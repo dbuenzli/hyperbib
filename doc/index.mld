@@ -1,0 +1,74 @@
+{0 hyperbib}
+
+{1:service Service}
+
+{!modules:
+Bibliography
+Bibliography_service
+Container
+Container_html
+Container_service
+Doi_html
+Entity
+Entity_html
+Entity_service
+Hclass
+Help_html
+Hfrag
+Home_html
+Hquery
+Icon
+Label
+Label_html
+Label_service
+Page
+Person
+Person_html
+Person_service
+Reference
+Reference_html
+Reference_service
+Schema
+Static_file
+Static_file_service
+Static_file_stamp
+Subject
+Subject_html
+Subject_service
+Uimsg
+User
+User_html
+User_service
+Year
+Year_html
+Year_service}
+
+{1:tool Tool}
+
+{!modules:
+Bibtex
+Cmd_add_user
+Cmd_db
+Cmd_html
+Cmd_serve
+Crossref
+Date
+Db
+Doi
+Export
+Hui
+Hyperbib
+Id
+Import
+Service
+Webapp
+}
+
+{1:doc Md documentation}
+
+{ul {- {{:../_docs/CHANGES.html}CHANGES}}
+{- {{:../_docs/DEVEL.html}DEVEL}}
+{- {{:../_docs/LICENSE.html}LICENSE}}
+{- {{:../_docs/README.html}README}}
+{- {{:../_docs/TODO.html}TODO}}
+{- {{:../_docs/doc/manual.html}Manual}}}

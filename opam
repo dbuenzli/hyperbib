@@ -1,0 +1,30 @@
+opam-version: "2.0"
+name: "hyperbib"
+synopsis: """Publish annotated bibliographies"""
+maintainer: ["Daniel Bünzli <daniel.buenzl i@erratique.ch>"]
+authors: ["The hyperbib programmers"]
+homepage: "https://erratique.ch/software/hyperbib"
+doc: "https://erratique.ch/software/hyperbib/doc"
+dev-repo: "git+https://erratique.ch/repos/hyperbib.git"
+bug-reports: "https://github.com/dbuenzli/hyperbib/issues"
+license: ["ISC" "OFL-1.1" "MIT"]
+tags: ["app" "bibliography" "org:erratique"]
+depends: ["ocaml" {>= "4.12"}
+          "ocamlfind" {build}
+          "b0" {build}
+          "cmdliner" {>= "1.0.4"}
+          "webs"
+          "hc"
+          "ask"
+          "note"
+          "brr"
+          "js_of_ocaml"]
+pin-depends: [["hc.~dev" "git+https://erratique.ch/repos/hc.git#master"]
+              ["ask.~dev" "git+https://erratique.ch/repos/ask.git#master"]
+              ["webs.~dev" "git+https://erratique.ch/repos/webs.git#master"]]
+build: [["b0"]]
+description: """
+Hyperbib is a web application to edit and publish annotated
+bibliographies.
+
+Hyperbib is distributed under the ISC license."""

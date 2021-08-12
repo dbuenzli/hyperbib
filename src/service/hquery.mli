@@ -1,0 +1,53 @@
+(*---------------------------------------------------------------------------
+   Copyright (c) 2021 University of Bern. All rights reserved.
+   Distributed under the ISC license, see terms at the end of the file.
+  ---------------------------------------------------------------------------*)
+
+(** HTTP request query helpers *)
+
+open Hyperbib.Std
+
+(* FIXME a less ad-hoc set of functions can be designed here. *)
+
+val find_cols :
+  cols:'r Col.v list -> Http.query -> ('r Col.value list, Resp.t) result
+
+val find_table_cols :
+  'r Table.t -> cols:'r Col.v list -> Http.query ->
+  ('r Col.value list, Resp.t) result
+(** [find_table_cols t cs] finds the value of columns [cs] of [t] in [q]. *)
+
+val careless_find_table_cols :
+  ?ignore:'r Col.v list -> 'r Table.t ->
+  Http.query -> ('r Col.value list, Resp.t) result
+(** Do not use, use {!find_table_cols}. [careless_find_table_cols r q]
+    finds in [q] all column names of [t], except those mentioned in
+    [ignore].
+
+    {b WARNING.} It is not a good idea to use this function, when your
+    database schema evolves, it may end up exposing columns to queries
+    that weere not meant to be updatable by the query. *)
+
+
+val key_for_rel : ?suff:string -> 'r Table.t -> ('r, 'a) Col.t -> string
+
+val find_ids :
+  uniquify:bool -> string -> Http.query -> (int list, Resp.t) result
+
+
+
+(*---------------------------------------------------------------------------
+   Copyright (c) 2021 University of Bern
+
+   Permission to use, copy, modify, and/or distribute this software for any
+   purpose with or without fee is hereby granted, provided that the above
+   copyright notice and this permission notice appear in all copies.
+
+   THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+   WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+   MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+   ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+   WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+   ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+   OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+  ---------------------------------------------------------------------------*)

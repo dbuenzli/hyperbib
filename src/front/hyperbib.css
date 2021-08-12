@@ -1,0 +1,666 @@
+@charset "UTF-8";
+@import url("fonts/fonts.css");
+
+/* Copyright (c) 2019 University of Bern. All rights reserved.
+   Distributed under the ISC license, see terms at the end of the file. */
+
+/* Reset a few things. */
+
+*, *::before, *::after
+{ box-sizing: border-box; margin:0; padding:0; border: 0;
+  background-color: transparent; color: inherit;
+  font: inherit; letter-spacing: inherit; word-spacing: inherit;
+  line-height: inherit; vertical-align: baseline;
+  text-decoration: inherit;  }
+
+:root
+{
+  --color-bg: white;
+  --color-bg-highlight: #E7E7E7;
+  --color-fg: #042037;
+  --color-fg-medium: #444;
+  --color-fg-light: #777;
+  --color-rule: #2F3236;
+  --color-link: #BBB;
+  --color-link-hover: #777;
+  --color-link-light: #AAA;
+  --color-link-extra-light: #EEE;
+  --color-link-visited: #BBB;
+  --color-subjects: #1f4a95;
+  --color-private: #ffe5e2;
+  --color-submit: #d2e8d6;
+  --color-submit-active: #8b998d;
+  --color-delete: #bf1515;
+
+  --color-button-border: #999;
+  --color-button-bg: #EEE;
+  --color-button-active-fg:#333;
+  --color-button-active-bg:#AAA;
+  --color-button-disabled-fg: #555;
+  --color-button-disabled-bg: #AAA;
+  --color-button-disabled-border: #888;
+
+  --ui-field-bg: #EEE;
+
+  --font-headings: "Lato";
+  --font-body: "Lato";
+  --font-mono: "DejaVu-SansMono";
+
+  --size-font: 1rem;
+  --size-font-micro: calc(0.675 * var(--size-font));
+  --size-font-tiny-ratio: 0.75;
+  --size-font-tiny:  calc(var(--size-font-tiny-ratio) * var(--size-font));
+  --size-font-small: calc(0.875 * var(--size-font));
+  --size-font-large: calc(1.25 * var(--size-font));
+  --size-font-big:   calc(1.5 * var(--size-font));
+  --size-font-huge:  calc(1.75 * var(--size-font));
+  --size-font-mono-ratio: 0.87097;
+
+  --size-line-ratio: 1.5;
+  --size-line: calc(var(--size-line-ratio) * var(--size-font));
+  --size-half-line: calc(0.5 * var(--size-line));
+  --size-fourth-line: calc(0.25 * var(--size-line));
+
+  --dur-notice: 100ms;
+  --dur-short: 250ms;
+  --dur-short-outro: 200ms;
+  --dur-medium: 500ms;
+  --dur-medium-outro: 400ms;
+  --dur-long: 1000ms;
+  --dur-long-outro: 750ms;
+}
+
+body { width: 100vw; height: 100vh; margin: 0; }
+
+/* Page geometry */
+
+.hyperbib
+{ min-height: 100%;
+  background-color: var(--color-bg);
+  color: var(--color-fg);
+  font-size: var(--size-font);
+  font-family: var(--font-body), sans-serif;
+  font-weight: 400;
+  line-height: var(--size-line);
+  text-align: left;
+  display: grid;
+  max-width: 120ch;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto 1fr auto;
+  grid-column-gap: 3.4375rem;
+  grid-template-areas:
+    "body ui"
+    "body ui"
+    "footer ui";
+  padding-top: calc(1.5 * var(--size-line));
+  padding-bottom: calc(1.5 * var(--size-line));
+  padding-left: calc(3 * var(--size-line));
+  padding-right: calc(3 * var(--size-line)); }
+
+.hyperbib > .ui { border-left: 1px solid #EEE; padding-left: var(--size-line)}
+.hyperbib > .ui { grid-area: ui;  }
+.hyperbib > .ui div {
+  /* Unclear why we need a nesting div here */
+  position: -webkit-sticky;
+  position: sticky; top: calc(1.5 * var(--size-line)); }
+
+.hyperbib > section { grid-area: body;  max-width: 72ch; }
+.hyperbib > footer { grid-area: footer; padding-top: var(--size-half-line); }
+.hyperbib > * { margin-top: 0 }
+
+/* Testing site banner */
+
+.hyperbib.testing { padding-top: calc(2.5 * var(--size-line)) }
+.hyperbib > .testing
+{ position:fixed; top:0; left:0;
+  padding: var(--size-fourth-line) 0;
+  width: 100%;
+  font-size: var(--size-font-small);
+  font-weight: 400;
+  text-align: center;
+  border-bottom: 1px solid #d9534f;
+  background-color: #fdf7f7;
+  color: #b52b27; }
+
+
+/* Media adjustments */
+
+@media only screen and (min-width:160ch) /* and (min-height: 60rem) */
+{
+  :root { --size-font: 1.25rem; } /* consider using vmin units */
+}
+
+@media only screen and (max-width:80ch)
+{
+  .hyperbib {
+    padding: var(--size-line);
+    grid-template-columns: auto;
+    grid-template-rows: auto auto 1fr;
+    grid-template-areas: "ui"
+                         "body"
+                         "footer"; }
+
+  .hyperbib > header, .hyperbib > section, .hyperbib > footer, .hyperbib > .toc,
+  .hyperbib > .ui
+  { padding: 0; border: none }
+
+  .hyperbib > .ui
+  { position: initial;
+    border-bottom: 1px solid #EEE;
+    padding-bottom: var(--size-half-line) }
+
+  .hyperbib .toc ul { display: flex; flex-direction: row; flex-wrap: wrap;
+                      gap: 1ex; }
+}
+
+@media print
+{
+  * { -webkit-print-color-adjust: exact; }
+
+  .hyperbib > * { width: 100%; }
+  .hyperbib {
+    grid-template-rows: auto auto 1fr;
+    grid-template-areas: "ui"
+                         "body"
+                         "footer"; }
+
+  header, section, footer, .ui { padding: 0; border: none }
+  header { border-bottom: 1px solid #EEE; }
+  section { padding-top: var(--size-half-line) }
+  .hyperbib > .toc { display: none }
+}
+
+/* Basic markup */
+
+* + * { margin-top: var(--size-half-line); }
+
+h1, h2, h3
+{ font-family: var(--font-headings), sans-serif; }
+
+h1
+{ font-size: var(--size-font-big); line-height: calc(1.75 * var(--size-line)) }
+
+h2
+{ font-size: var(--size-font-large); line-height: calc(1.5 * var(--size-line)) }
+
+
+ul, ol { list-style-position: outside }
+ul { list-style-type: square }
+ul > li { margin-left: 2.25ch; }
+ol > li { margin-left: 2ch; }
+em { font-style: italic }
+b, strong { font-weight: 700 }
+small { font-size: var(--size-font-small); line-height: 0 }
+small p { line-height: calc(0.875 * var(--size-line)); }
+
+sup { vertical-align: super; }
+sub { vertical-align: sub; }
+sup, sub { font-size : calc(1em * var(--size-font-tiny-ratio));
+           line-height: 0; margin-left: 0.2ex; }
+
+img { display: block; }
+
+/* Links and anchors. */
+
+a { color:inherit; text-decoration:none;
+    border-bottom: 1px solid var(--color-link); }
+a:visited { border-bottom: 1px solid var(--color-link-visited); }
+a:hover
+{ color: var(--color-link-hover);
+  border-bottom-color: var(--color-link-hover); }
+
+a.anchor:before { content: "#" }
+a.anchor:hover { text-decoration: underline; }
+*:hover > a.anchor { visibility: visible }
+a.anchor
+{ visibility: hidden; position: absolute;
+  font-weight: normal; font-style: normal;
+  margin-left: -2.5ch;
+  padding-right: 1ch; padding-left: 1ch; /* To remain selectable */
+  color: var(--color-link-hover);
+  border: none; }
+
+*:target /* Linked highlight */
+{ background-color: var(--color-bg-highlight);
+  box-shadow: 0 0 0 3px var(--color-bg-highlight) }
+
+/* Header */
+
+header h1 a { border: none }
+header h1
+{ font-size: var(--size-font-huge);
+  line-height: calc(1.5 * var(--size-line));
+  text-transform: none; }
+
+header div
+{ font-weight: 300; padding-top: calc(0.25 * var(--size-half-line)); }
+
+.updated { margin-left: 1ch; font-size: var(--size-font-micro);
+           font-style: italic; }
+
+/* Toc */
+
+.toc a { border-bottom: none }
+.toc li { margin: 0; }
+.toc ul
+{ font-size: var(--size-font-large);
+  line-height: calc(1.5 * var(--size-line));
+  font-weight: 300;
+  text-transform: uppercase;
+  list-style-type: none; margin: 0; padding:0; }
+
+/* Footer */
+
+footer { font-size: var(--size-font-tiny); color: var(--color-fg-light); }
+
+/* Generic UI layout */
+
+.group { display: flex; flex-wrap: wrap; }
+.group > * + * { margin-top: 0 }
+.dir-h { flex-direction: row }
+.dir-v { flex-direction: column }
+.align-start { justify-content: flex-start }
+.align-end { justify-content: flex-end }
+.align-center { justify-content: center }
+.align-justify { justify-content: space-between }
+.align-distribute { justify-content: space-evenly }
+.align-stretch { justify-content: stretch }
+.x-align-start { align-items: flex-start }
+.x-align-end { align-items: flex-end }
+.x-align-center { align-items: center }
+.x-align-justify { align-items: space-between }
+.x-align-distribute { align-items: space-evenly }
+.x-align-stretch { align-items: stretch }
+
+:focus { outline-offset: 3px; } /* Otherwise too tight in chrome */
+
+/* Icons */
+
+.icon + *  { margin-left: 0.5rem }
+.icon { width: 1.1rem; height:1.1rem }
+.icon * { stroke-width: 1 } /* N.B. that's specific to hyperbib's style */
+
+/* Buttons */
+
+.button
+{ -webkit-appearance: none;
+  appearance: none;
+/*  display: inline; */
+  position: relative; /* For the spinner overlay */
+  min-width: 7ex;
+  min-height: calc(2.0 * var(--size-font));
+  padding: 0rem 0.5rem;
+  border-radius: 0.15rem;
+  border: solid 1px var(--color-button-border);
+  background-color: var(--color-button-bg);
+  cursor: pointer; user-select: none; }
+
+.button * { pointer-events: none; }
+
+.button:active:hover
+{ background-color: var(--color-button-active-bg);
+  color: var(--color-button-active-fg); }
+
+.removable .value:active:hover
+{ box-shadow: 0 0 0 2px var(--color-button-active-bg);;
+  background-color: var(--color-button-active-bg);
+  color: var(--color-delete);; }
+
+.removable { display: inline-block;  margin:0 }
+.removable button { pointer-events: auto }
+.removable .value { pointer-events: none; }
+.removable .value:hover
+{
+  border-radius: 0.15rem;
+  box-shadow: 0 0 0 2px var(--color-button-bg);
+  color: var(--color-delete);
+  background-color: var(--color-button-bg) }
+
+.button:disabled, .button.hc-request
+{ border: solid 1px var(--color-button-disable-border);
+  background-color: var(--color-button-disabled-fg);
+  color: var(--color-button-disabled-bg);
+}
+
+.button .icon + * { margin-left: 0.25rem }
+
+/* Iconic buttons */
+
+.button.icon
+{ min-width: auto; min-height: auto; padding:0; border:none;
+  background-color: transparent; color: #666;
+}
+
+.button.icon .icon { position:relative; top: 2px }
+.button.icon:active:hover { background-color: transparent; color: #333 }
+
+/* Specific buttons */
+
+.submit { background: var(--color-submit)}
+.submit:active:hover { background: var(--color-submit-active); }
+
+.delete { color: var(--color-delete)}
+.delete:active:hover { color: var(--color-delete)}
+
+.button.remove
+{ min-width: auto; min-height: auto; padding:0.3rem; margin:-0.3rem;
+  border:none; background-color: transparent; color: inherit;
+}
+
+.button.remove:hover:active { background-color: transparent }
+
+/* Input and input fields
+
+   Autogrow for input and textareas use this dreadful trick
+   https://css-tricks.com/the-cleanest-trick-for-autogrowing-textareas/ */
+
+.autogrow.string { display: inline-grid; margin:0; }
+.autogrow.text { display: grid; margin:0; }
+.autogrow::after { white-space: pre-wrap; visibility: hidden; }
+.autogrow.string::after { content: attr(data-value); }
+.autogrow.text::after { content: attr(data-value) " "; }
+
+.autogrow > input, .autogrow > textarea, .autogrow::after
+{ grid-area: 1 / 1 / 2 / 2; }
+
+.autogrow > .input.text { resize: none; overflow: hidden; }
+
+.autogrow.string::after,
+.input.string
+{ -webkit-appearance: none;
+  appearance: none;
+  margin-top: 0; line-height: 0; border: none;
+  padding-left: 0.5ex;
+  padding-right: 0.5ex;
+  background-color: var(--ui-field-bg);
+  border-radius: 1px; box-shadow: 0 0 0 2px var(--ui-field-bg);
+  text-overflow: ellipsis; }
+
+.autogrow.text::after,
+.input.text
+{ margin-top: 0;
+  padding-left: 0.5ex;
+  background-color: var(--ui-field-bg);
+  border-radius: 1px; box-shadow: 0 0 0 2px var(--ui-field-bg);
+  display: block;
+  resize: vertical; }
+
+.input.bool { vertical-align: middle }
+.input.select
+{ margin-top: 0;
+  padding: 0;
+  padding-left: 0.5ex;
+  background-color: var(--ui-field-bg);
+  border-radius: 1px; box-shadow: 0 0 0 2px var(--ui-field-bg); }
+
+.field { display: block; display: flex; flex-direction:column; }
+.field > .label { font-size: var(--size-font-tiny) }
+.field > .input.string { display: block }
+
+.add { display: inline-block; position:relative; margin: 0 }
+
+.select-entity { position: relative; display: inline-block; margin: 0; }
+.select-entity ol
+{ position: absolute;
+  top: calc(var(--size-half-line) + 2.5px);
+  background: var(--ui-field-bg);
+  list-style-type: none;
+  z-index: 1;
+  width: max-content;
+  overflow: visible;
+  border-radius: 1px;
+  border: 1px solid var(--color-button-border);
+}
+
+.select-entity ol:empty { border: none }
+.select-entity li * { pointer-events: none; }
+.select-entity li
+{ margin: 0;
+  padding: 0.25rem 0.5rem;
+  color: var(--color-fg);
+  font-size: var(--size-font-small);
+  cursor: pointer; user-select: none;
+}
+
+.select-entity li:hover { background:#ddd }
+.select-entity li:hover:active
+{ background-color: var(--color-button-active-bg);
+  color: var(--color-button-active-fg); }
+
+
+.select-entity li + li { border-top: 1px solid #ddd; }
+.select-entity .input.string
+{ padding-left: 0;
+  background-color: inherit;
+  box-shadow: none; border: none; }
+
+.select-entity .input.string::placeholder
+{ color: var(--color-fg-light) }
+
+.select-entity .input.string:hover,
+.select-entity .input.string:focus
+{ background-color: var(--ui-field-bg);
+  border-radius: 1px; box-shadow: 0 0 0 2px var(--ui-field-bg); }
+
+/* Hc transitions */
+
+.hc-out { transition: all var(--dur-short); }
+.hc-in .input, .hc-out .input
+{ background-color: inherit !important; /* easier for specificity */
+  box-shadow: none !important; }
+
+.hc-out.removable, .hc-in.removable { opacity: 0; }
+.hc-out.removable { transition: all var(--dur-short-outro); }
+
+/* Hyperbib UI */
+
+.private
+{ background: var(--color-private);
+  box-shadow: 0 0 0 2px var(--color-private);
+  border-radius: 1px; }
+
+.uppercase { text-transform: uppercase; }
+
+.login > * { display: block }
+.login > .field > * { display: block }
+.login > .field > .label { font-weight: 700; font-size:var(--font-size); }
+.login > .field > input
+{ font-size:var(--font-size); width: 100%; padding:0.5ex; }
+
+.item-count
+{ color: var(--color-fg-light); font-size: var(--size-font-micro);
+  font-weight: 300; }
+
+h1 .item-count { font-size: var(--size-font) }
+h2 .item-count { font-size: var(--size-font-tiny) }
+
+.ref-list { list-style-type: none; }
+.ref-item { margin-left: 0 }
+.ref-item * + * { margin-top: 0 }
+.ref-item p { margin-top: 0 }
+
+.container-details { font-size: var(--size-font-small) }
+
+.value.orcid, .field.orcid
+{ font-weight:300; font-size: var(--size-font-micro) }
+
+.field.orcid .input { font-size: var(--size-font-tiny); font-weight: 400 }
+
+.more-details > * { margin-right: 1ch; }
+.more-details details summary::-webkit-details-marker {display: none; }
+.more-details details summary
+{ list-style: none; cursor: pointer; outline: none;
+  font-size: var(--size-font-tiny) }
+
+.more-details details summary::before
+{ content:"+ "; color: var(--color-fg-light); font-weight: 400; }
+
+.more-details details[open] summary::before { content:"– "; font-weight: 400; }
+.more-details details[open] { display:block; }
+.more-details > *
+{ display: inline-block; font-weight: 300;
+  font-size: var(--size-font-tiny) }
+
+.more-details > * > p { padding-left: 1ch; font-style: normal; }
+
+.field.public { display: block; }
+.field.public input:checked + .label
+{ background-color: inherit; box-shadow: none; border-radius: 0; }
+
+.field.public .label
+{ font-size: var(--size-font-small);
+  background-color: var(--color-private);
+  box-shadow: 0 0 0 2px var(--color-private);
+  border-radius: 1px;
+  transition: all var(--dur-short); }
+
+.description, .value.note, .value.private_note,
+.field.description, .field.note, .field.private_note
+{ font-size: var(--size-font-small); font-weight: 400; }
+
+p.description { line-height: calc(0.875 * var(--size-line)); }
+
+h1 + .description, h2 + .description { margin-top: 0; }
+
+.field.reference_subject > div { margin:0; }
+.field.reference_contributor > div { margin:0; }
+
+.value.subject { font-weight: 400; color: var(--color-subjects); }
+.value.parent { margin-top: 0; line-height: calc(0.875 * var(--size-line)); }
+.value.container { font-style: italic }
+.value.person { font-size: var(--size-font-small); font-weight: 300; }
+.index .value.person { font-size: var(--size-font); font-weight: 400; }
+
+.editing .container-loc > * { margin-right: 2ex; }
+.container-loc .string { font-size: var(--size-font-small); }
+
+.more-details > a, a.title, a.container, a.doi, a.person, a.year, a.ref-cite,
+a.subject
+{ border-bottom: none; }
+
+.more-details > a { line-height: var(--size-font-tiny) }
+
+.more-details > a:hover,
+a.title:hover, a.container:hover, a.doi:hover, a.person:hover,
+a.year:hover, a.ref-cite:hover, a.subject:hover
+{ border-bottom-color: var(--color-link-hover);
+  border-bottom: 1px solid var(--color-link-extra-light); }
+
+.index ol { list-style-type: none; margin-left: 0; }
+.index li { margin: 0; }
+.index
+{ margin-top: var(--size-half-line);
+  padding-bottom: var(--size-half-line);
+  border-bottom: 1px solid #EEE; }
+
+.index.year a
+{ font-family: var(--font-headings);
+  font-size: var(--size-font-large);
+  font-weight: 300;
+  text-transform: uppercase;
+  margin-right: 1ch;
+  display: inline-block;
+  border: none }
+
+.index.subject .value.description { margin-top: 0 }
+
+.letter-index * + * { margin-top: 0 }
+.letter-index .letter { margin-right: 1ch; display: inline-block; border:none }
+.letter
+{ font-family: var(--font-headings);
+  font-size: var(--size-font-large);
+  text-transform: uppercase; }
+
+.edit-pages { font-weight: 300; }
+.edit-ui { padding-top: var(--size-half-line); }
+.edit-ui { border-top: 1px solid #EEE; }
+.edit-ui.group > * + * { margin-top: var(--size-fourth-line); }
+
+.doi-resolver label, .doi-resolver input
+{ margin:0; padding:2px; background: #EEE; line-height:0;  }
+.doi-resolver label:hover { padding:2px; background: #DDD; }
+.doi-resolver label { display: initial }
+.doi-resolver input { display: none }
+.doi-resolver.editing label { display: none }
+.doi-resolver.editing input { display: initial }
+section .doi-resolver-ui { margin-left: 1em; }
+.ui .doi-resolver-ui
+{ font-size: var(--size-font-tiny); color: var(--color-fg-light); }
+
+.bibtex-file
+{ color: var(--color-fg-light); font-size: var(--size-font-small); }
+
+.user-view { border-radius: 0.15rem; border: solid 1px #999; }
+.user-view .button
+{ font-size: var(--size-font-small);
+  min-height: calc(1.625 * var(--size-font-small));
+  padding: 0rem 0.5rem; border-radius: 0; border: none; }
+
+.user-view .button:disabled
+{ background-color:#888; color:#FFF; border-radius: 0; border: none; }
+
+.user-ui { display: inline }
+.user-ui .button.submit
+{ background: none; display: inline; padding: 0; margin: 0;
+  border: none; cursor: pointer; }
+
+.user-ui .button.submit .logout {
+  color:inherit; text-decoration:none;
+  border-bottom: 1px solid var(--color-link); }
+
+.user-ui .button.submit:hover .logout
+{ color: var(--color-link-hover);
+  border-bottom-color: var(--color-link-hover); }
+
+/* .entity-ui { padding-top:var(--size-half-line); } */
+.entity-ui .button
+{ margin-top: var(--size-half-line) } /* For when they jump lines */
+
+.entity-ui .button + *
+{ margin-left: 0.5rem } /* Fixme switch to grid for gutters */
+
+.entity-menu { padding-top:var(--size-half-line); }
+.entity-menu .button, .entity-ui .button
+{ font-size: var(--size-font-small);
+  min-height: calc(2 * var(--size-font-small)); }
+
+h1 .entity-kind { font-size: var(--size-font-small); line-height: 0 }
+h1 .entity-kind a { border-bottom: 1px solid var(--color-link-extra-light); }
+
+form.entity.editing h1 { margin-top: calc(-1 * var(--size-half-line)); }
+h1 .field { display: inline-block; margin: 0; position: relative;
+            margin-top: var(--size-half-line); }
+h1 .field > .label
+{ position: absolute; top: calc(-1.1 * var(--size-line)); }
+
+.entity.editing
+{ padding-bottom:var(--size-half-line); border-bottom: 1px solid #EEE; }
+
+/* Tables */
+
+table { border-collapse: collapse; border-spacing: 0; width: 100%; }
+td, th { text-align: left; }
+th { text-align: left; font-weight: 700;
+     border-bottom:1px solid #eee;
+     padding-bottom: var(--size-half-line); }
+
+td { text-align: left;
+     padding-top: var(--size-fourth-line);
+     padding-bottom: var(--size-fourth-line); }
+td + td, th + th { padding-left:1.5em; }
+
+/*
+Copyright (c) 2019 University of Bern
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/

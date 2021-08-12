@@ -1,0 +1,135 @@
+/* DejaVu SansMono https://dejavu-fonts.github.io/ */
+
+/* 400 */
+
+@font-face
+{ font-family: 'DejaVu-SansMono';
+  src: url('DejaVuSansMono.woff2') format('woff2');
+  font-weight: 400; font-style: normal; }
+
+@font-face
+{ font-family: 'DejaVu-SansMono';
+  src: url('DejaVuSansMono-Oblique.woff2') format('woff2');
+  font-weight: 400; font-style: oblique; }
+
+/* 700 */
+
+@font-face
+{ font-family: 'DejaVu-SansMono';
+  src: url('DejaVuSansMono-Bold.woff2') format('woff2');
+  font-weight: 700; font-style: normal; }
+
+@font-face
+{ font-family: 'DejaVu-SansMono';
+  src: url('DejaVuSansMono-BoldOblique.woff2') format('woff2');
+  font-weight: 700; font-style: oblique; }
+
+/* Lato fonts http://www.latofonts.com/ */
+
+/* 100 */
+
+@font-face
+{ font-family: 'Lato';
+  src: url('Lato-Hairline.woff2') format('woff2');
+  font-style: normal; font-weight: 100; }
+
+@font-face
+{ font-family: 'Lato';
+  src: url('Lato-HairlineItalic.woff2') format('woff2');
+  font-style: italic; font-weight: 100; }
+
+/* 200 */
+
+@font-face
+{ font-family: 'Lato';
+  src: url('Lato-Thin.woff2') format('woff2');
+  font-style: normal; font-weight: 200; }
+
+@font-face
+{ font-family: 'Lato';
+  src: url('Lato-ThinItalic.woff2') format('woff2');
+  font-style: italic; font-weight: 200; }
+
+/* 300 */
+
+@font-face
+{ font-family: 'Lato';
+  src: url('Lato-Light.woff2') format('woff2');
+  font-style: normal; font-weight: 300; }
+
+@font-face
+{ font-family: 'Lato';
+  src: url('Lato-LightItalic.woff2') format('woff2');
+  font-style: italic; font-weight: 300; }
+
+/* 400 */
+
+@font-face
+{ font-family: 'Lato';
+  src: url('Lato-Regular.woff2') format('woff2');
+  font-style: normal; font-weight: 400; }
+
+@font-face
+{ font-family: 'Lato';
+  src: url('Lato-Italic.woff2') format('woff2');
+  font-style: italic; font-weight: 400; }
+
+/* 500 */
+
+@font-face
+{ font-family: 'Lato';
+  src: url('Lato-Semibold.woff2') format('woff2');
+  font-style: normal; font-weight: 500; }
+
+@font-face
+{ font-family: 'Lato';
+  src: url('Lato-SemiboldItalic.woff2') format('woff2');
+  font-style: italic; font-weight: 500; }
+
+/* 600 */
+
+@font-face
+{ font-family: 'Lato';
+  src: url('Lato-Semibold.woff2') format('woff2');
+  font-style: normal; font-weight: 600; }
+
+@font-face
+{ font-family: 'Lato';
+  src: url('Lato-SemiboldItalic.woff2') format('woff2');
+  font-style: italic; font-weight: 600; }
+
+/* 700 */
+
+@font-face
+{ font-family: 'Lato';
+  src: url('Lato-Bold.woff2') format('woff2');
+  font-style: normal; font-weight: 700; }
+
+@font-face
+{ font-family: 'Lato';
+  src: url('Lato-BoldItalic.woff2') format('woff2');
+  font-style: italic; font-weight: 700; }
+
+/* 800 */
+
+@font-face
+{ font-family: 'Lato';
+  src: url('Lato-Heavy.woff2') format('woff2');
+  font-style: normal; font-weight: 800; }
+
+@font-face
+{ font-family: 'Lato';
+  src: url('Lato-HeavyItalic.woff2') format('woff2');
+  font-style: italic; font-weight: 800; }
+
+/* 900 */
+
+@font-face
+{ font-family: 'Lato';
+  src: url('Lato-Black.woff2') format('woff2');
+  font-style: normal; font-weight: 900; }
+
+@font-face
+{ font-family: 'Lato';
+  src: url('Lato-BlackItalic.woff2') format('woff2');
+  font-style: italic; font-weight: 900; }

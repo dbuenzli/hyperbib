@@ -1,0 +1,14 @@
+[Unit]
+Description=Hyperbib
+
+[Service]
+Type=simple
+Restart=on-failure
+RestartSec=10s
+User=philo
+Group=philo
+
+ExecStart=hyperbib serve --listen localhost:8000 /var/www/hyperbib
+
+[Install]
+WantedBy=multi-user.target

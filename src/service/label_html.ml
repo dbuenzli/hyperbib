@@ -1,0 +1,109 @@
+(*---------------------------------------------------------------------------
+   Copyright (c) 2021 University of Bern. All rights reserved.
+   Distributed under the ISC license, see terms at the end of the file.
+  ---------------------------------------------------------------------------*)
+
+open Hyperbib.Std
+open Result.Syntax
+
+let ui_ext g ~self = match Page.Gen.editable g with
+| false -> El.void
+| true ->
+    let uf = Page.Gen.url_fmt g in
+    let new_button =
+      let cancel = Some (Kurl.Fmt.url uf self) in
+      let dst = Label.Url.v (Edit_new { cancel }) in
+      let href = Kurl.Fmt.rel_url uf ~src:self ~dst in
+      Hui.button_link ~href (El.txt (Uimsg.new_label ^ "…"))
+    in
+    Hui.group ~at:At.[Hclass.entity_ui] ~dir:`H [new_button]
+
+(*
+let hc_request rf r = Hfrag.hc_request rf (Kurl.v Label.Url.kind r)
+let buttons_view rf l =
+  let edit_button =
+    let r = hc_request rf @@ Edit (Label.id l) in
+    let t = Hc.target ".form:up" and e = Hc.effect `Element in
+    Hui.button ~at:[r; t; e] (El.txt "Edit")
+  in
+  Hui.group ~dir:`H [edit_button]
+
+let buttons_edit rf l =
+  let cancel_button =
+    let r = hc_request rf @@ Edit (Label.id l) in
+    let t = Hc.target ".form:up" and e = Hc.effect `Element in
+    Hui.cancel ~at:[r; t; e] (El.txt "Cancel")
+  in
+  Hui.group ~align:`Justify ~dir:`H
+    [cancel_button; Hui.submit (El.txt "Save label")]
+
+let buttons ~edit rf l =
+  if edit
+  then buttons_edit rf l
+  else buttons_view rf l
+
+*)
+let form ~edit rf l = El.void
+(*
+  let at = match edit with
+  | false -> []
+  | true ->
+      let r = hc_request rf @@ Update (Label.id l) in
+      let e = Hc.effect `Element in
+      [r; e]
+  in
+  Hui.form ~at ~edit [
+    Hui_ask.text_field ~edit ~col:Label.name' ~label:"Name" l;
+    Hui_ask.text_field ~edit ~col:Label.synopsis' ~label:"Synopsis" l;
+    Hui_ask.text_field ~edit ~col:Label.note' ~label:"Note" l;
+    Hui_ask.text_field ~edit ~col:Label.private_note' ~label:"Private note" l;
+    buttons ~edit rf l;
+  ]
+*)
+
+let label rf l = El.void
+(*
+  El.section [
+    El.h1 [El.txt ("Label " ^ Label.name l)];
+    form ~edit:false rf l;
+    El.h2 [El.txt "Applied to"]]
+*)
+
+let index_html g ~self ls =
+  let uf = Page.Gen.url_fmt g in
+  let anchor_id s = Fmt.str "%d" (Label.id s) in
+  let label l =
+    let viz = if Label.public l then At.void else Hclass.private' in
+    let label = Hfrag.link_label uf ~self l in
+    let label_descr = match Label.note l with
+    | "" -> El.void
+    | d -> El.p ~at:At.[Hclass.field; Hclass.description; viz] [El.txt d]
+    in
+    let lid = anchor_id l in
+    El.li ~at:At.[id lid] [Hfrag.anchor_a lid; label; El.sp; label_descr]
+  in
+  let title = [Hfrag.uppercase_span Uimsg.labels ] in
+  let labels = List.map label ls in
+  let labels = El.nav ~at:At.[Hclass.index; Hui.Class.label] labels in
+  El.section [ El.h1 title; labels ]
+
+let index g ls =
+  let self = Kurl.v Label.Url.kind Index in
+  let content = index_html g ~self ls in
+  Page.html ~ui_ext g ~self ~title:Uimsg.labels ~content
+
+(*---------------------------------------------------------------------------
+   Copyright (c) 2021 University of Bern
+
+   Permission to use, copy, modify, and/or distribute this software for any
+   purpose with or without fee is hereby granted, provided that the above
+   copyright notice and this permission notice appear in all copies.
+
+   THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+   WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+   MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+   ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+   WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+   ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+   OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+  ---------------------------------------------------------------------------*)

@@ -1,0 +1,4 @@
+PKG cmdliner b0 b0.kit ptime ptime.clock.os brr brr.note note webs webs.kit webs.unix webs.cli webs.html hc hc.page ask ask.sqlite3 ask.pool ask.kit
+S src/**
+S src-front
+B _b0/b/**
