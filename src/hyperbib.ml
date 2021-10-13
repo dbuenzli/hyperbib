@@ -18,6 +18,13 @@ module Std = struct
 
   module Bazaar = struct
 
+    let rec list_fold_stop_on_error f l acc = match l with
+    | [] -> Ok acc
+    | v :: vs ->
+        match f v acc with
+        | Ok acc -> list_fold_stop_on_error f vs acc
+        | Error _ as e -> e
+
     let rec list_iter_stop_on_error f = function
     | [] -> Ok ()
     | v :: vs ->
@@ -105,6 +112,7 @@ module Data_conf = struct
   let authentication_private_key c = Fpath.(c.app_dir / "auth.private")
   let data_dir c = Fpath.(c.app_dir / "data")
   let static_dir c = Fpath.(c.app_dir / "static")
+  let doi_cache_dir c = Fpath.(c.app_dir / "dois")
   let db_file c = Fpath.(data_dir c / "bib.sqlite3")
   let db_backup_file c = Fpath.(db_file c + ".backup")
   let bib_conf_file c = Fpath.(data_dir c / "bib-conf.json") (* FIXME unused *)

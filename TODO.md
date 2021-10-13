@@ -14,8 +14,8 @@
 
 #  UI
 
-* FF page load stutter.
 * Unsaved changes. 
+* Request feedbacks
 * Make nice things on blank states
 * Author/Editor order by drag and drop. 
 * Preserve user input when things go wrong. 
@@ -41,3 +41,8 @@
 * Markdownify comments.
 * If we keep db id mononontic we could do redirects on replace operations.
 * Comparison with doi data interface 
+* Glitches on page reload with UI doi resolver
+* Cites cited-by ui is confusing.
+* User referer for ~self on fragments.
+* Cleanups & bulk actions
+

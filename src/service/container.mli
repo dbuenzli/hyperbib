@@ -114,6 +114,8 @@ val match' :
 val match_stmt :
   title:string -> isbn:string -> issn:string -> t Sql.Stmt.t
 
+val select : string Ask.value -> (t, Bag.unordered) Ask.Bag.t
+val select_stmt : string -> t Sql.Stmt.t
 
 (** {1:urls URLs} *)
 
@@ -136,6 +138,10 @@ module Url : sig
   | Page of named_id
   | Replace of id
   | Replace_form of id
+  | Select of string
+  | Select_add of id
+  | Select_rem of id
+  | Select_create of container
   | Update of id
   | View_fields of id (** *)
   (** The type for container URL requests. *)

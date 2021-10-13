@@ -33,10 +33,10 @@ let get_person_for_page_ref =
     ~page_url ~page_404 ~entity_find_id_stmt ~entity_public ~entity_res_name
 
 let select_persons db ~only_public sel =
-  (* FIXME only_public, FIXME Ask escape % and _ in selector *)
+  (* FIXME only_public, FIXME Ask escape % and _ in selector, order by *)
   if String.trim sel = "" then Ok [] else
-  Db.list db (Person.select_stmt sel)
-
+  let* ps = Db.list db (Person.select_stmt sel) in
+  Ok (List.sort Person.order_by_last_name ps)
 
 let view_fields_resp app db req id =
   let* p = get_person db id in
@@ -141,6 +141,21 @@ let replace_form app req this =
   let replace = Person_html.replace_form g p ~ref_count ~persons in
   Ok (Page.resp_part replace)
 
+let creatable_person_of_sel sel =
+  let sel = String.trim sel in
+  if sel = "" then None else
+  match String.cut_left ~sep:"," sel with
+  | None ->
+      Option.some @@
+      Person.v ~id:0 ~last_name:sel ~first_names:"" ~orcid:""
+        ~note:"" ~private_note:"" ~public:true ()
+  | Some (last_name, first_names) ->
+      let last_name = String.trim last_name in
+      let first_names = String.trim first_names in
+      Option.some @@
+      Person.v ~id:0 ~last_name ~first_names ~orcid:""
+        ~note:"" ~private_note:"" ~public:true ()
+
 let select app role sel =
   let* () = Entity_service.check_edit_authorized app in
   Webapp.with_db_transaction `Deferred app @@ fun db ->
@@ -148,7 +163,8 @@ let select app role sel =
   let uf = Page.Gen.url_fmt g in
   let only_public = Page.Gen.only_public g in
   let* ps = select_persons db ~only_public sel in
-  let sel = Entity_html.addable_contributor_list role uf ps in
+  let creatable = creatable_person_of_sel sel in
+  let sel = Entity_html.addable_contributor_list ~creatable role uf ps in
   Ok (Page.resp_part sel)
 
 let select_add app role id =
@@ -158,6 +174,17 @@ let select_add app role id =
   let* p = get_person db id in
   let sel = Entity_html.add_contributor role (Page.Gen.url_fmt g) in
   let p = Entity_html.removable_contributor role p in
+  let add = El.splice [p; sel] in
+  Ok (Page.resp_part add)
+
+let select_create app role p =
+  let* () = Entity_service.check_edit_authorized app in
+  Webapp.with_db_transaction' `Deferred app @@ fun db ->
+  let g = Webapp.page_gen app in
+  let sel = Entity_html.add_contributor role (Page.Gen.url_fmt g) in
+  let p =
+    Entity_html.removable_contributor_create (Page.Gen.url_fmt g) role p
+  in
   let add = El.splice [p; sel] in
   Ok (Page.resp_part add)
 
@@ -196,6 +223,7 @@ let resp r app sess req = match (r : Person.Url.t) with
 | Replace_form id -> replace_form app req id
 | Select (role, sel) -> select app role sel
 | Select_add (role, id) -> select_add app role id
+| Select_create (role, p) -> select_create app role p
 | Update id -> update app req id
 | View_fields id  -> view_fields app req id
 

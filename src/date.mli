@@ -25,6 +25,8 @@ type partial = year * md_partial option
 val partial_of_string : string -> (partial, string) result
 (** [partial_of_string s] parses a partial date from [s]. *)
 
+val partial_to_string : partial -> string
+
 val pp_partial : Format.formatter -> partial -> unit
 (** [pp] is a formatter for partial dates. *)
 

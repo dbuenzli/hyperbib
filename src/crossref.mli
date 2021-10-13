@@ -52,9 +52,19 @@ end
 
 val for_doi :
   B00_http.Httpr.t option ->
-  cache:Fpath.t -> Doi.t -> (B00_serialk_json.Json.t, string) result
+  cache:Fpath.t -> Doi.t -> (B00_serialk_json.Json.t option, string) result
 (** [for_doi httpr cache doi] looks up crossref metadata for doi [doi].
-    Looks up in the local [cache] first. *)
+    Looks up in the local [cache] first. [None] is returned if the
+    doi cannot be resolved (404). *)
+
+(** {1:types Types}
+
+    From https://api.crossref.org/v1/types *)
+
+val types : (string * string) list
+
+
+
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2019 University of Bern

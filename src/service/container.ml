@@ -92,6 +92,16 @@ let match_stmt =
 
 let match_stmt ~title ~isbn ~issn = match_stmt title isbn issn
 
+let select sel =
+  (* FIXME trim spaces in both pattern and scrutinee *)
+  let open Ask.Syntax in
+  let* c = Bag.table table in
+  let sel_by_id = Text.(of_int (c #. id') = sel) in
+  let sel_by_title = Text.(like (c #. title') (sel ^ v "%") ) in
+  Bag.where (sel_by_id || sel_by_title) (Bag.yield c)
+
+let select_stmt =
+  Sql.Bag.(func @@ text @-> ret (Table.row table) select)
 
 (* Queries *)
 
@@ -115,8 +125,24 @@ module Url = struct
   | Page of named_id
   | Replace of id
   | Replace_form of id
+  | Select of string
+  | Select_add of id
+  | Select_rem of id
+  | Select_create of Container.t
   | Update of id
   | View_fields of id
+
+  let titleq = "title"
+  let container_of_query q = match Http.Query.find titleq q with
+  | None -> Resp.bad_request_400 ~reason:"No container found" ()
+  | Some title ->
+      Result.ok @@
+      Container.v
+        ~id:0 ~title ~isbn:"" ~issn:"" ~note:"" ~private_note:""
+        ~public:false ()
+
+  let container_to_query ?(init = Http.Query.empty) c =
+    init |> Http.Query.add titleq (Container.title c)
 
   let dec u = match Kurl.Bare.path u with
   | [""] ->
@@ -142,6 +168,20 @@ module Url = struct
       let* `GET = Kurl.Allow.(meths [get] u) in
       let cancel = Entity.Url.cancel_url_of_query (Kurl.Bare.query u) in
       Kurl.ok (New_form { cancel })
+  | ["part"; "select"] ->
+      let* `GET = Kurl.Allow.(meths [get] u) in
+      let q = Entity.Url.select_of_query (Kurl.Bare.query u) in
+      Kurl.ok (Select q)
+  | ["part"; "select"; "add"; id] ->
+      let* `GET, id = Entity.Url.get_id u id in
+      Kurl.ok (Select_add id)
+  | ["part"; "select"; "rem"; id] ->
+      let* `GET, id = Entity.Url.get_id u id in
+      Kurl.ok (Select_rem id)
+  | ["part"; "select"; "create"] ->
+      let* `GET = Kurl.Allow.(meths [get] u) in
+      let* c = container_of_query (Kurl.Bare.query u) in
+      Kurl.ok (Select_create c)
   | ["action"; "duplicate"; id] ->
       let* `POST, id = Entity.Url.meth_id u Kurl.Allow.[post] id in
       Kurl.ok (Duplicate id)
@@ -187,6 +227,16 @@ module Url = struct
       Kurl.bare `POST ["action"; "replace"; Res.Id.to_string id]
   | Replace_form id ->
       Kurl.bare `GET ["part"; "replace-form"; Res.Id.to_string id]
+  | Select sel ->
+      let query = Entity.Url.select_to_query sel in
+      Kurl.bare `GET ["part"; "select"] ?query
+  | Select_add id ->
+      Kurl.bare `GET ["part"; "select"; "add"; Res.Id.to_string id]
+  | Select_rem id ->
+      Kurl.bare `GET ["part"; "select"; "rem"; Res.Id.to_string id]
+  | Select_create c ->
+      let query = container_to_query c in
+      Kurl.bare `GET ["part"; "select"; "create"] ~query
   | Update id ->
       Kurl.bare `PUT [Res.Id.to_string id]
   | View_fields id ->

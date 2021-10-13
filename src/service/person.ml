@@ -53,6 +53,11 @@ module Person = struct
     let public = false in
     { p with last_name; public }
 
+  let created_equal p0 p1 =
+    (p0.orcid <> "" && p0.orcid = p1.orcid) ||
+    (p0.last_name = p1.last_name &&
+     p0.first_names = p1.first_names)
+
   (* Predicates and comparisons *)
 
   let order_by_last_name p0 p1 =
@@ -151,6 +156,27 @@ module Url = struct
   | None -> init
   | Some r -> Http.Query.add role (role_to_string r) init
 
+  let first = "first"
+  let last = "last"
+  let orcid = "orcid"
+  let person_of_query q = match Http.Query.find first q with
+  | None -> Resp.bad_request_400 ~reason:"No person found" ()
+  | Some f ->
+      match Http.Query.find last q with
+      | None -> Resp.bad_request_400 ~reason:"No person found" ()
+      | Some l ->
+          match Http.Query.find orcid q with
+          | None -> Resp.bad_request_400 ~reason:"No person found" ()
+          | Some orcid ->
+              Ok (Person.v ~id:0 ~last_name:l ~first_names:f ~orcid
+                    ~note:"" ~private_note:"" ~public:true ())
+
+  let person_to_query ?(init = Http.Query.empty) p =
+    init
+    |> Http.Query.add last (Person.last_name p)
+    |> Http.Query.add first (Person.first_names p)
+    |> Http.Query.add orcid (Person.orcid p)
+
   type named_id = string option * id
   type t =
   | Confirm_delete of id
@@ -166,6 +192,7 @@ module Url = struct
   | Replace_form of id
   | Select of role option * string
   | Select_add of role option * id
+  | Select_create of role option * person
   | Update of id
   | View_fields of id
 
@@ -202,6 +229,11 @@ module Url = struct
       let* `GET, id = Entity.Url.get_id u id in
       let* r = role_of_query (Kurl.Bare.query u) in
       Kurl.ok (Select_add (r, id))
+  | ["part"; "select"; "create"] ->
+      let* `GET = Kurl.Allow.(meths [get] u) in
+      let* r = role_of_query (Kurl.Bare.query u) in
+      let* p = person_of_query (Kurl.Bare.query u) in
+      Kurl.ok (Select_create (r, p))
   | ["action"; "duplicate"; id] ->
       let* `POST, id = Entity.Url.meth_id u Kurl.Allow.[post] id in
       Kurl.ok (Duplicate id)
@@ -258,6 +290,10 @@ module Url = struct
   | Select_add (r, id) ->
       let query = role_to_query r in
       Kurl.bare `GET ["part"; "select"; "add"; Res.Id.to_string id] ~query
+  | Select_create (r, p) ->
+      let query = role_to_query r in
+      let query = person_to_query ~init:query p in
+      Kurl.bare `GET ["part"; "select"; "create"] ~query
   | Update id ->
       Kurl.bare `PUT [Res.Id.to_string id]
   | View_fields id ->

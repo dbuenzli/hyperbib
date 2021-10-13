@@ -8,6 +8,7 @@
 val author : string
 val authors : string
 val add_author : string
+val add_container : string
 val add_editor : string
 val add_person : string
 val add_subject : string
@@ -27,22 +28,34 @@ val container_contained_zero : string -> string
 val container_list_descr : string
 val containers : string
 val copy : string
+val create : string
 val create_duplicate : string
 val create_label : string
 val create_subject : string
+val create_and_add_author : string
+val create_and_add_editor : string
+val create_and_add_person : string
 val create_person : string
 val create_container : string
+val create_and_add_container : string
 val create_reference : string
 val date : string
+val details : string
 val delete : string
 val deleted : string
 val description : string
+val document_in_bib : string -> string
+val doi : string
+val doi_not_found : string -> string
+val doi_error : string
 val duplicate : string
 val edit : string
 val editor : string
 val editors : string
 val email : string
 val error : string
+val fill_in_form_with_doi : string
+val fill_in : string
 val find_subject : string
 val find_container : string
 val find_person : string
@@ -51,6 +64,7 @@ val full_text : string
 val go_back_to_bib : string
 val goto_kind_index : string -> string
 val help : string
+val here : string
 val isbn : string
 val issn : string
 val issue : string
@@ -79,6 +93,7 @@ val not_found_404_descr : string
 val note : string
 val or_username : string
 val orcid : string
+val other : string
 val pages : string
 val parent : string
 val password : string
@@ -105,6 +120,7 @@ val reference_list_descr : string
 val references : string
 val references_anchor : string
 val remove_author : string
+val remove_container : string
 val remove_editor : string
 val remove_person : string
 val remove_reference : string
@@ -138,6 +154,7 @@ val this_is_a_testing_site : string
 val this_cannot_be_undone : string
 val this_will_also_delete : string
 val title : string
+val type' : string
 val unauthorized_401 : string
 val unauthorized_401_descr : string
 val unknown : string
@@ -145,6 +162,7 @@ val unnamed : string
 val untitled : string
 val user : string
 val volume : string
+val warning : string
 val year : string
 val year_index_descr : string
 val year_page_order_descr : string

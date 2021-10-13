@@ -10,16 +10,22 @@ open B00_std
 (** {1:dois DOIs} *)
 
 type t = string
-(** The type for DOIs. *)
+(** The type for DOIs. Note that this can be the empty string. On the
+    empty string, resolutions errors. *)
 
 val pp : t Fmt.t
 (** [pp] formats a DOI. *)
+
+val extract : string -> t
+(** [extract s] tries to remove any resolver prefix of [s].
+    It just cuts the string at the last to one '/' character or
+    returns [s] otherwise. *)
 
 (** {1:res Resolution} *)
 
 val default_resolver : B00_http.Uri.t
 (** [default_resolver] is the default resolver used to
-     resolve DOIs. This is [https://doi.org]. *)
+    resolve DOIs. This is [https://doi.org]. *)
 
 val resolve_to_uri :
   ?resolver:string -> B00_http.Httpr.t -> t -> (B00_http.Uri.t, string) result
@@ -28,10 +34,11 @@ val resolve_to_uri :
 
 val resolve_to_content_type :
   ?resolver:B00_http.Uri.t -> content_type:string ->
-  B00_http.Httpr.t -> t -> (string, string) result
+  B00_http.Httpr.t -> t -> (string option, string) result
 (** [resolve_to_bib r ~resolver ~format doi] resolves [doi] to a
     format [format] (the value of the HTTP [Accept:] header)
-      with [resolver] (defaults to {!default_resolver}). *)
+    with [resolver] (defaults to {!default_resolver}). [None] is returned
+    if this results in a 404. *)
 
 val bibtex : string
 (** [bibtex] is the BibTeX bibliographic format.

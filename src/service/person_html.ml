@@ -50,22 +50,24 @@ let confirm_delete g p ~ref_count =
     Hfrag.hc_delete uf confirm ~target (El.txt Uimsg.confirm_delete)
   in
   let bs = Hui.group ~align:`Justify ~dir:`H [delete_button; cancel_button] in
-  let msg =
-    let used_warn = match ref_count with
-    | 0 -> El.void
-    | n ->
-        let href = Hfrag.anchor_href Uimsg.references_anchor in
-        let refs = El.a ~at:[href] [El.txt_of Uimsg.these_n_references n] in
-        El.splice [El.txt Uimsg.it_will_be_removed_from; El.sp; refs;
-                   El.txt "."]
-    in
-    let really = El.txt_of Uimsg.really_delete_person (Person.names_fl p) in
-    El.p [really; El.sp; used_warn]
+  let really =
+    El.p [El.txt_of Uimsg.really_delete_person (Person.names_fl p)]
   in
-  let no_undo_warn = El.p [El.txt Uimsg.this_cannot_be_undone] in
-  let ui_msg = El.div ~at:[Hclass.ui_msg] [msg; no_undo_warn] in
+  let used = match ref_count with
+  | 0 -> El.void
+  | n ->
+      let href = Hfrag.anchor_href Uimsg.references_anchor in
+      let refs = El.a ~at:[href] [El.txt_of Uimsg.these_n_references n] in
+      let at = [Hclass.message; Hclass.info] in
+      El.p ~at [El.txt Uimsg.it_will_be_removed_from; El.sp; refs;
+                El.txt "."]
+  in
+  let no_undo_warn =
+    El.p ~at:[Hclass.message; Hclass.warn] [El.txt Uimsg.this_cannot_be_undone]
+  in
   let at = At.[Hclass.entity; Hclass.editing] in
-  El.section ~at [ h1_person uf ~self ~orcid:true p; ui_msg; bs; ]
+  El.section ~at
+    [ h1_person uf ~self ~orcid:true p; really; used; no_undo_warn; bs; ]
 
 let deleted g p =
   let person = Hfrag.uncapitalize Uimsg.person in
@@ -148,7 +150,7 @@ let duplicate_form g p ~ref_count =
   | n ->
       let href = Hfrag.anchor_href Uimsg.references_anchor in
       let refs = El.a ~at:[href] [El.txt_of Uimsg.these_n_references n] in
-      let at = [Hclass.ui_msg] in
+      let at = [Hclass.message; Hclass.info] in
       El.p ~at [El.txt Uimsg.person_duplicate_will_be_added_to; El.sp;
                 refs; El.txt "."]
   in
@@ -176,7 +178,7 @@ let replace_form g p ~ref_count ~persons =
   in
   let intro =
     let intro = Uimsg.replace_person_by (Person.names_fl p) in
-    El.p ~at:[Hclass.ui_msg] [El.txt intro]
+    El.p [El.txt intro]
   in
   let input_person = input_person ~name:Entity.Url.replace_by ~persons in
   let msg = match ref_count with
@@ -184,7 +186,7 @@ let replace_form g p ~ref_count ~persons =
   | n ->
       let href = Hfrag.anchor_href Uimsg.references_anchor in
       let refs = El.a ~at:[href] [El.txt_of Uimsg.these_n_references n] in
-      let at = [Hclass.ui_msg] in
+      let at = [Hclass.message; Hclass.info] in
       El.p ~at [El.txt Uimsg.replacement_person_will_be_added_to; El.sp;
                 refs; El.txt "."]
   in

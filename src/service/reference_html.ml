@@ -50,24 +50,44 @@ let confirm_delete g r =
     Hfrag.hc_delete uf confirm ~target (El.txt Uimsg.confirm_delete)
   in
   let bs = Hui.group ~align:`Justify ~dir:`H [delete_button; cancel_button] in
-  let msg =
-    let really = El.txt_of Uimsg.really_delete_reference (Reference.title r) in
-    El.p [really]
+  let really =
+    El.p [El.txt_of Uimsg.really_delete_reference (Reference.title r)]
   in
-  let no_undo_warn = El.p [El.txt Uimsg.this_cannot_be_undone] in
-  let ui_msg = El.div ~at:[Hclass.ui_msg] [msg; no_undo_warn] in
+  let no_undo_warn =
+    El.p ~at:[Hclass.message; Hclass.warn] [El.txt Uimsg.this_cannot_be_undone]
+  in
   let at = At.[Hclass.entity; Hclass.editing] in
-  El.section ~at [h1; ui_msg; bs]
+  El.section ~at [h1; really; no_undo_warn; bs]
 
 let edit_title r =
   let label = El.txt Uimsg.title and col = Reference.title' in
   Hui.field_text ~autogrow:true ~min_rows:1 ~label ~col r
 
-let edit_container r = El.void (* TODO *)
+let edit_doi r =
+  let label = El.txt Uimsg.doi and col = Reference.doi' in
+  Hui.field_string ~autogrow:true ~min_size:8 ~label ~col r
+
+let edit_isbn r =
+  let label = El.txt Uimsg.isbn and col = Reference.isbn' in
+  Hui.field_string ~autogrow:true ~min_size:8 ~label ~col r
+
+let edit_container uf r c =
+  let input = match c with
+  | None -> Entity_html.add_container uf
+  | Some (`Exists c) -> Entity_html.removable_container uf c
+  | Some (`To_create c) -> Entity_html.removable_container_create uf c
+  in
+  let span = El.span ~at:[Hui.Class.label] [El.txt Uimsg.container] in
+  let at = [Hclass.field; Hui.Class.for_col Reference.container'] in
+  El.label ~at [span; input]
 
 let edit_date r =
-  let _label = El.txt (Uimsg.date ^ "yyyy(-mm-dd)" ) in
-  El.void
+  let label = El.txt Uimsg.date in
+  let v = match Reference.date r with
+  | None -> "" | Some d -> Date.partial_to_string d
+  in
+  let name = Hquery.date_key in
+  Hui.field_string' ~autogrow:true ~min_size:10 ~name ~label v
 
 let edit_volume r =
   let label = El.txt Uimsg.volume and col = Reference.volume' in
@@ -90,8 +110,22 @@ let edit_note = Entity_html.edit_note (module Reference)
 let edit_private_note = Entity_html.edit_private_note (module Reference)
 let edit_public = Entity_html.edit_public (module Reference)
 
+let edit_type r =
+  let label = El.txt Uimsg.type' in
+  let options = List.map fst Crossref.types in
+  let option_value = Fun.id in
+  let option_text t = match List.assoc_opt t Crossref.types with
+  | None -> Uimsg.other | Some l -> l
+  in
+  let col = Reference.type'' in
+  Hui.field_select ~label ~option_text ~option_value ~options ~col r
+
 let edit_contributor role uf ps =
   let at = [Hclass.field; Hui.Class.for_table Reference.Contributor.table] in
+  let contributor = function
+  | `To_create p -> Entity_html.removable_contributor_create uf role p
+  | `Exists p -> Entity_html.removable_contributor role p
+  in
   let label = match role with
   | Some Person.Author -> Uimsg.authors
   | Some Person.Editor -> Uimsg.editors
@@ -99,7 +133,7 @@ let edit_contributor role uf ps =
   in
   let label = El.span ~at:[Hui.Class.label] [El.txt label] in
   let add = Entity_html.add_contributor role uf in
-  let ps = List.map (Entity_html.removable_contributor role) ps in
+  let ps = List.map contributor ps in
   El.div ~at [label; El.div (ps @ [add])]
 
 let edit_subjects uf ss =
@@ -116,7 +150,7 @@ let edit_submit uf ~submit r =
   in
   let r = Hfrag.hc_request uf url and e = Hc.effect `Element in
   let q = Hc.query "form:up" in
-  let t = Hc.target ":up :up :up" in
+  let t = Hc.target ":up :up :up :up" in
   let at = At.[t; r; e; q; Hui.Class.submit] in
   Hui.button ~at (El.txt label)
 
@@ -131,56 +165,115 @@ let edit_buttons uf ~submit r =
   let submit = edit_submit uf ~submit r in
   Hui.group ~align:`Justify ~dir:`H [cancel; submit]
 
+let edit_cites cites = (* Hidden for now *)
+  let cite doi = El.input ~at:At.[hidden; name Hquery.cite_key; value doi] () in
+  El.splice (List.map cite cites)
+
 let edit_reference
-    ?(msg = El.void) g ~self ~submit r ~authors ~editors ~subjects
-  =
+    g ~self ~submit r ~authors ~editors ~subjects ~container ~cites =
   let uf = Page.Gen.url_fmt g in
-  let h1 = h1_reference uf ~self r in
   let title = edit_title r in
-  let container_details =
-    let volume = edit_volume r in
-    let issue = edit_issue r in
-    let pages = edit_pages r in
-    Hui.group ~at:[Hclass.container_loc] ~dir:`H [volume; issue; pages]
+  let details =
+    let open' = match submit with `New _ -> At.true' "open" | _ -> At.void in
+(*    let open' = At.true' "open" in *)
+    let summary = El.summary ~at:[Hui.Class.label] [El.txt Uimsg.details] in
+    let ref_ids =
+      let doi = edit_doi r in
+      let isbn = edit_isbn r in
+      let type' = edit_type r in
+      Hui.group ~at:[Hclass.reference_ids] ~dir:`H [doi; isbn; type']
+    in
+    let cites = edit_cites cites in
+    let container_title = edit_container uf r container in
+    let container_details =
+      let date = edit_date r in
+      let volume = edit_volume r in
+      let issue = edit_issue r in
+      let pages = edit_pages r in
+      Hui.group ~at:[Hclass.container_loc] ~dir:`H [date; volume; issue; pages]
+    in
+    let edit_publisher = edit_publisher r in
+    let authors = edit_contributor (Some Person.Author) uf authors in
+    let editors = edit_contributor (Some Person.Editor) uf editors in
+    El.details ~at:[open'; Hclass.field]
+      [ summary; El.hr (); ref_ids; authors; editors; El.hr (); cites;
+        container_details;
+        container_title; edit_publisher;  ]
   in
-  let edit_publisher = edit_publisher r in
-  let authors = edit_contributor (Some Person.Author) uf authors in
-  let editors = edit_contributor (Some Person.Editor) uf editors in
   let subjects = edit_subjects uf subjects in
   let note = edit_note r in
   let private_note = edit_private_note r in
   let public = edit_public r in
   let buttons = edit_buttons uf ~submit r in
-  Hfrag.entity_form_no_submit
-    [ h1; title; container_details; El.div [edit_publisher];
-      authors; editors; subjects; note; private_note; public; msg; buttons]
+  Hfrag.form_no_submit
+    [ title; details; El.hr (); subjects; note; private_note; public; buttons]
+
+let fill_ui g ~doi =
+  let label =
+    let at = [Hclass.font_small] in
+    El.span ~at [El.txt Uimsg.fill_in_form_with_doi]
+  in
+  let input =
+    let at = [At.placeholder "DOI"; At.required; At.type' "search"] in
+    Hui.input_string' ~at ~autogrow:true ~min_size:25 ~name:"doi" doi
+  in
+  let fill_in =
+    let tip = Uimsg.fill_in_form_with_doi in
+    Hui.button ~type':"submit" ~tip (El.txt Uimsg.fill_in)
+  in
+  let input =
+    let at = [Hclass.hspace_0_5] in
+    Hui.group ~at ~x_align:`Center ~dir:`H [input; fill_in]
+  in
+  let at =
+    let url = Reference.Url.v (Fill_in_form "") in
+    let r = Hfrag.hc_request (Page.Gen.url_fmt g) url in
+    let t = Hc.target ":up .entity" in
+    [r; t; Hclass.vspace_0_125]
+  in
+  El.splice [El.form ~at [label; input]; El.hr ()]
+
+let filled_in_form g ~self r ~msg ~authors ~editors ~container ~cites =
+  let form = edit_reference g ~self ~submit:(`New None (* FIXME not nice *)) r
+      ~authors ~editors ~subjects:[] ~container ~cites
+  in
+  let at = At.[Hclass.entity; Hclass.editing] in
+  El.section ~at [msg; form]
 
 let edit_form g r ~render_data:rs =
   let self = Reference.Url.page r in
-  let authors = find_authors r rs and editors = find_editors r rs in
+  let authors = List.map (fun a -> `Exists a) (find_authors r rs) in
+  let editors = List.map (fun e -> `Exists e) (find_editors r rs) in
   let subjects = find_subjects r rs in
-  edit_reference g ~self ~submit:`Edit r ~authors ~editors ~subjects
+  let container = Option.map (fun c -> `Exists c) (find_container r rs) in
+  let h1 = h1_reference (Page.Gen.url_fmt g) ~self r in
+  let form =
+    edit_reference g ~self ~submit:`Edit r ~authors ~editors ~subjects
+      ~container ~cites:[] (* Not exposed in the UI. *)
+  in
+  let at = At.[Hclass.entity; Hclass.editing] in
+  El.section ~at [h1; form]
 
 let new_form g r ~cancel =
   let self = Reference.Url.v (New_form { cancel }) in
   let title = Hfrag.title ~sub:Uimsg.new_reference ~sup:Uimsg.reference in
-  let content =
-    let authors = [] and editors = [] and subjects = [] in
+  let fill_ui = fill_ui g ~doi:"" in
+  let form =
     let at = At.[Hclass.entity; Hclass.editing] in
+    let authors = [] and editors = [] and subjects = [] in
     El.section ~at
       [ edit_reference g ~self ~submit:(`New cancel) r
-          ~authors ~editors ~subjects]
+          ~authors ~editors ~subjects ~container:None ~cites:[] ]
   in
+  let content = El.section [fill_ui; form] in
   Page.html ?ui_ext:None g ~self ~title ~content
 
 let view_title ~linkify uf ~self r =
   let title = El.txt_of Hfrag.sentencify (Reference.non_empty_title r) in
   let at = [Hclass.value; Hui.Class.for_col Reference.title'; viz r] in
-  match linkify with
-  | false -> El.span ~at [title]
-  | true ->
-      let href = Kurl.Fmt.rel_url uf ~src:self ~dst:(Reference.Url.page r) in
-      Hfrag.link ~at ~href title
+  if not linkify then El.span ~at [title] else
+  let href = Kurl.Fmt.rel_url uf ~src:self ~dst:(Reference.Url.page r) in
+  Hfrag.link ~at ~href title
 
 let view_container_loc r =
   let vi = match Reference.(volume r, issue r) with
@@ -207,8 +300,9 @@ let view_container ~details uf ~self r c =
 let view_publisher r = match Reference.publisher r with
 | "" -> El.void | p -> El.txt_of (Fmt.str " %s. ") p
 
-let view_year uf ~self r =
-  El.splice [Hfrag.link_year uf ~self (Reference.year r); El.sp]
+let view_year uf ~self r = match Reference.year r with
+| 0 -> El.void
+| n -> El.splice [Hfrag.link_year uf ~self (Reference.year r); El.sp]
 
 let view_authors uf ~self ps r = match ps with
 | [] -> El.void
@@ -224,8 +318,8 @@ let view_subjects uf ~self r = function
     El.p [El.splice ~sep:(El.txt ", ") ss]
 
 let view_doi_link r = match Reference.doi r with
-| None -> El.void
-| Some doi ->
+| "" -> El.void
+| doi ->
     let dlink = Fmt.str "%s/%s" Doi.default_resolver doi in
     let at = At.[href dlink; v "data-doi" doi] in
     El.a ~at [El.txt Uimsg.full_text]

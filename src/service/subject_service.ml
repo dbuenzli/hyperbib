@@ -9,9 +9,10 @@ open Result.Syntax
 (* Data lookups *)
 
 let select_subjects db ~only_public sel =
-  (* FIXME only_public, FIXME Ask escape % and _ in selector *)
+  (* FIXME only_public, FIXME Ask escape % and _ in selector, order by *)
   if String.trim sel = "" then Ok [] else
-  Db.list db (Subject.select_stmt sel)
+  let* ss = Db.list db (Subject.select_stmt sel) in
+  Ok (List.sort Subject.order_by_name ss)
 
 let get_subject = Entity_service.get_entity (module Subject)
 let get_subject_ref_count db s =

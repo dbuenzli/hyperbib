@@ -70,12 +70,24 @@ val addable_subject_list :
   parents:Subject.t Id.Map.t -> Subject.t list -> El.html
 
 val addable_contributor_list :
-  Person.role option -> Kurl.fmt -> Person.t list -> El.html
+  Person.role option -> Kurl.fmt ->
+  creatable:Person.t option -> Person.t list -> El.html
 
 val add_subject : Kurl.fmt -> El.html
 val add_contributor : Person.role option -> Kurl.fmt -> El.html
 val removable_subject : Subject.t -> El.html
 val removable_contributor : Person.role option -> Person.t -> El.html
+
+val removable_contributor_create :
+  Kurl.fmt -> Person.role option -> Person.t -> El.html
+
+val addable_container_list :
+  Kurl.fmt -> creatable:Container.t option -> Container.t list -> El.html
+val add_container : Kurl.fmt -> El.html
+
+val removable_container : Kurl.fmt -> Container.t -> El.html
+val removable_container_create : Kurl.fmt -> Container.t -> El.html
+
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2021 University of Bern

@@ -47,21 +47,20 @@ let confirm_delete g s ~ref_count =
     Hfrag.hc_delete uf confirm ~target (El.txt Uimsg.confirm_delete)
   in
   let bs = Hui.group ~align:`Justify ~dir:`H [delete_button; cancel_button] in
-  let msg =
-    let applied_warn = match ref_count with
-    | 0 -> El.void
-    | n ->
-        let href = Hfrag.anchor_href Uimsg.references_anchor in
-        let refs = El.a ~at:[href] [El.txt_of Uimsg.these_n_references n] in
-        El.splice [El.txt Uimsg.it_is_still_applied_to; El.sp; refs; El.txt "."]
-    in
-    let really = El.txt_of Uimsg.really_delete_subject (Subject.name s) in
-    El.p [really; El.sp; applied_warn]
+  let really = El.p [El.txt_of Uimsg.really_delete_subject (Subject.name s)] in
+  let used = match ref_count with
+  | 0 -> El.void
+  | n ->
+      let href = Hfrag.anchor_href Uimsg.references_anchor in
+      let refs = El.a ~at:[href] [El.txt_of Uimsg.these_n_references n] in
+      let at = [Hclass.message; Hclass.info] in
+      El.p ~at [El.txt Uimsg.it_is_still_applied_to; El.sp; refs; El.txt "."]
   in
-  let no_undo_warn = El.p [El.txt Uimsg.this_cannot_be_undone] in
-  let ui_msg = El.div ~at:[Hclass.ui_msg] [msg; no_undo_warn] in
+  let no_undo_warn =
+    El.p ~at:[Hclass.message; Hclass.warn] [El.txt Uimsg.this_cannot_be_undone]
+  in
   let at = At.[Hclass.entity; Hclass.editing] in
-  El.section ~at [ h1; ui_msg; bs; ]
+  El.section ~at [ h1; really; used; no_undo_warn; bs; ]
 
 let edit_name s =
   let label = El.txt Uimsg.name in
@@ -130,7 +129,7 @@ let duplicate_form g s ~ref_count ~parents =
   | n ->
       let href = Hfrag.anchor_href Uimsg.references_anchor in
       let refs = El.a ~at:[href] [El.txt_of Uimsg.these_n_references n] in
-      let at = [Hclass.ui_msg] in
+      let at = [Hclass.message; Hclass.info] in
       El.p ~at [El.txt Uimsg.subject_duplicate_will_be_applied_to; El.sp;
                 refs; El.txt "."]
   in
@@ -178,17 +177,14 @@ let replace_form g s ~ref_count ~subjects =
     let submit = Hui.submit (El.txt Uimsg.replace_subject) in
     Hui.group ~align:`Justify ~dir:`H [cancel; submit]
   in
-  let intro =
-    let intro = Uimsg.replace_subject_by (Subject.name s) in
-    El.p ~at:[Hclass.ui_msg] [El.txt intro]
-  in
+  let intro = El.p [El.txt_of Uimsg.replace_subject_by (Subject.name s)] in
   let input_subject = input_subject ~name:Entity.Url.replace_by ~subjects in
   let msg = match ref_count with
   | 0 -> El.void
   | n ->
       let href = Hfrag.anchor_href Uimsg.references_anchor in
       let refs = El.a ~at:[href] [El.txt_of Uimsg.these_n_references n] in
-      let at = [Hclass.ui_msg] in
+      let at = [Hclass.message; Hclass.info] in
       El.p ~at [El.txt Uimsg.replacement_subject_will_be_applied_to; El.sp;
                 refs; El.txt "."]
   in

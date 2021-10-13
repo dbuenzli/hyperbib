@@ -60,6 +60,7 @@ let rec for_doi httpr ~cache doi =
   match exists with
   | true ->
       let* contents = Os.File.read doi_file in
+      Result.map Option.some @@
       Json.of_string ~file:(Fpath.to_string doi_file) contents
   | false ->
       let* httpr = match httpr with
@@ -68,8 +69,44 @@ let rec for_doi httpr ~cache doi =
       in
       let content_type = Doi.json in
       let* json = Doi.resolve_to_content_type ~content_type httpr doi in
-      let* () = Os.File.write ~make_path:true ~force:true doi_file json in
-      for_doi None ~cache doi
+      match json with
+      | None -> Ok None
+      | Some json ->
+          let* () = Os.File.write ~make_path:true ~force:true doi_file json in
+          for_doi None ~cache doi
+
+let types = [
+  (* As found in https://api.crossref.org/v1/types
+     jq '.message.items[] | [.id, .label] | @csv' | \
+     sed 's/\\"/"/g; s/""$/";/g; s/^""/"/g' *)
+  "book","Book";
+  "book-chapter","Book Chapter";
+  "book-part","Book Part";
+  "book-section","Book Section";
+  "book-series","Book Series";
+  "book-set","Book Set";
+  "book-track","Book Track";
+  "component","Component";
+  "dataset","Dataset";
+  "dissertation","Dissertation";
+  "edited-book","Edited Book";
+  "journal","Journal";
+  "journal-article","Journal Article";
+  "journal-issue","Journal Issue";
+  "journal-volume","Journal Volume";
+  "monograph","Monograph";
+  "other","Other";
+  "peer-review","Peer Review";
+  "posted-content","Posted Content";
+  "proceedings","Proceedings";
+  "proceedings-article","Proceedings Article";
+  "proceedings-series","Proceedings Series";
+  "reference-book","Reference Book";
+  "reference-entry","Reference Entry";
+  "report","Report";
+  "report-series","Report Series";
+  "standard","Standard";
+  "standard-series","Standard Series"; ]
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2019 University of Bern

@@ -26,8 +26,14 @@ module Std : sig
   (** Other needs *)
   module Bazaar : sig
 
+    (* FIXME it these kinds of things should likely be added to
+       B00_std *)
+
+    val list_fold_stop_on_error :
+      ('a -> 'b -> ('b, 'err) result) -> 'a list -> 'b -> ('b, 'err) result
+
     val list_iter_stop_on_error :
-      ('a -> ('b, 'c) result) -> 'a list -> (unit, 'c) result
+      ('a -> ('b, 'err) result) -> 'a list -> (unit, 'err) result
 
     val list_iter_log_on_error :
       ('a -> ('b, string) result) -> 'a list -> unit
@@ -120,6 +126,10 @@ module Data_conf : sig
 
   val data_dir : t -> Fpath.t
   (** [data_dir c] is the absolute path to the data directory. *)
+
+  val doi_cache_dir : t -> Fpath.t
+  (** [doic_cache_dir c] is the absolute path to the DOI metadata
+      cache directory. *)
 
   val static_dir : t -> Fpath.t
   (** [static_dir c] is the absolute path to the static assets directory. *)

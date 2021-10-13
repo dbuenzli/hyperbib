@@ -72,6 +72,8 @@ val duplicate_data : t -> t
 (** [duplicate_data s] is [s] with its last name altered and {!public} set to
     none. The {!id} is the one of [s]. *)
 
+val created_equal : t -> t -> bool
+
 (** {1:predcomp Predicates and comparisons} *)
 
 val order_by_last_name : t -> t -> int
@@ -158,6 +160,7 @@ module Url : sig
   | Replace_form of id
   | Select of role option * string
   | Select_add of role option * id
+  | Select_create of role option * person
   | Update of id
   | View_fields of id (** *)
   (** The type for person URL requests. *)

@@ -95,7 +95,7 @@ val group :
 
 val button :
   ?at:At.t list -> ?x_align:align -> ?align:align -> ?dir:dir ->
-  ?tip:string -> El.html -> El.html
+  ?tip:string -> ?type':string -> El.html -> El.html
 (** [button ~at ~tip label] is a button with label [label] (which
     is [El.span]end, additional attributes [~at] and a tooltip [tip].
     FIXME talk about spinner *)
@@ -127,8 +127,11 @@ val delete :
     used as HTTP query key, see also {!Hquery} *)
 
 val input_string' :
-  ?at:At.t list -> ?autogrow:bool -> min_size:int -> name:string ->
-  string -> El.html
+  ?at:At.t list -> ?autocomplete:bool -> ?autogrow:bool -> min_size:int ->
+  name:string -> string -> El.html
+(** [autcomplete] is a mess this is [true] by default
+    and adds the [autocomplete='off'] attribute but that doesn't
+    work in most browser. *)
 
 val input_text' :
   ?at:At.t list ->  ?autogrow:bool -> min_rows:int -> name:string ->
@@ -139,7 +142,7 @@ val input_bool' : ?at:At.t list -> name:string -> bool -> El.html
 val input_bool : ?at:At.t list -> col:('a, bool) Ask.Col.t -> 'a -> El.html
 
 val input_string :
-  ?at:At.t list -> ?autogrow:bool -> min_size:int ->
+  ?at:At.t list -> ?autocomplete:bool -> ?autogrow:bool -> min_size:int ->
   col:('a, string) Ask.Col.t -> 'a -> El.html
 
 val input_text :
@@ -154,9 +157,15 @@ val field_bool :
   ?input_at:At.t list -> ?at:At.t list -> label:El.html ->
   col:('r, bool) Ask.Col.t -> 'r -> El.html
 
+val field_string' :
+  ?input_at:At.t list -> ?at:At.t list -> ?autocomplete:bool ->
+  ?autogrow:bool -> min_size:int -> label:El.html ->
+  name:string -> string -> Webs_html.El.html
+
 val field_string :
-  ?input_at:At.t list -> ?at:At.t list -> ?autogrow:bool -> min_size:int ->
-  label:El.html -> col:('r, string) Ask.Col.t -> 'r -> El.html
+  ?input_at:At.t list -> ?at:At.t list -> ?autocomplete:bool ->
+  ?autogrow:bool -> min_size:int -> label:El.html ->
+  col:('r, string) Ask.Col.t -> 'r -> El.html
 
 val field_text :
   ?textarea_at:At.t list -> ?at:At.t list -> ?autogrow:bool -> min_rows:int ->

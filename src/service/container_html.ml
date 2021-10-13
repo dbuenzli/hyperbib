@@ -43,22 +43,22 @@ let confirm_delete g c ~ref_count =
     Hfrag.hc_delete uf confirm ~target (El.txt Uimsg.confirm_delete)
   in
   let bs = Hui.group ~align:`Justify ~dir:`H [delete_button; cancel_button] in
-  let msg =
-    let used_warn = match ref_count with
-    | 0 -> El.void
-    | n ->
-        let href = Hfrag.anchor_href Uimsg.references_anchor in
-        let refs = El.a ~at:[href] [El.txt_of Uimsg.these_n_references n] in
-        El.splice [El.txt Uimsg.this_will_also_delete; El.sp; refs;
-                   El.txt "."]
-    in
-    let really = El.txt_of Uimsg.really_delete_container (Container.title c) in
-    El.p [really; El.sp; used_warn]
+  let really =
+    El.p [ El.txt_of Uimsg.really_delete_container (Container.title c) ]
   in
-  let no_undo_warn = El.p [El.txt Uimsg.this_cannot_be_undone] in
-  let ui_msg = El.div ~at:[Hclass.ui_msg] [msg; no_undo_warn] in
+  let used = match ref_count with
+  | 0 -> El.void
+  | n ->
+      let href = Hfrag.anchor_href Uimsg.references_anchor in
+      let refs = El.a ~at:[href] [El.txt_of Uimsg.these_n_references n] in
+      let at = [Hclass.message; Hclass.error] in
+      El.p ~at [El.txt Uimsg.this_will_also_delete; El.sp; refs; El.txt "."]
+  in
+  let no_undo_warn =
+    El.p ~at:[Hclass.message; Hclass.warn] [El.txt Uimsg.this_cannot_be_undone]
+  in
   let at = At.[Hclass.entity; Hclass.editing] in
-  El.section ~at [ h1; ui_msg; bs; ]
+  El.section ~at [ h1; really; used; no_undo_warn;  bs; ]
 
 let deleted g c =
   let cont = Hfrag.uncapitalize Uimsg.container in
@@ -69,18 +69,17 @@ let deleted g c =
   El.section [ El.h1 [El.txt Uimsg.deleted]; El.p [msg]; El.p [goto]]
 
 let edit_title c =
-  (*  let at = Hclass.container :: Hclass.for_col Container.title' :: [] in *)
   let label = El.txt Uimsg.title in
-  Hui.field_string (* ~at *)
-    ~autogrow:true ~min_size:10 ~label ~col:Container.title' c
+  Hui.field_text
+    ~autogrow:true ~min_rows:1 ~label ~col:Container.title' c
 
 let edit_issn c =
   let label = El.txt Uimsg.issn in
-  Hui.field_string ~autogrow:true ~min_size:20 ~label ~col:Container.issn' c
+  Hui.field_string ~autogrow:true ~min_size:10 ~label ~col:Container.issn' c
 
 let edit_isbn c =
   let label = El.txt Uimsg.isbn in
-  Hui.field_string ~autogrow:true ~min_size:20 ~label ~col:Container.isbn' c
+  Hui.field_string ~autogrow:true ~min_size:15 ~label ~col:Container.isbn' c
 
 let edit_note = Entity_html.edit_note (module Container)
 let edit_private_note = Entity_html.edit_private_note (module Container)
@@ -88,8 +87,8 @@ let edit_public = Entity_html.edit_public (module Container)
 
 let edit_submit uf ~submit c =
   let url, label = match submit with
-  | `New _ -> Container.Url.v Create, Uimsg.create_person
-  | `Edit -> Container.Url.v (Update (Container.id c)), Uimsg.save_person
+  | `New _ -> Container.Url.v Create, Uimsg.create_container
+  | `Edit -> Container.Url.v (Update (Container.id c)), Uimsg.save_container
   | `Duplicate ->
       Container.Url.v (Duplicate (Container.id c)), Uimsg.create_duplicate
   in
@@ -111,15 +110,19 @@ let edit_buttons uf ~submit c =
 
 let edit_container ?(msg = El.void) g ~self ~submit c =
   let uf = Page.Gen.url_fmt g in
-  let h1 = h1_container uf ~self ~title:edit_title c in
-  let issn = edit_issn c in
-  let isbn = edit_isbn c in
+  let h1 = h1_container uf ~self ~title:(Fun.const El.void) c in
+  let title = edit_title c in
+  let ids =
+    let issn = edit_issn c in
+    let isbn = edit_isbn c in
+    Hui.group ~at:[Hclass.container_ids] ~dir:`H [issn; isbn]
+  in
   let note = edit_note c in
   let private_note = edit_private_note c in
   let public = edit_public c in
   let buttons = edit_buttons uf ~submit c in
   Hfrag.entity_form_no_submit
-    [h1; issn; isbn; note; private_note; public; msg; buttons]
+    [h1; title; ids; note; private_note; public; msg; buttons]
 
 let edit_form g c =
   let self = Container.Url.page c in
@@ -160,7 +163,7 @@ let replace_form g c ~ref_count ~containers =
   in
   let intro =
     let intro = Uimsg.replace_container_by (Container.title c) in
-    El.p ~at:[Hclass.ui_msg] [El.txt intro]
+    El.p [El.txt intro]
   in
   let input_container =
     input_container ~name:Entity.Url.replace_by ~containers
@@ -170,7 +173,7 @@ let replace_form g c ~ref_count ~containers =
   | n ->
       let href = Hfrag.anchor_href Uimsg.references_anchor in
       let refs = El.a ~at:[href] [El.txt_of Uimsg.these_n_references n] in
-      let at = [Hclass.ui_msg] in
+      let at = [Hclass.message; Hclass.info] in
       El.p ~at [El.txt Uimsg.replacement_container_will_become_container_of;
                 El.sp; refs; El.txt "."]
   in

@@ -34,7 +34,40 @@ val key_for_rel : ?suff:string -> 'r Table.t -> ('r, 'a) Col.t -> string
 val find_ids :
   uniquify:bool -> string -> Http.query -> (int list, Resp.t) result
 
+val date_key : string
+val find_date : Http.query -> (Date.partial option, string) result
 
+val cite_key : string
+val find_cites : Http.query -> Doi.t list
+
+
+val person_key : Person.role option -> string
+
+val create_container_title : string
+val create_container_issn : string
+val create_container_isbn : string
+val find_create_container : Http.query -> Container.t option
+
+val create_author_first : string
+val create_author_last : string
+val create_author_orcid : string
+(* val find_create_authors : Http.query -> Person.t list *)
+
+val create_editor_first : string
+val create_editor_last : string
+val create_editor_orcid : string
+(* val find_create_editors : Http.query -> Person.t list *)
+
+val contributor_keys : Person.role option -> string * string * string
+
+val find_create_contributors :
+  Http.query ->
+   ([`Id of Person.id | `To_create of Person.t] list *
+    [`Id of Person.id | `To_create of Person.t] list, Resp.t) result
+
+
+
+val uniquify_ids : int list -> int list
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2021 University of Bern

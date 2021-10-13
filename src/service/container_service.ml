@@ -8,6 +8,13 @@ open Result.Syntax
 
 (* Data lookups *)
 
+let select_containers db ~only_public sel =
+  (* FIXME only_public, FIXME Ask escape % and _ in selector, order by *)
+  if String.trim sel = "" then Ok [] else
+  let* cs = Db.list db (Container.select_stmt sel) in
+  Ok (List.sort Container.order_by_title cs)
+
+
 let get_container = Entity_service.get_entity (module Container)
 let get_container_ref_count db s =
   let ref_count = Reference.container_ref_count_stmt (Container.id s) in
@@ -131,6 +138,45 @@ let replace_form app req this =
   let replace = Container_html.replace_form g c ~ref_count ~containers in
   Ok (Page.resp_part replace)
 
+let select app sel =
+  let* () = Entity_service.check_edit_authorized app in
+  Webapp.with_db_transaction `Deferred app @@ fun db ->
+  let g = Webapp.page_gen app in
+  let uf = Page.Gen.url_fmt g in
+  let only_public = Page.Gen.only_public g in
+  let* cs = select_containers db ~only_public sel in
+  let creatable =
+    Option.some @@
+    Container.v
+      ~id:0 ~title:sel ~isbn:"" ~issn:"" ~note:"" ~private_note:""
+      ~public:false ()
+  in
+  let sel = Entity_html.addable_container_list uf ~creatable cs in
+  Ok (Page.resp_part sel)
+
+let select_add app id =
+  let* () = Entity_service.check_edit_authorized app in
+  Webapp.with_db_transaction' `Deferred app @@ fun db ->
+  let g = Webapp.page_gen app in
+  let uf = Page.Gen.url_fmt g in
+  let* c = get_container db id in
+  let c = Entity_html.removable_container uf c in
+  Ok (Page.resp_part c)
+
+let select_rem app _id =
+  let* () = Entity_service.check_edit_authorized app in
+  Webapp.with_db_transaction' `Deferred app @@ fun db ->
+  let g = Webapp.page_gen app in
+  let sel = Entity_html.add_container (Page.Gen.url_fmt g) in
+  Ok (Page.resp_part sel)
+
+let select_create app c =
+  let* () = Entity_service.check_edit_authorized app in
+  Webapp.with_db_transaction' `Deferred app @@ fun db ->
+  let g = Webapp.page_gen app in
+  let c = Entity_html.removable_container_create (Page.Gen.url_fmt g) c in
+  Ok (Page.resp_part c)
+
 let update app req id =
   let* () = Entity_service.check_edit_authorized app in
   Webapp.with_db_transaction' `Immediate app @@ fun db ->
@@ -164,6 +210,10 @@ let resp r app sess req = match (r : Container.Url.t) with
 | Page ref -> page app ref
 | Replace id -> replace app req id
 | Replace_form id -> replace_form app req id
+| Select sel -> select app sel
+| Select_add id -> select_add app id
+| Select_rem id -> select_rem app id
+| Select_create c -> select_create app c
 | Update id -> update app req id
 | View_fields id  -> view_fields app req id
 

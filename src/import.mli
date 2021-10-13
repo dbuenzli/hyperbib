@@ -7,9 +7,36 @@
 
 open Hyperbib.Std
 
+type 'a entity = [ `Exists of 'a | `To_create of 'a ]
+(** The type for importing entities. Indicates whether it already
+    exists or is to be created in the database. *)
+
+module Doi : sig
+
+  type ref
+  (** The type for the metadata of a DOI. *)
+
+  val get_ref :
+    B00_http.Httpr.t option -> cache:Fpath.t -> Doi.t ->
+    (ref option, string) result
+
+  val cites_of_ref : ref -> Doi.t list
+
+  val get_container :
+    create_public:bool -> Db.t -> ref ->
+    (Container.t entity option, Db.error) result
+
+  val reference_of_ref :
+    ?note:string -> public:bool -> container_id:int option -> ref ->
+    Reference.t
+
+  val authors_editors_of_ref :
+    create_public:bool -> Db.t -> ref ->
+    (Person.t entity list * Person.t entity list, Db.error) result
+end
 
 val legacy :
-  Db.t -> app_dir:Fpath.t -> ((unit, string) result, Db.error) result
+  Db.t -> Hyperbib.Data_conf.t -> ((unit, string) result, Db.error) result
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2020 University of Bern
