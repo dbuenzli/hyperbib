@@ -14,7 +14,7 @@ module Url = struct
   | Hyperbib_js
 
   let dec u =
-    let* `GET = Kurl.Allow.(meths [get] u) in
+    let* `GET = Kurl.allow Http.Meth.[get] u in
     match Kurl.Bare.path u with
     | ["hyperbib.css"] -> Kurl.ok Hyperbib_css
     | ["hyperbib.js"] -> Kurl.ok Hyperbib_js

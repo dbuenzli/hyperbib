@@ -19,11 +19,11 @@ let parse_kind ~kind kind_of_string col acc k v = match kind_of_string v with
 | Some v -> Ok (Ask.Col.Value (col, v) :: acc)
 | None ->
     let reason = Fmt.str "key %s: not a %s" k kind in
-    Resp.bad_request_400 ~reason ()
+    Http.Resp.bad_request_400 ~reason ()
 
 let unhandled key t =
   let explain = Fmt.str "key %s: unhandled column type %a" key Type.pp t in
-  Resp.server_error_500 ~explain ()
+  Http.Resp.server_error_500 ~explain ()
 
 let add_col_value (type c) ~col:(col : ('a, c) Col.t) q acc =
   let key = Ask.Col.name col in
@@ -79,15 +79,128 @@ let find_ids ~uniquify key q = match Http.Query.find_all key q with
 | ids ->
     let rec loop seen acc = function
     | [] -> Ok (List.rev acc)
+    | "" :: ids -> loop seen acc ids
     | i :: ids ->
         match int_of_string_opt i (* FIXME *)  with
         | None ->
-            let reason = Fmt.str "key %s: not an identifier" key in
-            Resp.bad_request_400 ~reason ()
+            let reason = Fmt.str "key %s: %S is not an identifier" key i in
+            Http.Resp.bad_request_400 ~reason ()
         | Some i when uniquify && Intset.mem i seen -> loop seen acc ids
         | Some i ->  loop (Intset.add i seen) (i :: acc) ids
     in
     loop Intset.empty [] ids
+
+let date_key = "x-date"
+let find_date q = match Http.Query.find date_key q with
+| None | Some "" -> Ok None
+| Some s -> Result.map Option.some (Date.partial_of_string s)
+
+let cite_key = "x-cite"
+let find_cites q = Http.Query.find_all cite_key q
+
+let create_container_title = "x-container-title"
+let create_container_issn = "x-container-issn"
+let create_container_isbn = "x-container-isbn"
+
+let find_create_container q =
+  match Http.Query.find create_container_title q with
+  | None -> None
+  | Some title ->
+      let get o = Option.value ~default:"" o in
+      let issn = get @@ Http.Query.find create_container_issn q in
+      let isbn = get @@ Http.Query.find create_container_isbn q in
+      let public = Http.Query.mem "public" q (* XXX Brittle *) in
+      Option.some @@
+        Container.v
+          ~id:0 ~title ~isbn ~issn ~note:"" ~private_note:""
+          ~public ()
+
+let person_key = function
+| None -> Reference.Contributor.(key_for_rel table person')
+| Some role ->
+    let suff = Person.role_to_string role in
+    Reference.Contributor.(key_for_rel table person' ~suff)
+
+
+(* FIXME this is retarded *)
+
+let create_author_first = "x-author-first"
+let create_author_last = "x-author-last"
+let create_author_orcid = "x-author-orcid"
+
+let create_editor_first = "x-editor-first"
+let create_editor_last = "x-editor-last"
+let create_editor_orcid = "x-editor-orcid"
+
+let create_person_first = "x-person-first"
+let create_person_last = "x-person-last"
+let create_person_orcid = "x-person-orcid"
+
+let create_person_keys = function
+| Some Person.Author ->
+    create_author_first, create_author_last, create_author_orcid
+| Some Editor ->
+    create_editor_first, create_editor_last, create_editor_orcid
+| None ->
+    create_person_first, create_person_last, create_person_orcid
+
+let find_create_person ~public ~role q =
+  let first, last, orcid = create_person_keys role in
+  let ( let* ) = Option.bind in
+  let* first_names = Http.Query.find first q in
+  let* last_name = Http.Query.find last q in
+  let* orcid = Http.Query.find orcid q in
+  Option.some @@ Person.v
+    ~id:0 ~last_name ~first_names ~orcid ~note:"" ~private_note:"" ~public ()
+
+
+let find_create_persons ~public role q =
+  let rec loop acc fs ls os = match fs, ls, os with
+  | first_names :: fs, last_name :: ls, orcid :: os ->
+      let p =
+        Person.v ~id:0 ~last_name ~first_names ~orcid
+          ~note:"" ~private_note:"" ~public ()
+      in
+      loop (`To_create p :: acc) fs ls os
+  | [], [], [] -> List.rev acc
+  | _ -> Fmt.failwith "create %s list mismatch" (Person.role_to_string role)
+  in
+  let first, last, orcid = create_person_keys (Some role) in
+  let firsts = Http.Query.find_all first q in
+  let lasts = Http.Query.find_all last q in
+  let orcids = Http.Query.find_all orcid q in
+  loop [] firsts lasts orcids
+
+let find_contributor_kind ~public role q =
+  let id_key = person_key (Some role) in
+  let creates = find_create_persons ~public role q in
+  let rec loop acc creates = function
+  | [] -> List.rev acc
+  | "x" :: ids -> loop (List.hd creates :: acc) (List.tl creates) ids
+  | "" :: ids -> loop acc creates ids
+  | id :: ids ->
+      match int_of_string_opt id (* FIXME *)  with
+      | None -> Fmt.failwith "key %s: %s not an identifier" id_key id
+      | Some i -> loop (`Id i :: acc) creates ids
+  in
+  loop [] creates (Http.Query.find_all id_key q)
+
+let find_create_contributors q =
+  try
+    let public = Http.Query.mem "public" q (* XXX Brittle *) in
+    Ok
+    (find_contributor_kind ~public Person.Author q,
+     find_contributor_kind ~public Person.Editor q)
+  with Failure e -> Http.Resp.bad_request_400 ~explain:e ()
+
+let uniquify_ids l =
+  let rec loop seen acc = function
+  | [] -> List.rev acc
+  | i :: is ->
+      if Intset.mem i seen then loop seen acc is else
+      loop (Intset.add i seen) (i :: acc) is
+  in
+  loop Intset.empty [] l
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2021 University of Bern

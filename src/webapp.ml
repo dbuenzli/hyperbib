@@ -138,10 +138,10 @@ let with_db_transaction' k a f =
 (* Serving *)
 
 type service =
-  t -> Session.t option -> Webs.Req.t -> Session.t Webs_kit.Session.result
+  t -> Session.t option -> Http.req -> Session.t Webs_kit.Session.result
 
 type immutable_session_service =
-  t -> Session.t option -> Webs.Req.t -> (Webs.Resp.t, Webs.Resp.t) result
+  t -> Session.t option -> Http.req -> (Http.resp, Http.resp) result
 
 let immutable_session_service service app sess req =
   Webs_kit.Session.for_result sess (service app sess req)

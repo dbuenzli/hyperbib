@@ -5,24 +5,15 @@
 
 open Hyperbib.Std
 
+type 'a entity = [ `Exists of 'a | `To_create of 'a ]
+
 module Doi = struct
   open Result.Syntax
   open B00_serialk_json
 
-  type person = { family : string; given : string; orcid : string }
-  let personq =
-    let person family given orcid =
-      let none_is_empty v = String.trim (Option.value ~default:"" v) in
-      let family = String.trim family in
-      let given = none_is_empty given in
-      let orcid = none_is_empty orcid in
-      { family; given; orcid }
-    in
-    Jsonq.(succeed person $
-           Crossref.Contributor.family $
-           Crossref.Contributor.given $
-           Crossref.Contributor.orcid)
+  (* What we extract from DOI metadata *)
 
+  type person = { family : string; given : string; orcid : string }
   type ref =
     { authors : person list;
       abstract : string;
@@ -39,6 +30,26 @@ module Doi = struct
       title : string;
       type' : string;
       volume : string; }
+
+  let person_equal p0 p1 =
+    if String.equal p0.orcid p1.orcid then true else
+    String.equal p0.family p1.family &&
+    String.equal p0.given p1.given
+
+  (* DOI metadata query and extraction *)
+
+  let personq =
+    let person family given orcid =
+      let none_is_empty v = String.trim (Option.value ~default:"" v) in
+      let family = String.trim family in
+      let given = none_is_empty given in
+      let orcid = none_is_empty orcid in
+      { family; given; orcid }
+    in
+    Jsonq.(succeed person $
+           Crossref.Contributor.family $
+           Crossref.Contributor.given $
+           Crossref.Contributor.orcid)
 
   let refq =
     let ref
@@ -84,43 +95,54 @@ module Doi = struct
            Crossref.Work.volume)
 
   let get_ref httpr ~cache doi =
-    Log.info (fun m -> m "Importing %s" doi);
     Result.map_error (fun e -> Fmt.str "%s: %s" doi e) @@
     let* json = Crossref.for_doi httpr ~cache doi in
-    let* ref = Jsonq.query refq json in
-    Ok (ref doi)
+    match json with
+    | None -> Ok None
+    | Some json ->
+        let* ref = Jsonq.query refq json in
+        Ok (Some (ref doi))
 
-  (* Importation business, a bit convoluted we need to check
-     what already exists in the db. *)
+  (* Converting to hyperbib entities. A bit convoluted we need to check
+     which entities already exists in the db. *)
+
+  let reference_of_ref ?(note = "") ~public ~container_id:container r =
+    let isbn = if Option.is_some container then "" else r.isbn in
+    Reference.v ~id:0 ~abstract:r.abstract ~container ~date:(Some r.issued)
+      ~doi:r.doi ~isbn ~issue:r.issue ~note ~pages:r.page
+      ~private_note:"" ~public ~publisher:r.publisher ~title:r.title
+      ~type':r.type' ~volume:r.volume
+
+  let cites_of_ref r = r.cites
 
   let get_container ~create_public:public db ref =
-    if ref.container_title = "" then Ok `None else
+    if ref.container_title = "" then Ok None else
     let title = ref.container_title and isbn = ref.isbn and issn = ref.issn in
     let new_container () =
       Container.v
         ~id:0 ~title ~isbn ~issn ~note:"" ~private_note:"" ~public ()
     in
     let c = Container.match_stmt ~title ~isbn ~issn in
-    let* cs = Db.list  db c in
+    let* cs = Db.list db c in
     match cs with
-    | [c] -> Ok (`Exists c)
-    | [] -> Ok (`To_create (new_container ()))
+    | [c] -> Ok (Some (`Exists c))
+    | [] -> Ok (Some (`To_create (new_container ())))
     | _ ->
         let has_issn c = Container.issn c = issn in
         match List.filter has_issn cs with
-        | [c] -> Ok (`Exists c)
+        | [c] -> Ok (Some (`Exists c))
         | _ ->
             let has_isbn c = Container.isbn c = isbn in
             match List.filter has_isbn cs with
             | [] -> assert false
-            | [c] ->  Ok (`Exists c)
+            | [c] ->  Ok (Some (`Exists c))
             | cs ->
                 Log.warn begin fun m ->
                   m "Could not disambiguate %a with %s %s %s"
                     Fmt.(list ~sep:comma int) (List.map Container.id cs)
                     title isbn issn
                 end;
-                Ok (`Exists (List.hd cs))
+                Ok (Some (`Exists (List.hd cs)))
 
   let get_person ~create_public:public db p =
     let new_person () =
@@ -145,12 +167,12 @@ module Doi = struct
             end;
             Ok (`Exists (List.hd ps))
 
-  let reference_of_ref ?(note = "") ~public ~container_id:container r =
-    let isbn = if Option.is_some container then "" else r.isbn in
-    Reference.v ~id:0 ~abstract:r.abstract ~container ~date:(Some r.issued)
-      ~doi:(Some r.doi) ~isbn ~issue:r.issue ~note ~pages:r.page
-      ~private_note:"" ~public ~publisher:r.publisher ~title:r.title
-      ~type':r.type' ~volume:r.volume
+  let authors_editors_of_ref ~create_public db r =
+    let add p acc = let* p = get_person ~create_public db p in Ok (p :: acc) in
+    let* authors = Bazaar.list_fold_stop_on_error add r.authors [] in
+    let* editors = Bazaar.list_fold_stop_on_error add r.editors [] in
+    (* Order is important, for some people *)
+    Ok (List.rev authors, List.rev editors)
 end
 
 (* This can be deleted at some point. *)
@@ -274,9 +296,9 @@ module Legacy = struct
   let get_container_id db ref =
     match Doi.get_container ~create_public:true db ref with
     | Error _ as e -> e
-    | Ok `None -> Ok None
-    | Ok (`Exists c) -> Ok (Some (Container.id c))
-    | Ok (`To_create c) ->
+    | Ok None -> Ok None
+    | Ok Some (`Exists c) -> Ok (Some (Container.id c))
+    | Ok Some (`To_create c) ->
         let* id = Db.insert db (Container.create ~ignore_id:true c) in
         Ok (Some id)
 
@@ -352,19 +374,23 @@ module Legacy = struct
     List.fold_left add [] ref.Doi.cites
 
   let make_ref get_doi_ref db nmap ref =
+    Log.info (fun m -> m "Importing %s" ref.doi);
     let* doi_ref = get_doi_ref ref.doi in
-    Db.error_string @@
-    let* container_id = get_container_id db doi_ref in
-    let note = ref.note and public = ref.public in
-    let r = Doi.reference_of_ref ~container_id doi_ref ~note ~public in
-    let* rid = Db.insert db (Reference.create ~ignore_id:true r) in
-    let subjs = reference_subjects_stmts nmap ref rid in
-    let* () = Bazaar.list_iter_stop_on_error (Db.exec db) subjs in
-    let cites = reference_cites_stmts doi_ref rid in
-    let* () = Bazaar.list_iter_stop_on_error (Db.exec db) cites in
-    let* contributors = contributors db doi_ref rid in
-    let* () = Bazaar.list_iter_stop_on_error (Db.exec db) contributors in
-    Ok ()
+    match doi_ref with
+    | None -> Fmt.error "%s: not found (404)" ref.doi
+    | Some doi_ref ->
+        Db.error_string @@
+        let* container_id = get_container_id db doi_ref in
+        let note = ref.note and public = ref.public in
+        let r = Doi.reference_of_ref ~container_id doi_ref ~note ~public in
+        let* rid = Db.insert db (Reference.create ~ignore_id:true r) in
+        let subjs = reference_subjects_stmts nmap ref rid in
+        let* () = Bazaar.list_iter_stop_on_error (Db.exec db) subjs in
+        let cites = reference_cites_stmts doi_ref rid in
+        let* () = Bazaar.list_iter_stop_on_error (Db.exec db) cites in
+        let* contributors = contributors db doi_ref rid in
+        let* () = Bazaar.list_iter_stop_on_error (Db.exec db) contributors in
+        Ok ()
 
   let make_refs db httpr nmap refs =
     Bazaar.list_iter_log_on_error (make_ref db httpr nmap) refs
@@ -380,8 +406,9 @@ module Legacy = struct
     in
     Jsonq.query Jsonq.(mem "value" (fold_array List.cons ref [])) json
 
-  let import db ~app_dir =
+  let import db data_conf =
     Db.with_transaction `Immediate db @@ fun db ->
+    let app_dir = Hyperbib.Data_conf.app_dir data_conf in
     let tables_dir = Fpath.(app_dir / "tables") in
     let* nmap, imap = subjects ~file:Fpath.(tables_dir / "subjects.json") in
     let ss = make_subjects nmap imap in
@@ -389,7 +416,8 @@ module Legacy = struct
     let* refs = refs ~file:Fpath.(tables_dir / "refs.json") in
     let refs = List.filter_map Fun.id refs in
     let* httpr = Result.map Option.some (B00_http.Httpr.get_curl ()) in
-    let get_doi_ref = Doi.get_ref httpr ~cache:Fpath.(app_dir / "dois") in
+    let cache = Hyperbib.Data_conf.doi_cache_dir data_conf in
+    let get_doi_ref = Doi.get_ref httpr ~cache in
     Ok (make_refs get_doi_ref db nmap refs)
 end
 

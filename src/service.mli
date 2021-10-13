@@ -9,7 +9,7 @@ val url_fmt : init:Kurl.fmt -> Kurl.fmt
 
 val v :
   Webapp.t -> Webapp.Session.t option ->
-  Webs.Req.t -> Webapp.Session.t Webs_kit.Session.resp
+  Http.req -> Webapp.Session.t Webs_kit.Session.resp
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2021 University of Bern

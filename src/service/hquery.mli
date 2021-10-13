@@ -10,16 +10,16 @@ open Hyperbib.Std
 (* FIXME a less ad-hoc set of functions can be designed here. *)
 
 val find_cols :
-  cols:'r Col.v list -> Http.query -> ('r Col.value list, Resp.t) result
+  cols:'r Col.v list -> Http.query -> ('r Col.value list, Http.resp) result
 
 val find_table_cols :
   'r Table.t -> cols:'r Col.v list -> Http.query ->
-  ('r Col.value list, Resp.t) result
+  ('r Col.value list, Http.resp) result
 (** [find_table_cols t cs] finds the value of columns [cs] of [t] in [q]. *)
 
 val careless_find_table_cols :
   ?ignore:'r Col.v list -> 'r Table.t ->
-  Http.query -> ('r Col.value list, Resp.t) result
+  Http.query -> ('r Col.value list, Http.resp) result
 (** Do not use, use {!find_table_cols}. [careless_find_table_cols r q]
     finds in [q] all column names of [t], except those mentioned in
     [ignore].
@@ -32,9 +32,46 @@ val careless_find_table_cols :
 val key_for_rel : ?suff:string -> 'r Table.t -> ('r, 'a) Col.t -> string
 
 val find_ids :
-  uniquify:bool -> string -> Http.query -> (int list, Resp.t) result
+  uniquify:bool -> string -> Http.query -> (int list, Http.resp) result
+
+val date_key : string
+val find_date : Http.query -> (Date.partial option, string) result
+
+val cite_key : string
+val find_cites : Http.query -> Doi.t list
+
+val person_key : Person.role option -> string
+
+val create_container_title : string
+val create_container_issn : string
+val create_container_isbn : string
+val find_create_container : Http.query -> Container.t option
+
+val create_author_first : string
+val create_author_last : string
+val create_author_orcid : string
+(* val find_create_authors : Http.query -> Person.t list *)
+
+val create_editor_first : string
+val create_editor_last : string
+val create_editor_orcid : string
 
 
+val find_create_person :
+  public:bool -> role:Person.role option -> Http.query -> Person.t option
+
+(* val find_create_editors : Http.query -> Person.t list *)
+
+val create_person_keys : Person.role option -> string * string * string
+
+val find_create_contributors :
+  Http.query ->
+   ([`Id of Person.id | `To_create of Person.t] list *
+    [`Id of Person.id | `To_create of Person.t] list, Http.resp) result
+
+
+
+val uniquify_ids : int list -> int list
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2021 University of Bern

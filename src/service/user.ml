@@ -145,21 +145,21 @@ module Url = struct
 
   let dec u = match Kurl.Bare.path u with
   | ["login"] ->
-      let* meth = Kurl.Allow.(meths [get; post] u) in
+      let* meth = Kurl.allow Http.Meth.[get; post] u in
       let goto = goto_of_query (Kurl.Bare.query u) in
       (match meth with
       | `GET -> Kurl.ok (Login { goto })
       | `POST -> Kurl.ok (Authenticate { goto }))
   | ["logout"] ->
-      let* `POST = Kurl.Allow.(meths [post] u) in
+      let* `POST = Kurl.allow Http.Meth.[post] u in
       let goto = goto_of_query (Kurl.Bare.query u) in
       Kurl.ok (Logout { goto })
   | ["view"; "private"; private'] ->
-      let* `POST = Kurl.Allow.(meths [post] u) in
+      let* `POST = Kurl.allow Http.Meth.[post] u in
       let* private' = match private' with
       | "true" -> Ok true
       | "false" -> Ok false
-      | _ -> Resp.not_found_404 ()
+      | _ -> Http.Resp.not_found_404 ()
       in
       Kurl.ok (View { private' })
   | _ ->

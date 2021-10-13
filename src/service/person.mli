@@ -72,6 +72,8 @@ val duplicate_data : t -> t
 (** [duplicate_data s] is [s] with its last name altered and {!public} set to
     none. The {!id} is the one of [s]. *)
 
+val created_equal : t -> t -> bool
+
 (** {1:predcomp Predicates and comparisons} *)
 
 val order_by_last_name : t -> t -> int
@@ -156,8 +158,14 @@ module Url : sig
   | Page of named_id
   | Replace of id
   | Replace_form of id
-  | Select of role option * string
-  | Select_add of role option * id
+  | Input of
+      Entity.Url.for_list * Entity.Url.input_name * role option * id
+  | Input_create of
+      Entity.Url.for_list * Entity.Url.input_name * role option * person
+  | Input_finder of
+      Entity.Url.for_list * Entity.Url.input_name * role option
+  | Input_finder_find of
+      Entity.Url.for_list * Entity.Url.input_name * role option * string
   | Update of id
   | View_fields of id (** *)
   (** The type for person URL requests. *)

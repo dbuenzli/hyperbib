@@ -58,6 +58,7 @@ let dec_partial s =
   | Failure _ -> Fmt.error "%S: not of the form YYYY[-MM[-DD]]" s
 
 let partial_of_string = dec_partial
+let partial_to_string v = enc_partial v |> Result.get_ok
 let pp_partial ppf v = Fmt.string ppf (enc_partial v |> Result.get_ok)
 
 let ask_partial_type =

@@ -36,7 +36,7 @@ let serve
       ~conf ~data_conf ?service_path ~max_connections ~backup_every_s
       ~editable ~secure_cookie ~testing ()
   in
-  let log = Webs.Connector.default_log ~trace:true () in
+  let log = Webs_connector.default_log ~trace:true () in
   let c = Webs_httpc.create ~log ~listener ?service_path ~max_connections () in
   log_startup c app;
   let serve = Webapp.serve app ~url_fmt:Service.url_fmt Service.v in

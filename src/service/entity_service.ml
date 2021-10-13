@@ -11,7 +11,7 @@ let check_edit_authorized app =
      and retry the request, we might need a bit of `hc` support. *)
   match User.Caps.edit (Webapp.caps app) with
   | true -> Ok ()
-  | false -> Resp.unauthorized_401 () (* FIXME do something for user *)
+  | false -> Http.Resp.unauthorized_401 () (* FIXME do something for user *)
 
 
 (* Data lookups *)
@@ -22,7 +22,7 @@ let get_entity
   =
   let* s = Db.first' db (E.find_id_stmt id) in
   match s with
-  | None -> Resp.not_found_404 ()
+  | None -> Http.Resp.not_found_404 ()
   | Some s -> Ok s
 
 (* Responses *)
@@ -33,12 +33,12 @@ let create
   =
   let* () = check_edit_authorized app in
   Webapp.with_db_transaction' `Immediate app @@ fun db ->
-  let* q = Req.to_query req in
+  let* q = Http.Req.to_query req in
   let* vs = Hquery.careless_find_table_cols ~ignore:[Col.V E.id'] E.table q in
   let* id = Db.insert' db (E.create_cols ~ignore_id:true vs) in
   let uf = Webapp.url_fmt app in
   let headers = Hfrag.hc_redirect uf (entity_page_url id) in
-  Ok (Resp.empty ~headers Http.ok_200)
+  Ok (Http.Resp.empty ~headers Http.ok_200)
 
 let delete
     (type t) (module E : Entity.IDENTIFIABLE_WITH_QUERIES with type t = t)

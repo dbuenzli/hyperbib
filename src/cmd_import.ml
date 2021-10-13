@@ -19,8 +19,7 @@ let import_legacy data_conf reset =
       let foreign_keys = false in
       let* db = Db.open' ~foreign_keys (Hyperbib.Data_conf.db_file data_conf) in
       let* () = Db.setup ~schema:Schema.tables ~drop_if_exists:true db in
-      let app_dir = Hyperbib.Data_conf.app_dir data_conf in
-      let* ret = Import.legacy db ~app_dir in
+      let* ret = Import.legacy db data_conf in
       Ok (Result.map (Fun.const Hyperbib.Exit.ok) ret)
 
 let db conf action data_conf reset = match action with

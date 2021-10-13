@@ -27,7 +27,7 @@ module Reference = struct
       abstract : string;
       container : Container.id option;
       date : Date.partial option;
-      doi : Doi.t option;
+      doi : Doi.t;
       isbn : string;
       issue : string;
       note : string;
@@ -58,6 +58,12 @@ module Reference = struct
     in
     { id; abstract; container; date; doi; isbn; issue; note;
       pages; private_note; public; publisher; title; type'; volume; }
+
+  let new' =
+    { id = 0; abstract = ""; container = None; date = None; doi = "";
+      isbn = ""; issue = ""; note = ""; pages = ""; private_note = "";
+      public = false; publisher = ""; title = Uimsg.untitled;
+      type' = ""; volume = ""; }
 
   let id r = r.id
   let abstract r = r.abstract
@@ -90,7 +96,7 @@ module Reference = struct
   let container' = Col.v "container" Type.(Option Int) container
   let date_year' = Col.v "date_year" Type.(Option Int) date_year
   let date_md' = Col.v "date_md" Type.(Option Date.ask_md_partial_type) date_md
-  let doi' = Col.v "doi" Type.(Option Text) doi
+  let doi' = Col.v "doi" Type.Text doi
   let isbn' = Col.v "isbn" Type.Text isbn
   let issue' = Col.v "issue" Type.Text issue
   let note' = Col.v "note" Type.Text note
@@ -115,6 +121,13 @@ module Reference = struct
           Index (Index.v [Col.V doi']);
           Index (Index.v [Col.V container']);
           Index (Index.v [Col.V date_year'])]
+
+  let col_values_for_date = function
+  | None -> Col.Value (date_year', None), Col.Value (date_md', None)
+  | Some (y, None) ->
+      Col.Value (date_year', (Some y)), Col.Value (date_md', None)
+  | Some (y, (Some md)) ->
+      Col.Value (date_year', (Some y)), Col.Value (date_md', (Some md))
 end
 
 include (Reference)
@@ -372,14 +385,26 @@ module Cites = struct
     let* ref = Bag.table ref_table in
     let is_rid = Int.(rid = rel #. reference') in
     let is_internal_doi =
-      Option.is_some (ref #. ref_doi') &&
-      Text.(rel #. doi' = (Option.get (ref #. ref_doi')))
+      Text.(not (ref #. ref_doi' = empty)) &&
+      Text.(rel #. doi' = ref #. ref_doi')
     in
     let pair x y = Bag.inj (fun x y -> x, y) $ x $ y in (* FIXME ask *)
     let rel' = pair (rel #. reference') (ref #. id') in
     Bag.where (is_rid && is_internal_doi) (Bag.yield rel')
 
   let internal_row = Row.Quick.(t2 (int "ref") (int "cited"))
+  let set_list ~reference:id ~dois = fun db ->
+    (* We could diff to devise delete and insert ops, for now it seems
+       easier this way. *)
+    let ref_col = Col.Value (reference', id) in
+    let delete_all id = Sql.delete_from table ~where:[ref_col] in
+    let cite doi = v ~reference:id ~doi in
+    let cites = List.map cite dois in
+    let insert c = Db.exec db @@ create c in
+    let open Result.Syntax in
+    let* () = Db.exec db (delete_all id) in
+    let* () = Bazaar.list_iter_stop_on_error insert cites in
+    Ok ()
 end
 
 include Entity.Publicable_queries (Reference)
@@ -491,7 +516,12 @@ let dois_cited rid =
 let find_dois dois =
   let* doi = dois in
   let* r = Bag.table table in
-  let is_doi = Option.(has_value ~eq:Text.equal doi (r #. doi')) in
+  let is_doi = Text.(not (doi = empty) && doi = r #. doi') in
+  Bag.where is_doi (Bag.yield r)
+
+let find_doi doi =
+  let* r = Bag.table table in
+  let is_doi = Text.(not (doi = empty) && doi = r #. doi') in
   Bag.where is_doi (Bag.yield r)
 
 let render_data ~only_public refs =
@@ -562,6 +592,7 @@ module Url = struct
   | Duplicate_form of id
 *)
   | Edit_form of id
+  | Fill_in_form of Doi.t
   | Index
   | New_form of { cancel : Entity.Url.cancel_url }
   | Page of named_id
@@ -570,10 +601,14 @@ module Url = struct
   | Update of id
   | View_fields of id
 
+  let doi = "doi"
+  let get_doi u = match Http.Query.find doi (Kurl.Bare.query u) with
+  | None -> Http.Resp.bad_request_400 ()
+  | Some doi -> Ok doi
 
   let dec u = match Kurl.Bare.path u with
   | [""] ->
-      let* meth = Kurl.Allow.(meths [get; post] u) in
+      let* meth = Kurl.allow Http.Meth.[get; post] u in
       let url = match meth with `GET -> Index | `POST -> Create in
       Kurl.ok url
   | ["part"; "confirm-delete"; id] ->
@@ -582,6 +617,10 @@ module Url = struct
   | ["part"; "edit-form"; id] ->
       let* `GET, id = Entity.Url.get_id u id in
       Kurl.ok (Edit_form id)
+  | ["part"; "fill-in-form"] ->
+      let* `GET = Kurl.allow Http.Meth.[get] u in
+      let* doi = get_doi u in
+      Kurl.ok (Fill_in_form doi)
   | ["part"; "view-fields"; id] ->
       let* `GET, id = Entity.Url.get_id u id in
       Kurl.ok (View_fields id)
@@ -594,7 +633,7 @@ module Url = struct
       Kurl.ok (Duplicate_form id)
 *)
   | ["part"; "new-form"] ->
-      let* `GET = Kurl.Allow.(meths [get] u) in
+      let* `GET = Kurl.allow Http.Meth.[get] u in
       let cancel = Entity.Url.cancel_url_of_query (Kurl.Bare.query u) in
       Kurl.ok (New_form { cancel })
 (*
@@ -609,7 +648,7 @@ module Url = struct
       let* `GET, id = Entity.Url.get_id u id in
       Kurl.ok (Page (Some name, id))
   | [id] ->
-      let* meth, id = Entity.Url.meth_id u Kurl.Allow.[get; put; delete] id in
+      let* meth, id = Entity.Url.meth_id u Http.Meth.[get; put; delete] id in
       let url = match meth with
       | `GET -> Page (None, id) | `PUT -> Update id | `DELETE -> Delete id
       in
@@ -635,6 +674,13 @@ module Url = struct
       Kurl.bare `GET ["part"; "edit-form"; Res.Id.to_string id]
   | Index ->
       Kurl.bare `GET [""] ~ext:html
+  | Fill_in_form d ->
+      (* XXX something feels wrong with Kurl here separate
+         URL req / resp types ? *)
+      let query = match d with
+      | "" -> None | d -> Some (Http.Query.(empty |> add doi d))
+      in
+      Kurl.bare `GET ["part"; "fill-in-form"] ?query
   | New_form { cancel } ->
       let query = Entity.Url.cancel_url_to_query cancel in
       Kurl.bare `GET ["part"; "new-form"] ?query

@@ -78,23 +78,26 @@ let adjust_app_and_session app sess =
 let error_pages app req resp =
   (* FIXME webs body and content length business this shows we do it wrong. *)
   let t = Page.error (Webapp.page_gen app) req resp in
-  let explain = Resp.explain resp in
-  let headers = Http.Headers.undef Http.content_length (Resp.headers resp) in
-  let status = Resp.status resp in
-  Page.resp ~explain ~headers ~status t
+  let explain = Http.Resp.explain resp in
+  let headers =
+    Http.Headers.undef Http.content_length (Http.Resp.headers resp)
+  in
+  let status = Http.Resp.status resp in
+  let reason = Http.Resp.reason resp in
+  Page.resp ~reason ~explain ~headers ~status t
 
 let v app sess req =
   let app, sess = adjust_app_and_session app sess in
   let sess, resp =
-    Resp.result @@
-    let* req = Session.for_error sess (Req.clean_path req) in
+    Http.Resp.result @@
+    let* req = Session.for_error sess (Http.Req.clean_path req) in
     let service = Kurl.find_service tree (Kurl.Bare.of_req req) in
     let* service = Session.for_error sess service in
     match service with
     | Some service -> service app sess req
     | None -> Static_file_service.v app sess req
   in
-  sess, Resp.map_errors ~only_empty:true (error_pages app req) resp
+  sess, Http.Resp.map_errors ~only_empty:true (error_pages app req) resp
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2021 University of Bern

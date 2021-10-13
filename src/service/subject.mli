@@ -172,12 +172,14 @@ module Url : sig
   | Duplicate_form of id
   | Edit_form of id
   | Index
+  | Input of Entity.Url.for_list * Entity.Url.input_name * id
+  | Input_create of Entity.Url.for_list * Entity.Url.input_name * subject
+  | Input_finder of Entity.Url.for_list * Entity.Url.input_name
+  | Input_finder_find of Entity.Url.for_list * Entity.Url.input_name * string
   | New_form of { cancel : Entity.Url.cancel_url }
   | Page of named_id
   | Replace of id
   | Replace_form of id
-  | Select of string
-  | Select_add of id
   | Update of id
   | View_fields of id (** *)
   (** The type for subject URL requests. *)

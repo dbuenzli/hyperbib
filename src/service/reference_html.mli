@@ -13,18 +13,21 @@ val list_by_desc_date :
   Page.Gen.t -> self:Kurl.t -> Reference.render_data -> El.html
 
 val list_section :
-  ?anchor_id:string ->
-  ?title:El.html -> Page.Gen.t -> self:Kurl.t ->
-  descr:string -> descr_zero:string ->
-  Reference.render_data -> El.html
+  ?anchor_id:string -> ?title:El.html -> Page.Gen.t -> self:Kurl.t ->
+  descr:string -> descr_zero:string -> Reference.render_data -> El.html
 
 (** {1:entity Entity} *)
 
 val confirm_delete : Page.Gen.t -> Reference.t -> El.html
 
 val edit_form :
-  Page.Gen.t -> Reference.t -> render_data:Reference.render_data ->
-  El.html
+  Page.Gen.t -> Reference.t -> render_data:Reference.render_data -> El.html
+
+val filled_in_form :
+  Page.Gen.t -> self:Kurl.t -> cancel:Entity.Url.cancel_url ->
+  Reference.t -> msg:El.html ->
+  authors:Person.t Import.entity list -> editors:Person.t Import.entity list ->
+  container:Container.t Import.entity option -> cites:Doi.t list -> El.html
 
 val new_form :
   Page.Gen.t -> Reference.t -> cancel:Entity.Url.cancel_url ->  Page.t

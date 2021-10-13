@@ -17,7 +17,7 @@ val duplicate_form :
   Page.Gen.t -> Subject.t -> ref_count:int -> parents:Subject.t list -> El.html
 
 val replace_form :
-  Page.Gen.t -> Subject.t -> ref_count:int -> subjects:Subject.t list -> El.html
+  Page.Gen.t -> Subject.t -> ref_count:int -> El.html
 
 val new_form :
   Page.Gen.t -> Subject.t -> parents:Subject.t list ->

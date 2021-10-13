@@ -9,25 +9,25 @@ open Hyperbib.Std
 
 (** {1:misc Miscellaneous} *)
 
-val check_edit_authorized : Webapp.t -> (unit, Resp.t) result
+val check_edit_authorized : Webapp.t -> (unit, Http.resp) result
 
 (** {1:data Data lookups} *)
 
 val get_entity :
   (module Entity.IDENTIFIABLE_WITH_QUERIES with type t = 't) ->
-  Db.t -> Id.t -> ('t, Webs.Resp.t) result
+  Db.t -> Id.t -> ('t, Http.resp) result
 
 (** {1:responses Request responses} *)
 
 val create :
   (module Entity.IDENTIFIABLE_WITH_QUERIES with type t = 't) ->
   entity_page_url:(Id.t -> Kurl.t) ->
-  Webapp.t -> Req.t -> (Resp.t, Resp.t) result
+  Webapp.t -> Http.req -> (Http.resp, Http.resp) result
 
 val delete :
   (module Entity.IDENTIFIABLE_WITH_QUERIES with type t = 't) ->
   deleted_html:(Page.Gen.t -> 't -> El.html) ->
-  Webapp.t -> Id.t -> (Resp.t, Resp.t) result
+  Webapp.t -> Id.t -> (Http.resp, Http.resp) result
 
 (** {1:pagerefs Page references} *)
 
@@ -40,7 +40,7 @@ val entity_for_page_ref :
   entity_public:('entity -> bool) ->
   entity_res_name:('entity -> 'name) ->
   (Db.t -> Page.Gen.t -> only_public:bool ->
-   ('name, 'id) page_ref -> ('entity, Webs.Resp.t) result)
+   ('name, 'id) page_ref -> ('entity, Http.resp) result)
 (** XXX if we define a signature named resource we could use first class
     modules here, at least t replace the [entity_*] arguments
     For now it's a bit too disparate. *)

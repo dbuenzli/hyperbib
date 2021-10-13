@@ -105,21 +105,24 @@ val error_url_kind : Kurl.bare Kurl.kind
 val error_url : Kurl.bare -> Kurl.t
 (** [error_url b] is [Kurl.v error_url_kind b]. *)
 
-val error : Gen.t -> Req.t -> Resp.t -> t
+val error : Gen.t -> Http.req -> Http.resp -> t
 (** [error g req resp] is a generic HTML error page when [req] errors
     with [resp]. *)
 
 (** {1:resp Responding} *)
 
 val resp_part :
-  ?explain:string -> ?headers:Http.headers -> ?status:int -> El.html -> Resp.t
+  ?explain:string -> ?reason:string -> ?headers:Http.headers -> ?status:int ->
+  El.html -> Http.resp
 (** [resp_part html] an HTML part response for [html] *)
 
 val resp :
-  ?explain:string -> ?headers:Http.headers -> ?status:int -> t -> Resp.t
+  ?explain:string -> ?reason:string -> ?headers:Http.headers -> ?status:int ->
+  t -> Http.resp
 (** [resp page] is an HTML page response for [html]. *)
 
-val resp_404 : ?explain:string -> ?headers:Http.headers -> t -> Resp.t
+val resp_404 :
+  ?explain:string -> ?reason:string -> ?headers:Http.headers -> t -> Http.resp
 (** [resp_404] is [resp ~status:Http.not_found_404]. *)
 
 (*---------------------------------------------------------------------------

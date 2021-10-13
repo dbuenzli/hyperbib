@@ -13,10 +13,7 @@ val new_form :
 
 val edit_form : Page.Gen.t -> Container.t -> El.html
 val duplicate_form : Page.Gen.t -> Container.t -> El.html
-val replace_form :
-  Page.Gen.t -> Container.t -> ref_count:int ->
-  containers:Container.t list -> El.html
-
+val replace_form : Page.Gen.t -> Container.t -> ref_count:int -> El.html
 val view_fields : Page.Gen.t -> self:Kurl.t -> Container.t -> El.html
 val view_full :
   Page.Gen.t -> self:Kurl.t -> Container.t -> Reference.render_data -> El.html

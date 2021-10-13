@@ -9,7 +9,7 @@ open Result.Syntax
 let v app sess r =
   Session.for_result sess @@
   let static_dir = Fpath.to_string (Webapp.static_dir app) in
-  let* file = Req.to_absolute_filepath ~root:static_dir r in
+  let* file = Http.Req.to_absolute_filepath ~root:static_dir r in
   let file = Fpath.v file in
   let file = match Fpath.is_dir_path file with
   | true -> (* note because of path cleaning this is only for / *) file
@@ -26,11 +26,11 @@ let v app sess r =
       (* FIXME versioning scheme, note something was done in Static_file *)
       let forever = "public, max-age=31536000, immutable" in
       let hs = Http.Headers.(empty |> add Http.cache_control forever) in
-      Resp.override_headers ~by:hs resp
+      Http.Resp.override_headers ~by:hs resp
   | ".html" ->
       let ctrl = "max-age=0" in
       let hs = Http.Headers.(empty |> add Http.cache_control ctrl) in
-      Resp.override_headers ~by:hs resp
+      Http.Resp.override_headers ~by:hs resp
   | _ -> resp
   in
   Ok resp

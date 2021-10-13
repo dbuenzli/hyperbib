@@ -6,7 +6,7 @@
 open Hyperbib.Std
 open Result.Syntax
 
-let resp r app sess req = Resp.not_implemented_501 ()
+let resp r app sess req = Http.Resp.not_implemented_501 ()
 let v = Kurl.service Label.Url.kind resp
 
 (*---------------------------------------------------------------------------

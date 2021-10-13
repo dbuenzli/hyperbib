@@ -8,6 +8,12 @@ open Result.Syntax
 
 (* Data lookups *)
 
+let select_containers db ~only_public sel =
+  (* FIXME only_public, FIXME Ask escape % and _ in selector, order by *)
+  if String.trim sel = "" then Ok [] else
+  let* cs = Db.list db (Container.select_stmt sel) in
+  Ok (List.sort Container.order_by_title cs)
+
 let get_container = Entity_service.get_entity (module Container)
 let get_container_ref_count db s =
   let ref_count = Reference.container_ref_count_stmt (Container.id s) in
@@ -58,14 +64,14 @@ let delete =
 let duplicate app req src =
   let* () = Entity_service.check_edit_authorized app in
   Webapp.with_db_transaction' `Immediate app @@ fun db ->
-  let* q = Req.to_query req in
+  let* q = Http.Req.to_query req in
   let ignore = [Col.V Container.id'] in
   let* vs = Hquery.careless_find_table_cols ~ignore Container.table q in
   let* dst = Db.insert' db (Container.create_cols ~ignore_id:true vs) in
   let* () = Db.exec' db (Container.Label.copy_applications_stmt ~src ~dst) in
   let uf = Webapp.url_fmt app in
   let headers = Hfrag.hc_redirect uf (Container.Url.v (Page (None, dst))) in
-  Ok (Resp.empty ~headers Http.ok_200)
+  Ok (Http.Resp.empty ~headers Http.ok_200)
 
 let duplicate_form app req id =
   let* () = Entity_service.check_edit_authorized app in
@@ -108,33 +114,93 @@ let page app ref =
   let page = Container_html.page g c refs in
   Ok (Page.resp page)
 
-let replace app req this =
-  let* () = Entity_service.check_edit_authorized app in
-  Webapp.with_db_transaction' `Immediate app @@ fun db ->
-  let* q = Req.to_query req in
-  let* by = Entity.Url.replace_by_of_query q in
-  if this = by then view_fields_resp app db req this else
-  let rep = Reference.replace_container_stmt ~this ~by in
-  let* () = Db.exec' db rep in
-  let* () = Db.exec' db (Container.delete this) in
-  let uf = Webapp.url_fmt app in
-  let headers = Hfrag.hc_redirect uf (Container.Url.v (Page (None, by))) in
-  Ok (Resp.empty ~headers Http.ok_200)
+let _replace_form app db this =
+  let* c = get_container db this in
+  let* ref_count = get_container_ref_count db c in
+  let g = Webapp.page_gen app in
+  let replace = Container_html.replace_form g c ~ref_count in
+  Ok (Page.resp_part replace)
 
 let replace_form app req this =
   let* () = Entity_service.check_edit_authorized app in
   Webapp.with_db_transaction' `Deferred app @@ fun db ->
-  let* c = get_container db this in
-  let* ref_count = get_container_ref_count db c in
-  let* containers = Db.list' db (Container.list_stmt ~only_public:false) in
+  _replace_form app db this
+
+let replace app req this =
+  let* () = Entity_service.check_edit_authorized app in
+  Webapp.with_db_transaction' `Immediate app @@ fun db ->
+  let* q = Http.Req.to_query req in
+  let* by =
+    let* by = Entity.Url.replace_by_of_query' q in
+    match by with
+    | Some _ as by -> Ok by
+    | None ->
+        match Hquery.find_create_container q with
+        | None -> Ok None
+        | Some c ->
+            let* cid = Db.insert' db (Container.create ~ignore_id:true c) in
+            Ok (Some cid)
+  in
+  match by with
+  | None ->
+      (* FIXME solve that front end,
+         the request should not be done if we don't have the data *)
+      _replace_form app db this
+  | Some by ->
+      if this = by then view_fields_resp app db req this else
+      let rep = Reference.replace_container_stmt ~this ~by in
+      let* () = Db.exec' db rep in
+      let* () = Db.exec' db (Container.delete this) in
+      let uf = Webapp.url_fmt app in
+      let headers = Hfrag.hc_redirect uf (Container.Url.v (Page (None, by))) in
+      Ok (Http.Resp.empty ~headers Http.ok_200)
+
+let input app ~input_name id =
+  let* () = Entity_service.check_edit_authorized app in
+  Webapp.with_db_transaction' `Deferred app @@ fun db ->
+  let uf = Page.Gen.url_fmt (Webapp.page_gen app) in
+  let* c = get_container db id in
+  let c = Entity_html.container_input uf ~input_name c in
+  Ok (Page.resp_part c)
+
+let input_create app ~input_name c =
+  let* () = Entity_service.check_edit_authorized app in
+  Webapp.with_db_transaction' `Deferred app @@ fun db ->
+  let uf = Page.Gen.url_fmt (Webapp.page_gen app) in
+  let c = Entity_html.container_input_create uf ~input_name c in
+  Ok (Page.resp_part c)
+
+let input_finder app ~input_name =
+  let* () = Entity_service.check_edit_authorized app in
+  Webapp.with_db_transaction' `Deferred app @@ fun db ->
+  let uf = Page.Gen.url_fmt (Webapp.page_gen app) in
+  let sel = Entity_html.container_input_finder uf ~input_name in
+  Ok (Page.resp_part sel)
+
+let creatable_container_of_sel sel =
+  let sel = String.trim sel in
+  if sel = "" then None else
+  Option.some @@ Container.v
+    ~id:0 ~title:sel ~isbn:"" ~issn:"" ~note:"" ~private_note:""
+    ~public:false ()
+
+let input_finder_find app ~input_name sel =
+  let* () = Entity_service.check_edit_authorized app in
+  Webapp.with_db_transaction `Deferred app @@ fun db ->
   let g = Webapp.page_gen app in
-  let replace = Container_html.replace_form g c ~ref_count ~containers in
-  Ok (Page.resp_part replace)
+  let uf = Page.Gen.url_fmt g in
+  let only_public = Page.Gen.only_public g in
+  let* cs = select_containers db ~only_public sel in
+  let creatable = creatable_container_of_sel sel in
+  let sel =
+    Entity_html.container_input_finder_results uf ~input_name ~creatable cs
+  in
+  Ok (Page.resp_part sel)
 
 let update app req id =
   let* () = Entity_service.check_edit_authorized app in
   Webapp.with_db_transaction' `Immediate app @@ fun db ->
-  let* q = Req.to_query req in
+  let* q = Http.Req.to_query req in
   let ignore = [Col.V Container.id'] in
   let* vs = Hquery.careless_find_table_cols ~ignore Container.table q in
   let* () = Db.exec' db (Container.update id vs) in
@@ -164,6 +230,10 @@ let resp r app sess req = match (r : Container.Url.t) with
 | Page ref -> page app ref
 | Replace id -> replace app req id
 | Replace_form id -> replace_form app req id
+| Input (input_name, id) -> input app ~input_name id
+| Input_create (n, c) -> input_create app n c
+| Input_finder input_name -> input_finder app ~input_name
+| Input_finder_find (input_name, sel) -> input_finder_find app ~input_name sel
 | Update id -> update app req id
 | View_fields id  -> view_fields app req id
 

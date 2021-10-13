@@ -92,6 +92,16 @@ let match_stmt =
 
 let match_stmt ~title ~isbn ~issn = match_stmt title isbn issn
 
+let select sel =
+  (* FIXME trim spaces in both pattern and scrutinee *)
+  let open Ask.Syntax in
+  let* c = Bag.table table in
+  let sel_by_id = Text.(of_int (c #. id') = sel) in
+  let sel_by_title = Text.(like (c #. title') (sel ^ v "%") ) in
+  Bag.where (sel_by_id || sel_by_title) (Bag.yield c)
+
+let select_stmt =
+  Sql.Bag.(func @@ text @-> ret (Table.row table) select)
 
 (* Queries *)
 
@@ -111,16 +121,32 @@ module Url = struct
   | Duplicate_form of id
   | Edit_form of id
   | Index
+  | Input of Entity.Url.input_name * id
+  | Input_create of Entity.Url.input_name * container
+  | Input_finder of Entity.Url.input_name
+  | Input_finder_find of Entity.Url.input_name * string
   | New_form of { cancel : Entity.Url.cancel_url }
   | Page of named_id
   | Replace of id
   | Replace_form of id
   | Update of id
-  | View_fields of id
+  | View_fields of id (** *)
+
+  let titleq = "title"
+  let container_of_query q = match Http.Query.find titleq q with
+  | None -> Http.Resp.bad_request_400 ~reason:"No container found" ()
+  | Some title ->
+      Result.ok @@
+      Container.v
+        ~id:0 ~title ~isbn:"" ~issn:"" ~note:"" ~private_note:""
+        ~public:false ()
+
+  let container_to_query ?(init = Http.Query.empty) c =
+    init |> Http.Query.add titleq (Container.title c)
 
   let dec u = match Kurl.Bare.path u with
   | [""] ->
-      let* meth = Kurl.Allow.(meths [get; post] u) in
+      let* meth = Kurl.allow Http.Meth.[get; post] u in
       let url = match meth with `GET -> Index | `POST -> Create in
       Kurl.ok url
   | ["part"; "confirm-delete"; id] ->
@@ -139,20 +165,38 @@ module Url = struct
       let* `GET, id = Entity.Url.get_id u id in
       Kurl.ok (Duplicate_form id)
   | ["part"; "new-form"] ->
-      let* `GET = Kurl.Allow.(meths [get] u) in
+      let* `GET = Kurl.allow Http.Meth.[get] u in
       let cancel = Entity.Url.cancel_url_of_query (Kurl.Bare.query u) in
       Kurl.ok (New_form { cancel })
+  | ["part"; "input"; id] ->
+      let* `GET, id = Entity.Url.get_id u id in
+      let* n = Entity.Url.input_name_of_query (Kurl.Bare.query u) in
+      Kurl.ok (Input (n, id))
+  | ["part"; "input-create"] ->
+      let* `GET = Kurl.allow Http.Meth.[get] u in
+      let* n = Entity.Url.input_name_of_query (Kurl.Bare.query u) in
+      let* c = container_of_query (Kurl.Bare.query u) in
+      Kurl.ok (Input_create (n, c))
+  | ["part"; "input-finder"] ->
+      let* `GET = Kurl.allow Http.Meth.[get] u in
+      let* n = Entity.Url.input_name_of_query (Kurl.Bare.query u) in
+      Kurl.ok (Input_finder n)
+  | ["part"; "input-finder-find"] ->
+      let* `GET = Kurl.allow Http.Meth.[get] u in
+      let* n = Entity.Url.input_name_of_query (Kurl.Bare.query u) in
+      let q = Entity.Url.select_of_query (Kurl.Bare.query u) in
+      Kurl.ok (Input_finder_find (n, q))
   | ["action"; "duplicate"; id] ->
-      let* `POST, id = Entity.Url.meth_id u Kurl.Allow.[post] id in
+      let* `POST, id = Entity.Url.meth_id u Http.Meth.[post] id in
       Kurl.ok (Duplicate id)
   | ["action"; "replace"; id] ->
-      let* `POST, id = Entity.Url.meth_id u Kurl.Allow.[post] id in
+      let* `POST, id = Entity.Url.meth_id u Http.Meth.[post] id in
       Kurl.ok (Replace id)
   | [name; id] ->
       let* `GET, id = Entity.Url.get_id u id in
       Kurl.ok (Page (Some name, id))
   | [id] ->
-      let* meth, id = Entity.Url.meth_id u Kurl.Allow.[get; put; delete] id in
+      let* meth, id = Entity.Url.meth_id u Http.Meth.[get; put; delete] id in
       let url = match meth with
       | `GET -> Page (None, id) | `PUT -> Update id | `DELETE -> Delete id
       in
@@ -187,6 +231,20 @@ module Url = struct
       Kurl.bare `POST ["action"; "replace"; Res.Id.to_string id]
   | Replace_form id ->
       Kurl.bare `GET ["part"; "replace-form"; Res.Id.to_string id]
+  | Input (n, id) ->
+      let query = Entity.Url.input_name_to_query n in
+      Kurl.bare `GET ["part"; "input"; Res.Id.to_string id] ~query
+  | Input_create (n, c) ->
+      let query = container_to_query c in
+      let query = Entity.Url.input_name_to_query ~init:query n in
+      Kurl.bare `GET ["part"; "input-create"] ~query
+  | Input_finder n ->
+      let query = Entity.Url.input_name_to_query n in
+      Kurl.bare `GET ["part"; "input-finder"] ~query
+  | Input_finder_find (n, sel) ->
+      let query = Entity.Url.select_to_query sel in
+      let query = Entity.Url.input_name_to_query ?init:query n in
+      Kurl.bare `GET ["part"; "input-finder-find"] ~query
   | Update id ->
       Kurl.bare `PUT [Res.Id.to_string id]
   | View_fields id ->

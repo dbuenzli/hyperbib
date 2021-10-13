@@ -129,10 +129,19 @@ end
 module Url = struct
   open Result.Syntax
 
+  type query_key = string
+
   let replace_by = "replace-by"
+
+  (* XXX remove eventually *)
   let replace_by_of_query q = match Http.Query.find replace_by q with
-  | None -> Resp.bad_request_400 ()
+  | None -> Http.Resp.bad_request_400 ()
   | Some r -> Res.Id.decode r
+
+  let replace_by_of_query' q = match Http.Query.find replace_by q with
+  | None | Some "" -> Ok None
+  | Some r -> Result.map Option.some (Res.Id.decode r)
+
 
   type cancel_url = string option
   let cancel = "cancel"
@@ -146,12 +155,34 @@ module Url = struct
   | "" -> None
   | sel -> Some (Http.Query.(empty |> add select sel))
 
+  type input_name = string
+  let input_name = "input-name"
+  let input_name_of_query q = match Http.Query.find input_name q with
+  | None -> Http.Resp.bad_request_400 ()
+  | Some n -> Ok n
+
+  type for_list = bool
+  let for_list = "for-list"
+  let for_list_of_query q = match Http.Query.find for_list q with
+  | None -> Ok false
+  | Some bool ->
+      match bool_of_string_opt bool with
+      | None -> Http.Resp.bad_request_400 ~reason:"%S: not a boolean" ()
+      | Some bool -> Ok bool
+
+  let for_list_to_query ?(init = Http.Query.empty) b =
+    Http.Query.add for_list (string_of_bool b) init
+
+
+  let input_name_to_query ?(init = Http.Query.empty) n =
+    Http.Query.add input_name n init
+
   let meth_id u ms id =
-    let* meth = Kurl.Allow.meths ms u in
+    let* meth = Kurl.allow ms u in
     let* id = Res.Id.decode id in
     Ok (meth, id)
 
-  let get_id u id = meth_id u Kurl.Allow.[get] id
+  let get_id u id = meth_id u Http.Meth.[get] id
 end
 
 (*---------------------------------------------------------------------------

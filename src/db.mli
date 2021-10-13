@@ -77,7 +77,8 @@ val id_map_related_list :
 
 (** {1:webs Webs responding convenience} *)
 
-val error_resp : ?retry_after_s:int -> ('a, error) result -> ('a, Resp.t) result
+val error_resp :
+  ?retry_after_s:int -> ('a, error) result -> ('a, Http.resp) result
 (** [error_resp e] is a webs response for [Error e]. {!Ask.Error.busy_time_out}
     errors are mapped to a {!Webs.Http.service_unavailable_503} with
     a {!Webs.Http.retry_after} header of [retry_after_s] seconds (default
@@ -85,13 +86,13 @@ val error_resp : ?retry_after_s:int -> ('a, error) result -> ('a, Resp.t) result
 
 (** Same as {!queries} but composed with {!error_resp}. *)
 
-val exec' : t -> unit Sql.Stmt.t -> (unit, Webs.Resp.t) result
-val insert' : t -> unit Sql.Stmt.t -> (Id.t, Webs.Resp.t) result
-val first' : t -> 'a Sql.Stmt.t -> ('a option, Webs.Resp.t) result
-val list' : t -> 'a Sql.Stmt.t -> ('a list, Webs.Resp.t) result
+val exec' : t -> unit Sql.Stmt.t -> (unit, Webs.Http.resp) result
+val insert' : t -> unit Sql.Stmt.t -> (Id.t, Webs.Http.resp) result
+val first' : t -> 'a Sql.Stmt.t -> ('a option, Webs.Http.resp) result
+val list' : t -> 'a Sql.Stmt.t -> ('a list, Webs.Http.resp) result
 val with_transaction' :
   transaction_kind ->
-  t -> (t -> ('a, 'b) result) -> (('a, 'b) result, Webs.Resp.t) result
+  t -> (t -> ('a, 'b) result) -> (('a, 'b) result, Webs.Http.resp) result
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2021 University of Bern

@@ -20,9 +20,15 @@ module Class = struct
   let bool = At.class' "bool"
   let cancel = At.class' "cancel"
   let delete = At.class' "delete"
+  let orderable = At.class' "orderable"
+  let ordering = At.class' "ordering"
+  let finder = At.class' "finder"
+  let finder_input = At.class' "finder-input"
+  let finder_result = At.class' "finder-result"
   let input = At.class' "input"
   let label = At.class' "label"
   let string = At.class' "string"
+  let select = At.class' "select"
   let spinner = At.class' "spinner"
   let submit = At.class' "submit"
   let text = At.class' "text"
@@ -79,8 +85,8 @@ let _button ~type':t ?(at = []) ?x_align ?align ?dir ?tip label =
   let at = At.(Class.button :: type' t :: if_some "title" tip :: (lats @ at)) in
   El.button ~at [ spinner; label; ]
 
-let button ?at ?x_align ?align ?dir ?tip label =
-  _button ~type':"button" ?at ?x_align ?align ?dir ?tip label
+let button ?at ?x_align ?align ?dir ?tip ?(type' = "button") label =
+  _button ~type' ?at ?x_align ?align ?dir ?tip label
 
 let button_link ?(at = []) ?x_align ?align ?dir ?tip ~href:h label =
   let at = At.v "onclick" (Printf.sprintf "location.href='%s';" h) :: at in
@@ -100,11 +106,14 @@ let delete ?(at = []) ?x_align ?align ?dir ?tip label =
 
 (* Editors *)
 
-let input_string' ?(at = []) ?(autogrow = false) ~min_size ~name v =
+let input_string'
+    ?(at = []) ?(autocomplete = true) ?(autogrow = false) ~min_size ~name v
+  =
   let size = At.int "size" min_size in
   let name = At.name name in
   let value = At.value v in
-  let at = Class.input :: Class.string :: size :: name :: value :: at in
+  let ac = if autocomplete then At.autocomplete "off" else At.void in
+  let at = Class.input :: Class.string :: ac :: size :: name :: value :: at in
   match autogrow with
   | false -> El.input ~at ()
   | true ->
@@ -141,9 +150,9 @@ let input_bool ?at ~col r =
   let name = Ask.Col.name col and v = Ask.Col.proj col r in
   input_bool' ?at ~name v
 
-let input_string ?at ?autogrow ~min_size ~col r =
+let input_string ?at ?autocomplete ?autogrow ~min_size ~col r =
   let name = Ask.Col.name col and v = Ask.Col.proj col r in
-  input_string' ?at ?autogrow ~min_size ~name v
+  input_string' ?at ?autocomplete ?autogrow ~min_size ~name v
 
 let input_text ?at ?autogrow ~min_rows ~col r =
   let name = Ask.Col.name col and v = Ask.Col.proj col r in
@@ -157,7 +166,7 @@ let input_select ?(at = []) ~option_text ~option_value ~options ~col r =
     let at = At.[if' (String.equal rv ov) selected; value ov] in
     El.option ~at [El.txt text]
   in
-  let at = Class.input :: Hclass.select :: name :: at in
+  let at = Class.input :: Class.select :: name :: at in
   El.select ~at (List.map option options)
 
 let field_bool ?input_at ?(at = []) ~label ~col r =
@@ -166,9 +175,23 @@ let field_bool ?input_at ?(at = []) ~label ~col r =
   let col_class = Class.for_col col in
   El.label ~at:(Hclass.field :: col_class :: at) [input; El.sp; label]
 
-let field_string ?input_at ?(at = []) ?autogrow ~min_size ~label ~col r =
+
+let field_string'
+    ?input_at ?(at = []) ?autocomplete ?autogrow ~min_size ~label ~name v
+  =
   let label = El.span ~at:[Class.label] [label] in
-  let input = input_string ?at:input_at ?autogrow ~min_size ~col r in
+  let input =
+    input_string' ?at:input_at ?autocomplete ?autogrow ~min_size ~name v
+  in
+  El.label ~at:(Hclass.field :: at) [label; El.sp; input]
+
+let field_string
+    ?input_at ?(at = []) ?autocomplete ?autogrow ~min_size ~label ~col r
+  =
+  let label = El.span ~at:[Class.label] [label] in
+  let input =
+    input_string ?at:input_at ?autocomplete ?autogrow ~min_size ~col r
+  in
   let col_class = Class.for_col col in
   El.label ~at:(Hclass.field :: col_class :: at) [label; El.sp; input]
 

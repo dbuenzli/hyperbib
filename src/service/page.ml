@@ -234,7 +234,7 @@ let error_url_kind = Kurl.Kind.bare ~name:"error" ()
 let error_url b = Kurl.v error_url_kind b
 let error g req resp =
   let uf = Gen.url_fmt g in
-  let bare = match Http.Headers.mem Hc.hc (Req.headers req) with
+  let bare = match Http.Headers.mem Hc.hc (Http.Req.headers req) with
   | false -> Kurl.Bare.of_req req
   | true ->
       (* Make links relative to the requesting page, not to the request *)
@@ -244,7 +244,7 @@ let error g req resp =
   in
   let self = error_url bare in
   let with_code title status = Fmt.str "%s (%d)" title status in
-  let title, descr = match Resp.status resp with
+  let title, descr = match Http.Resp.status resp with
   | 401 -> Uimsg.unauthorized_401, Uimsg.unauthorized_401_descr
   | 404 -> Uimsg.not_found_404, Uimsg.not_found_404_descr
   | 501 -> Uimsg.not_implemented_501, Uimsg.not_implemented_501_descr
@@ -261,21 +261,22 @@ let error g req resp =
       El.h1 [ El.txt title ];
       El.p [ El.txt descr; El.sp; goto_bib; ]]
   in
-  let is_hc_req = Http.Headers.(mem (name "hc")) (Req.headers req) in
+  let is_hc_req = Http.Headers.(mem (name "hc")) (Http.Req.headers req) in
   if is_hc_req
   then html_part g ~self ~content
   else html g ~self ~title ~content
 
 (* Responses *)
 
-let resp_part ?explain ?headers ?(status = Http.ok_200) part =
-  Resp.html ?explain ?headers status (El.to_string ~doc_type:false part)
+let resp_part ?explain ?reason ?headers ?(status = Http.ok_200) part =
+  Http.Resp.html ?explain ?reason ?headers status
+    (El.to_string ~doc_type:false part)
 
-let resp ?explain ?headers ?(status = Http.ok_200) p =
-  Resp.html ?explain ?headers status (doc_to_string p)
+let resp ?explain ?reason ?headers ?(status = Http.ok_200) p =
+  Http.Resp.html ?explain ?reason ?headers status (doc_to_string p)
 
-let resp_404 ?explain ?headers p =
-  resp ?explain ?headers ~status:Http.not_found_404 p
+let resp_404 ?explain ?reason ?headers p =
+  resp ?explain ?reason ?headers ~status:Http.not_found_404 p
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2021 University of Bern

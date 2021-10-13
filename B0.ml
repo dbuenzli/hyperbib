@@ -3,27 +3,28 @@ open B00_std
 
 (* OCaml libraries *)
 
-let threads = B0_ocaml.libname "threads.posix"
-let cmdliner = B0_ocaml.libname "cmdliner"
-let b00_std = B0_ocaml.libname "b0.b00.std"
+let ask = B0_ocaml.libname "ask"
+let ask_kit = B0_ocaml.libname "ask.kit"
+let ask_pool = B0_ocaml.libname "ask.pool"
+let ask_sqlite3 = B0_ocaml.libname "ask.sqlite3"
 let b00_kit = B0_ocaml.libname "b0.b00.kit"
+let b00_std = B0_ocaml.libname "b0.b00.std"
+let brr = B0_ocaml.libname "brr"
+let brr_note = B0_ocaml.libname "brr.note"
+let cmdliner = B0_ocaml.libname "cmdliner"
+let hc = B0_ocaml.libname "hc"
+let hc_page = B0_ocaml.libname "hc.page"
+let note = B0_ocaml.libname "note"
 let ptime = B0_ocaml.libname "ptime"
 let ptime_clock = B0_ocaml.libname "ptime.clock.os"
+let threads = B0_ocaml.libname "threads.posix"
 let webs = B0_ocaml.libname "webs"
+let webs_cli = B0_ocaml.libname "webs.cli"
+let webs_connector = B0_ocaml.libname "webs.connector"
+let webs_html = B0_ocaml.libname "webs.html"
 let webs_httpc = B0_ocaml.libname "webs.httpc"
 let webs_kit = B0_ocaml.libname "webs.kit"
 let webs_unix = B0_ocaml.libname "webs.unix"
-let webs_cli = B0_ocaml.libname "webs.cli"
-let webs_html = B0_ocaml.libname "webs.html"
-let ask = B0_ocaml.libname "ask"
-let ask_kit = B0_ocaml.libname "ask.kit"
-let ask_sqlite3 = B0_ocaml.libname "ask.sqlite3"
-let ask_pool = B0_ocaml.libname "ask.pool"
-let note = B0_ocaml.libname "note"
-let brr = B0_ocaml.libname "brr"
-let brr_note = B0_ocaml.libname "brr.note"
-let hc = B0_ocaml.libname "hc"
-let hc_page = B0_ocaml.libname "hc.page"
 
 (* Front end (and copy to app/static) *)
 
@@ -107,8 +108,8 @@ let hyperbib =
   let requires =
     [ threads; cmdliner; ptime; ptime_clock; b00_std; b00_kit;
       ask; ask_kit; ask_sqlite3; ask_pool;
-      webs; webs_kit; webs_unix; webs_cli; webs_httpc; webs_html;
-      hc ]
+      webs; webs_connector; webs_kit; webs_unix; webs_cli; webs_httpc;
+      webs_html; hc ]
   in
   let srcs =
     (* XXX slightly messy we need to copy it over because of

@@ -9,7 +9,7 @@
 
 open Hyperbib.Std
 
-(** {1:outline Outline}. *)
+(** {1:outline Outline} *)
 
 val database : El.html
 val duplicate : El.html

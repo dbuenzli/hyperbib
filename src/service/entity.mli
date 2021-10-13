@@ -160,8 +160,11 @@ module Publicable_queries (E : PUBLICABLE) : PUBLICABLE_QUERIES
 module Url : sig
 
 
+  (** {1:query Query keys} *)
+
   val replace_by : string
-  val replace_by_of_query : Http.query -> (Id.t, Resp.t) result
+  val replace_by_of_query : Http.query -> (Id.t, Http.resp) result
+  val replace_by_of_query' : Http.query -> (Id.t option , Http.resp) result
 
   type cancel_url = string option
   val cancel_url_of_query : Http.query -> cancel_url
@@ -171,11 +174,21 @@ module Url : sig
   val select_of_query : Http.query -> string
   val select_to_query : string -> Http.query option
 
-  val meth_id :
-    Kurl.bare -> 'a Kurl.Allow.t list -> string ->
-    ('a * Res.Id.t, Resp.t) result
+  type input_name = string
+  val input_name_of_query : Http.query -> (input_name, Http.resp) result
+  val input_name_to_query : ?init:Http.query -> input_name -> Http.query
 
-  val get_id : Kurl.bare -> string -> ([> `GET ] * Res.Id.t, Resp.t) result
+  type for_list = bool
+  val for_list_of_query : Http.query -> (for_list, Http.resp) result
+  val for_list_to_query : ?init:Http.query -> for_list -> Http.query
+
+  (** {1:meth Methods} *)
+
+  val meth_id :
+    Kurl.bare -> 'a Http.Meth.constraint' list -> string ->
+    ('a * Res.Id.t, Http.resp) result
+
+  val get_id : Kurl.bare -> string -> ([> `GET ] * Res.Id.t, Http.resp) result
 end
 
 (*---------------------------------------------------------------------------

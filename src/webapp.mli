@@ -40,11 +40,11 @@ type t
 (** The type for web application globals. *)
 
 type service =
-  t -> Session.t option -> Webs.Req.t -> Session.t Webs_kit.Session.result
+  t -> Session.t option -> Http.req -> Session.t Webs_kit.Session.result
 (** The type for the services of the web application. *)
 
 type immutable_session_service =
-  t -> Session.t option -> Webs.Req.t -> (Webs.Resp.t, Webs.Resp.t) result
+  t -> Session.t option -> Http.req -> (Http.resp, Http.resp) result
 (** The type for services which do not change the session state. *)
 
 val immutable_session_service : immutable_session_service -> service
@@ -70,8 +70,8 @@ val setup :
 
 val serve : t ->
   url_fmt:(init:Kurl.fmt -> Kurl.fmt) ->
-  (t -> Session.t option -> Webs.Req.t -> Session.t Webs_kit.Session.resp) ->
-  Webs.service
+  (t -> Session.t option -> Http.req -> Session.t Webs_kit.Session.resp) ->
+  Http.service
 (** [serve app s] serves service [s] with [app].
 
     {b FIXME.} This [url_fmt] makes things a bit messy. Maybe page_gen
@@ -122,18 +122,18 @@ val url_fmt : t -> Kurl.fmt
 (** {1:bracket Convenience database brackets} *)
 
 val with_db :
-  t -> (Db.t -> ('a, Db.error) result) -> ('a, Resp.t) result
+  t -> (Db.t -> ('a, Db.error) result) -> ('a, Http.resp) result
 
 val with_db' :
-  t -> (Db.t -> ('a, Resp.t) result) -> ('a, Resp.t) result
+  t -> (Db.t -> ('a, Http.resp) result) -> ('a, Http.resp) result
 
 val with_db_transaction :
   Db.transaction_kind -> t -> (Db.t -> ('a, Db.error) result) ->
-  ('a, Resp.t) result
+  ('a, Http.resp) result
 
 val with_db_transaction' :
-  Db.transaction_kind -> t -> (Db.t -> ('a, Resp.t) result) ->
-  ('a, Resp.t) result
+  Db.transaction_kind -> t -> (Db.t -> ('a, Http.resp) result) ->
+  ('a, Http.resp) result
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2021 University of Bern

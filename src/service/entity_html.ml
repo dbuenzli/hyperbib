@@ -5,7 +5,7 @@
 
 open Hyperbib.Std
 
-(* Description *)
+(* Description field *)
 
 let edit_description
     (type t) (module E : Entity.DESCRIBABLE with type t = t) ?textarea_at ?at e
@@ -25,7 +25,7 @@ let view_description
       let col_class = Hui.Class.for_col E.description' in
       El.p ~at:(Hclass.value :: col_class :: viz :: at) [El.txt d]
 
-(* Note *)
+(* Note field *)
 
 let edit_note
     (type t) (module E : Entity.ANNOTABLE with type t = t) ?textarea_at ?at e
@@ -44,18 +44,7 @@ let view_note
       let col_class = Hui.Class.for_col E.note' in
       El.p ~at:(Hclass.value :: col_class :: viz :: at) [El.txt n]
 
-(* Public *)
-
-let edit_public
-    (type t) (module E : Entity.PUBLICABLE with type t = t) ?(at = [])  e
-  =
-  let label = El.txt Uimsg.public in
-  Hui.field_bool ~label ~col:E.public' e
-
-let viz (type t) (module E : Entity.PUBLICABLE with type t = t) e =
-  if E.public e then At.void else Hclass.private'
-
-(* Private note *)
+(* Private note field *)
 
 let edit_private_note
     (type t) (module E : Entity.PRIVATELY_ANNOTABLE with type t = t)
@@ -77,61 +66,205 @@ let view_private_note
       let col_class = Hui.Class.for_col E.private_note' in
       El.p ~at:(Hclass.value :: col_class :: Hclass.private' :: at) [El.txt n]
 
-(* Relations *)
+(* Public field *)
 
-let removable
-    (type t) (module E : Entity.PUBLICABLE with type t = t)
-    ?(suff = El.void) ~key ~remove_tip ~render e
+let edit_public
+    (type t) (module E : Entity.PUBLICABLE with type t = t) ?(at = [])  e
   =
-  let input_id =
-    let sid = string_of_int (E.id e) in
-    El.input ~at:At.[hidden; name key; value sid] ()
-  in
-  let remove =
-    let cls = [Hui.Class.button; Hclass.remove; Hclass.entity] in
-    let at = At.type' "button" :: At.title remove_tip :: cls in
-    El.button ~at [El.txt "\u{02DF}"]
-  in
-  let entity =
-    let viz = if E.public e then At.void else Hclass.private' in
-    let at = [viz; Hui.Class.for_table E.table; Hclass.value] in
-    El.span ~at [render e; remove]
-  in
-  El.span ~at:[Hclass.removable] [input_id; entity; suff]
+  let label = El.txt Uimsg.public in
+  Hui.field_bool ~label ~col:E.public' e
 
-let addable
+let viz (type t) (module E : Entity.PUBLICABLE with type t = t) e =
+  if E.public e then At.void else Hclass.private'
+
+(* Entity *)
+
+let finder_result
     (type t) (module E : Entity.PUBLICABLE with type t = t)
-    ~key ~add_tip ~render uf ~action e
+    ~creatable ~tip ~render uf ~action e
   =
   let entity =
-    let viz = if E.public e then At.void else Hclass.private' in
+    let viz = if E.public e || creatable then At.void else Hclass.private' in
     let at = [viz; Hui.Class.for_table E.table; Hclass.value] in
     El.span ~at [render e]
   in
   let r = Hfrag.hc_request uf (action e) in
   let t = Hc.target ":up :up :up" in
   let e = Hc.effect `Element in
-  let tab_index = At.tabindex 0 in
-  let title = At.v "title" add_tip in
+  let tab_index = At.tabindex (-1) in
+  let title = At.v "title" tip in
   let role = At.v "role" "option" in
-  let at = [Hclass.addable; r; t; e; tab_index; title; role] in
+  let c = if creatable then Hclass.creatable else At.void in
+  let at = [Hui.Class.finder_result; c; r; t; e; tab_index; title; role] in
   El.li ~at [entity]
 
-let addable_list
+let input_finder_results
     (type t) (module E : Entity.PUBLICABLE with type t = t)
-    ~key ~add_tip ~render uf ~action es
+    ~creatable ~tip ~render uf ~action es
   =
-  let li = addable (module E) ~key ~add_tip ~render uf ~action in
-  El.ol ~at:[At.v "role" "listbox"] (List.map li es)
+  let li = finder_result (module E) ~creatable:false ~tip ~render uf ~action in
+  let c = match creatable with None -> El.void | Some c -> c in
+  El.ol ~at:[At.v "role" "listbox"] (List.map li es @ [c])
 
-let person_key = function (* FIXME use that in reference_service *)
-| None ->
-    Reference.Contributor.(Hquery.key_for_rel table person')
-| Some role ->
-    let suff = Person.role_to_string role in
-    Reference.Contributor.(Hquery.key_for_rel table person' ~suff)
+let entity_input_finder ?min_size ?(at = []) uf ~kind req ~value =
+  let r = Hfrag.hc_request uf req in
+  let t = Hc.target (":up :up ol") in
+  let e = Hc.event ~debounce_ms:250 "input" in
+  let eff = Hc.effect `Element in
+  let pl = kind ^ "\u{207A}" in
+  let min_size = String.length pl - 1 in
+  let pl = At.placeholder pl in
+  let type' = At.type' "search" in
+  let at = Hclass.value :: Hui.Class.finder_input :: at in
+  let at = r :: t :: e :: eff :: pl :: type' :: at in
+  Hui.input_string' ~at ~autogrow:true ~min_size ~name:"select" value
 
-let addable_subject_list uf ~parents ss =
+let entity_remove_button ~req ~tip =
+  let at = match req with
+  | None -> [Hclass.hui_remove]
+  | Some (meth, url) ->
+      let r = Hc.request ~meth url in
+      let t = Hc.target ":up :up" in
+      let e = Hc.effect `Element in
+      [r; t; e]
+  in
+  let at = Hui.Class.button :: Hclass.remove :: Hclass.entity :: at in
+  let at = At.type' "button" :: At.title tip :: at in
+  El.button ~at [El.txt "\u{02DF}"]
+
+let comma = El.txt ",\u{00A0}"
+
+let input_entity_id ~input_name:n eid =
+  let eid = match eid with None -> "" | Some id -> string_of_int id in
+  El.input ~at:At.[hidden; name n; value eid] ()
+
+let entity_input_by_id
+    (type t) (module E : Entity.PUBLICABLE with type t = t)
+    uf ~input_name ~render ~orderable ~remove ~suff e
+  =
+  let input = input_entity_id ~input_name (Some (E.id e)) in
+  let entity =
+    let viz = if E.public e then At.void else Hclass.private' in
+    let at = [viz; Hui.Class.for_table E.table; Hclass.value] in
+    El.span ~at [render e; remove]
+  in
+  let at =
+    At.if' orderable Hui.Class.orderable ::
+    At.if' (not (El.is_void remove)) Hclass.removable :: []
+  in
+  El.span ~at [input; entity; suff]
+
+(* Persons *)
+
+let person_remove_button uf ~for_list ~input_name ~role =
+  let tip = match role with
+  | Some Person.Author -> Uimsg.remove_author
+  | Some Person.Editor -> Uimsg.remove_editor
+  | None -> Uimsg.remove_person
+  in
+  let req = match for_list with
+  | true -> None
+  | false ->
+      let req = Person.Url.v (Input_finder (for_list, input_name, role)) in
+      Some (Kurl.Fmt.req uf req)
+  in
+  entity_remove_button ~req ~tip
+
+let person_input uf ~for_list ~input_name ~role p =
+  let remove = person_remove_button uf ~for_list ~input_name ~role in
+  let render p = El.txt_of Person.names_lf p in
+  let orderable = for_list and suff = if for_list then comma else El.void in
+  entity_input_by_id
+    (module Person) uf ~input_name ~render ~orderable ~remove ~suff p
+
+let person_input_create uf ~for_list ~input_name ~role p =
+  let remove = person_remove_button uf ~for_list ~input_name ~role in
+  let render p = El.txt_of Person.names_lf p in
+  let input_create =
+    let i k d = El.input ~at:At.[hidden; name k; value d] () in
+    let first, last, orcid = Hquery.create_person_keys role in
+    El.splice [
+      i (Hquery.person_key role) "x";
+      i first (Person.first_names p);
+      i last (Person.last_name p);
+      i orcid (Person.orcid p) ]
+  in
+  let entity =
+    let create = Hclass.creatable in
+    let at = [create; Hui.Class.for_table Person.table; Hclass.value] in
+    El.span ~at [render p; remove]
+  in
+  let orderable = if for_list then Hui.Class.orderable else At.void in
+  let suff = if for_list then comma else El.void in
+  El.span ~at:[Hclass.removable; orderable] [input_create; entity; suff]
+
+let person_creatable_result uf ~for_list ~input_name ~role p =
+  let create = Uimsg.create_person in
+  let tip = match role with
+  | Some Person.Author -> Uimsg.create_and_add_author
+  | Some Person.Editor -> Uimsg.create_and_add_editor
+  | None -> Uimsg.create_and_add_person
+  in
+  let render p = El.txt (create ^ ": " ^ Person.names_lf p ^ "\u{207A}") in
+  let action p = Person.Url.v (Input_create (for_list, input_name, role, p)) in
+  finder_result (module Person) ~creatable:true ~tip ~render uf ~action p
+
+let person_input_finder_results uf ~for_list ~input_name ~role ~creatable:p ps =
+  let render p = El.txt (Person.names_lf p ^ "\u{207A}") in
+  let action p =
+    Person.Url.v (Input (for_list, input_name, role, Person.id p))
+  in
+  let tip = match role with
+  | Some Person.Author -> Uimsg.add_author
+  | Some Person.Editor -> Uimsg.add_editor
+  | None -> Uimsg.add_person
+  in
+  let creatable =
+    Option.map (person_creatable_result uf ~for_list ~input_name ~role) p
+  in
+  input_finder_results (module Person) ~creatable ~tip ~render uf ~action ps
+
+let person_input_finder uf ~for_list ~input_name ~role =
+  let res =
+    person_input_finder_results uf ~for_list ~input_name ~role
+      ~creatable:None []
+  in
+  let input_subject_id = input_entity_id ~input_name None in
+  let input =
+    let req =
+      Person.Url.v (Input_finder_find (for_list, input_name, role, ""))
+    in
+    let kind = match role with
+    | Some Person.Author -> Uimsg.author
+    | Some Person.Editor -> Uimsg.editor
+    | None -> Uimsg.person
+    in
+    entity_input_finder ~at:[Hclass.person] ~kind uf req ~value:""
+  in
+  let finder = El.div ~at:[Hui.Class.finder] [input; res] in
+  let at = [Hclass.entity; Hclass.subject] in
+  El.div ~at [input_subject_id; finder]
+
+(* Subjects *)
+
+let subject_remove_button uf ~for_list ~input_name =
+  let tip = Uimsg.remove_subject in
+  let req = match for_list with
+  | true -> None (* client side removal *)
+  | false ->
+      let req = Subject.Url.v (Input_finder (for_list, input_name)) in
+      Some (Kurl.Fmt.req uf req)
+  in
+  entity_remove_button ~req ~tip
+
+let subject_input uf ~for_list ~input_name s =
+  let remove = subject_remove_button uf ~for_list ~input_name in
+  let render s = El.txt_of Subject.name s in
+  let orderable = false and suff = if for_list then comma else El.void in
+  entity_input_by_id
+    (module Subject) uf ~input_name ~render ~orderable ~remove ~suff s
+
+let subject_input_finder_results uf ~for_list ~input_name ~parents ss =
   let render s =
     let p = Option.bind (Subject.parent s) (Fun.flip Id.Map.find_opt parents) in
     match p with
@@ -139,83 +272,89 @@ let addable_subject_list uf ~parents ss =
     | Some p ->
         El.txt (Fmt.str "%s\u{207A} (%s)" (Subject.name s) (Subject.name p))
   in
-  let action s = Subject.Url.v (Select_add (Subject.id s)) in
-  let key = Reference.Subject.(Hquery.key_for_rel table subject') in
-  let add_tip = Uimsg.add_subject in
-  addable_list (module Subject) ~key ~add_tip ~render uf ~action ss
+  let action p = Subject.Url.v (Input (for_list, input_name, Subject.id p)) in
+  let tip = Uimsg.add_subject and creatable = None in
+  input_finder_results (module Subject) ~creatable ~tip ~render uf ~action ss
 
-let addable_contributor_list role uf ps =
-  let render p = El.txt (Person.names_lf p ^ "\u{207A}") in
-  let action p = Person.Url.v (Select_add (role, (Person.id p))) in
-  let key = Reference.Subject.(Hquery.key_for_rel table subject') in
-  let add_tip = match role with
-  | Some Person.Author -> Uimsg.add_author
-  | Some Person.Editor -> Uimsg.add_editor
-  | None -> Uimsg.add_person
+let subject_input_finder uf ~for_list ~input_name =
+  let res =
+    let parents = Id.Map.empty in
+    subject_input_finder_results uf ~for_list ~input_name ~parents []
   in
-  addable_list (module Person) ~key ~add_tip ~render uf ~action ps
-
-let add_subject uf =
-  let dl = addable_subject_list uf ~parents:Id.Map.empty [] in
+  let input_subject_id = input_entity_id ~input_name None in
   let input =
-    let r = Hfrag.hc_request uf (Subject.Url.v (Select "")) in
+    let req = Subject.Url.v (Input_finder_find (for_list, input_name, "")) in
+    let kind = Uimsg.subject and at = [Hclass.subject] in
+    entity_input_finder ~at ~kind uf req ~value:""
+  in
+  let finder = El.div ~at:[Hui.Class.finder] [input; res] in
+  let at = [Hclass.entity; Hclass.subject] in
+  El.div ~at [input_subject_id; finder]
+
+(* Containers *)
+
+let container_remove_button uf ~input_name =
+  let tip = Uimsg.remove_container in
+  let req = Kurl.Fmt.req uf (Container.Url.v (Input_finder input_name)) in
+  entity_remove_button ~req:(Some req) ~tip
+
+let container_input uf ~input_name c =
+  let remove = container_remove_button uf ~input_name in
+  let render c = El.txt_of Container.title c in
+  let orderable = false and suff = El.void in
+  entity_input_by_id
+    (module Container) uf ~input_name ~render ~orderable ~remove ~suff c
+
+let container_input_create uf ~input_name c =
+  let remove = container_remove_button uf ~input_name in
+  let input_create =
+    let i k d = El.input ~at:At.[hidden; name k; value d] () in
+    El.splice [
+      i Hquery.create_container_title (Container.title c);
+      i Hquery.create_container_isbn (Container.isbn c);
+      i Hquery.create_container_issn (Container.issn c);
+    ]
+  in
+  let entity =
+    let create = Hclass.creatable in
+    let at = [create; Hui.Class.for_table Container.table; Hclass.value] in
+    El.span ~at [El.txt_of Container.title c; remove]
+  in
+  El.span ~at:[Hclass.removable] [input_create; entity]
+
+let container_creatable_result uf ~input_name c =
+  let create = Uimsg.create_container in
+  let tip = Uimsg.create_and_add_container in
+  let render p = El.txt (create ^ ": " ^ Container.title c ^ "\u{207A}") in
+  let action p = Container.Url.v (Input_create (input_name, c)) in
+  finder_result (module Container) ~creatable:true ~tip ~render uf ~action c
+
+let container_input_finder_results uf ~input_name ~creatable:c cs =
+  let render c = El.txt (Container.title c ^ "\u{207A}") in
+  let action p = Container.Url.v (Input (input_name, Container.id p)) in
+  let tip = Uimsg.add_container in
+  let creatable = Option.map (container_creatable_result uf ~input_name) c in
+  input_finder_results (module Container) ~creatable ~tip ~render uf ~action cs
+
+let container_input_finder uf ~input_name =
+  let res = container_input_finder_results uf ~input_name ~creatable:None [] in
+  let input_container_id = input_entity_id ~input_name None in
+  let input =
+    let req = Container.Url.v (Input_finder_find (input_name, "")) in
+    let r = Hfrag.hc_request uf req in
     let t = Hc.target (":up :up ol") in
     let e = Hc.event ~debounce_ms:250 "input" in
     let eff = Hc.effect `Element in
-    let pl = Uimsg.subject ^ "\u{207A}" in
-    let min_size = String.length pl - 1 in
+    let pl = Uimsg.container ^ "\u{207A}" in
     let pl = At.placeholder pl in
-    let ac = At.autocomplete "off" in
     let type' = At.type' "search" in
-    let at = [Hclass.value; Hclass.subject; r; t; e; eff; ac; pl; type'] in
-    Hui.input_string' ~at ~autogrow:true ~min_size ~name:"select" ""
+    let at = Hclass.value :: Hui.Class.finder_input :: Hclass.container :: [] in
+    let at = r :: t :: e :: eff :: pl :: type' :: at in
+    Hui.input_text' ~at ~autogrow:true ~min_rows:1 ~name:"select" ""
   in
-  let selector = El.div ~at:[Hclass.select_entity] [input; dl] in
-  let at = [Hclass.add; Hclass.entity; Hclass.subject] in
-  El.div ~at [selector]
-
-let add_contributor role uf =
-  let dl = addable_contributor_list role uf [] in
-  let input =
-    let r = Hfrag.hc_request uf (Person.Url.v (Select (role, ""))) in
-    let t = Hc.target (":up :up ol") in
-    let e = Hc.event ~debounce_ms:250 "input" in
-    let eff = Hc.effect `Element in
-    let pl = match role with
-    | None -> Uimsg.person
-    | Some Person.Author -> Uimsg.author
-    | Some Person.Editor -> Uimsg.editor
-    in
-    let pl = pl ^ "\u{207A}" in
-    let min_size = String.length pl - 1 in
-    let pl = At.placeholder pl in
-    let ac = At.autocomplete "off" in
-    let type' = At.type' "search" in
-    let at = [Hclass.value; Hclass.person; r; t; e; eff; ac; pl; type'] in
-    Hui.input_string' ~at ~autogrow:true ~min_size ~name:"select" ""
-  in
-  let selector = El.div ~at:[Hclass.select_entity] [input; dl] in
-  let at = [Hclass.add; Hclass.entity; Hclass.person] in
-  El.div ~at [selector]
-
-let comma = El.txt ",\u{00A0}"
-
-let removable_subject =
-  let key = Reference.Subject.(Hquery.key_for_rel table subject') in
-  let render e = El.txt_of Subject.name e in
-  let remove_tip = Uimsg.remove_subject in
-  removable (module Subject) ~key ~remove_tip ~render ~suff:comma
-
-let removable_contributor role =
-  let key = person_key role in
-  let render p = El.txt_of Person.names_lf p in
-  let remove_tip = match role with
-  | Some Author -> Uimsg.remove_author
-  | Some Editor -> Uimsg.remove_editor
-  | None -> Uimsg.remove_person
-  in
-  removable (module Person) ~key ~remove_tip ~render ~suff:comma
-
+  let finder = El.div ~at:[Hui.Class.finder] [input; res] in
+  let at = [Hclass.entity; Hclass.container] in
+  El.div ~at [input_container_id; finder]
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2021 University of Bern

@@ -27,10 +27,11 @@ let hc_request uf u =
 let target_entity = "." ^ (snd (At.to_pair Hclass.entity)) ^ ":up"
 let target_entity_up = target_entity ^ " :up"
 
-let hc_button ?(at = []) ?x_align ?align ?dir ?tip uf url ~target label =
+let hc_button ?(at = []) ?x_align ?align ?dir ?tip uf url ?query ~target label =
   let r = hc_request uf url in
   let t = Hc.target target_entity and e = Hc.effect `Element in
-  Hui.button ~at:(r :: t :: e :: at) ?x_align ?align ?dir ?tip label
+  let q = match query with None -> At.void | Some q -> Hc.query q in
+  Hui.button ~at:(r :: t :: e :: q :: at) ?x_align ?align ?dir ?tip label
 
 let hc_delete ?(at = []) ?x_align ?align ?dir ?tip uf url ~target label =
   let r = hc_request uf url in
@@ -98,17 +99,20 @@ let letters_nav letters =
   let a l = El.a ~at:[anchor_href (letter_id l); Hclass.letter] [El.txt l] in
   El.nav ~at:At.[Hclass.letter_index] (List.map a letters)
 
-(* Entity *)
-
-let entity_form_no_submit ?(at = []) els =
+let form_no_submit ?(at = []) es =
   (* Somehow it seems very hard to avoid implicit submission [1] which
      is not really adapted to these forms. So we don't rely on the
      submit event to send the request.
      [1]: https://html.spec.whatwg.org/multipage/\
           form-control-infrastructure.html#implicit-submission *)
-  let disable_submit = At.v "onsubmit" "return false;" in
-  let at = Hclass.entity :: Hclass.editing :: disable_submit :: at in
-  El.form ~at els
+  let at = At.v "onsubmit" "return false;" :: at in
+  El.form ~at es
+
+(* Entity *)
+
+let entity_form_no_submit ?(at = []) es =
+  let at = Hclass.entity :: Hclass.editing :: at in
+  form_no_submit ~at es
 
 let entity_kind_index uf ~self ~kind url =
   let href = Kurl.Fmt.rel_url uf ~src:self ~dst:url in

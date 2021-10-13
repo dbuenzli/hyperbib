@@ -30,7 +30,8 @@ val hc_request : Kurl.fmt -> Kurl.t -> At.t
 
 val hc_button :
   ?at:At.t list -> ?x_align:Hui.align -> ?align:Hui.align -> ?dir:Hui.dir ->
-  ?tip:string -> Kurl.fmt -> Kurl.t -> target:string -> El.html -> El.html
+  ?tip:string -> Kurl.fmt -> Kurl.t -> ?query:string -> target:string ->
+  El.html -> El.html
 
 val hc_delete :
   ?at:At.t list -> ?x_align:Hui.align -> ?align:Hui.align -> ?dir:Hui.dir ->
@@ -81,6 +82,7 @@ val letters_nav : letter list -> Hyperbib.Std.El.html
 
     {b FIXME.} Maybe this should rather live in [Entity_html]. *)
 
+val form_no_submit : ?at:At.t list -> El.html list -> El.html
 val entity_form_no_submit : ?at:At.t list -> El.html list -> El.html
 
 val entity_kind_index :

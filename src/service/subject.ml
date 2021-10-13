@@ -178,18 +178,31 @@ module Url = struct
   | Duplicate_form of id
   | Edit_form of id
   | Index
+  | Input of Entity.Url.for_list * Entity.Url.input_name * id
+  | Input_create of Entity.Url.for_list * Entity.Url.input_name * subject
+  | Input_finder of Entity.Url.for_list * Entity.Url.input_name
+  | Input_finder_find of Entity.Url.for_list * Entity.Url.input_name * string
   | New_form of { cancel : Entity.Url.cancel_url }
   | Page of named_id
   | Replace of id
   | Replace_form of id
-  | Select of string
-  | Select_add of id
   | Update of id
   | View_fields of id
 
+  let nameq = "name"
+  let subject_of_query q = match Http.Query.find nameq q with
+  | None -> Http.Resp.bad_request_400 ~reason:"No subject found" ()
+  | Some name ->
+      Result.ok @@
+      Subject.v ~id:0 ~name ~parent:None ~see:None
+        ~description:"" ~private_note:"" ~public:false ()
+
+  let subject_to_query ?(init = Http.Query.empty) s =
+    Http.Query.add nameq (Subject.name s) init
+
   let dec u = match Kurl.Bare.path u with
   | [""] ->
-      let* meth = Kurl.Allow.(meths [get; post] u) in
+      let* meth = Kurl.allow Http.Meth.[get; post] u in
       let url = match meth with `GET -> Index | `POST -> Create in
       Kurl.ok url
   | ["part"; "confirm-delete"; id] ->
@@ -208,27 +221,42 @@ module Url = struct
       let* `GET, id = Entity.Url.get_id u id in
       Kurl.ok (Duplicate_form id)
   | ["part"; "new-form"] ->
-      let* `GET = Kurl.Allow.(meths [get] u) in
+      let* `GET = Kurl.allow Http.Meth.[get] u in
       let cancel = Entity.Url.cancel_url_of_query (Kurl.Bare.query u) in
       Kurl.ok (New_form { cancel })
-  | ["part"; "select"] ->
-      let* `GET = Kurl.Allow.(meths [get] u) in
-      let q = Entity.Url.select_of_query (Kurl.Bare.query u) in
-      Kurl.ok (Select q)
-  | ["part"; "select"; "add"; id] ->
+  | ["part"; "input"; id] ->
       let* `GET, id = Entity.Url.get_id u id in
-      Kurl.ok (Select_add id)
+      let* for_list = Entity.Url.for_list_of_query (Kurl.Bare.query u) in
+      let* input_name = Entity.Url.input_name_of_query (Kurl.Bare.query u) in
+      Kurl.ok (Input (for_list, input_name, id))
+  | ["part"; "input-create"] ->
+      let* `GET = Kurl.allow Http.Meth.[get] u in
+      let* for_list = Entity.Url.for_list_of_query (Kurl.Bare.query u) in
+      let* input_name = Entity.Url.input_name_of_query (Kurl.Bare.query u) in
+      let* s = subject_of_query (Kurl.Bare.query u) in
+      Kurl.ok (Input_create (for_list, input_name, s))
+  | ["part"; "input-finder"] ->
+      let* `GET = Kurl.allow Http.Meth.[get] u in
+      let* for_list = Entity.Url.for_list_of_query (Kurl.Bare.query u) in
+      let* input_name = Entity.Url.input_name_of_query (Kurl.Bare.query u) in
+      Kurl.ok (Input_finder (for_list, input_name))
+  | ["part"; "input-finder-find"] ->
+      let* `GET = Kurl.allow Http.Meth.[get] u in
+      let* for_list = Entity.Url.for_list_of_query (Kurl.Bare.query u) in
+      let* input_name = Entity.Url.input_name_of_query (Kurl.Bare.query u) in
+      let q = Entity.Url.select_of_query (Kurl.Bare.query u) in
+      Kurl.ok (Input_finder_find (for_list, input_name, q))
   | ["action"; "duplicate"; id] ->
-      let* `POST, id = Entity.Url.meth_id u Kurl.Allow.[post] id in
+      let* `POST, id = Entity.Url.meth_id u Http.Meth.[post] id in
       Kurl.ok (Duplicate id)
   | ["action"; "replace"; id] ->
-      let* `POST, id = Entity.Url.meth_id u Kurl.Allow.[post] id in
+      let* `POST, id = Entity.Url.meth_id u Http.Meth.[post] id in
       Kurl.ok (Replace id)
   | [name; id] ->
       let* `GET, id = Entity.Url.get_id u id in
       Kurl.ok (Page (Some name, id))
   | [id] ->
-      let* meth, id = Entity.Url.meth_id u Kurl.Allow.[get; put; delete] id in
+      let* meth, id = Entity.Url.meth_id u Http.Meth.[get; put; delete] id in
       let url = match meth with
       | `GET -> Page (None, id) | `PUT -> Update id | `DELETE -> Delete id
       in
@@ -263,11 +291,27 @@ module Url = struct
       Kurl.bare `POST ["action"; "replace"; Res.Id.to_string id]
   | Replace_form id ->
       Kurl.bare `GET ["part"; "replace-form"; Res.Id.to_string id]
-  | Select sel ->
+  | Input (for_list, n, id) ->
+      let query = Http.Query.empty in
+      let query = Entity.Url.for_list_to_query ~init:query for_list in
+      let query = Entity.Url.input_name_to_query ~init:query n in
+      Kurl.bare `GET ["part"; "input"; Res.Id.to_string id] ~query
+  | Input_create (for_list, n, s) ->
+      let query = Http.Query.empty in
+      let query = Entity.Url.for_list_to_query ~init:query for_list in
+      let query = subject_to_query ~init:query s in
+      let query = Entity.Url.input_name_to_query ~init:query n in
+      Kurl.bare `GET ["part"; "input-create"] ~query
+  | Input_finder (for_list, n) ->
+      let query = Http.Query.empty in
+      let query = Entity.Url.for_list_to_query ~init:query for_list in
+      let query = Entity.Url.input_name_to_query ~init:query n in
+      Kurl.bare `GET ["part"; "input-finder"] ~query
+  | Input_finder_find (for_list, n, sel) ->
       let query = Entity.Url.select_to_query sel in
-      Kurl.bare `GET ["part"; "select"] ?query
-  | Select_add id ->
-      Kurl.bare `GET ["part"; "select"; "add"; Res.Id.to_string id]
+      let query = Entity.Url.for_list_to_query ?init:query for_list in
+      let query = Entity.Url.input_name_to_query ~init:query n in
+      Kurl.bare `GET ["part"; "input-finder-find"] ~query
   | Update id ->
       Kurl.bare `PUT [Res.Id.to_string id]
   | View_fields id  ->

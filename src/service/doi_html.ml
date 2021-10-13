@@ -11,7 +11,11 @@ let resolver =
   El.span ~at:At.[class' "doi-resolver-ui"]
     [ El.span [El.txt "Full text resolver:"]; El.sp;
       El.span ~at:At.[class' "doi-resolver"]
-        [El.label [El.txt Doi.default_resolver]]]
+        (* FIXME commenting that is better than anything
+           but we still glitch on page reloads on FF. Not sure
+           why this is the case, update should happen before
+           the DOM is shown. *)
+        [(* El.label [El.txt Doi.default_resolver] *)]]
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2021 University of Bern

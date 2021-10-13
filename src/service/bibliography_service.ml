@@ -10,7 +10,7 @@ let bibtex_file app file =
   let g = Webapp.page_gen app in
   let b = Page.Gen.bibliography g in
   match String.equal file (Bibliography.bibtex_filename b) with
-  | false -> Resp.not_found_404 ()
+  | false -> Http.Resp.not_found_404 ()
   | true ->
       let only_public = Ask.Bool.true' in
       let refs = Reference.list ~only_public in
@@ -19,8 +19,8 @@ let bibtex_file app file =
       in
       let now = Page.Gen.now g in
       match Export.bibtex_of_refs ~now b refs with
-      | Ok bib -> Ok (Resp.text Http.ok_200 bib)
-      | Error explain -> Resp.server_error_500 ~explain ()
+      | Ok bib -> Ok (Http.Resp.text Http.ok_200 bib)
+      | Error explain -> Http.Resp.server_error_500 ~explain ()
 
 let page app p =
   let page = p (Webapp.page_gen app) in

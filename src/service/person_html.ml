@@ -50,22 +50,24 @@ let confirm_delete g p ~ref_count =
     Hfrag.hc_delete uf confirm ~target (El.txt Uimsg.confirm_delete)
   in
   let bs = Hui.group ~align:`Justify ~dir:`H [delete_button; cancel_button] in
-  let msg =
-    let used_warn = match ref_count with
-    | 0 -> El.void
-    | n ->
-        let href = Hfrag.anchor_href Uimsg.references_anchor in
-        let refs = El.a ~at:[href] [El.txt_of Uimsg.these_n_references n] in
-        El.splice [El.txt Uimsg.it_will_be_removed_from; El.sp; refs;
-                   El.txt "."]
-    in
-    let really = El.txt_of Uimsg.really_delete_person (Person.names_fl p) in
-    El.p [really; El.sp; used_warn]
+  let really =
+    El.p [El.txt_of Uimsg.really_delete_person (Person.names_fl p)]
   in
-  let no_undo_warn = El.p [El.txt Uimsg.this_cannot_be_undone] in
-  let ui_msg = El.div ~at:[Hclass.ui_msg] [msg; no_undo_warn] in
+  let used = match ref_count with
+  | 0 -> El.void
+  | n ->
+      let href = Hfrag.anchor_href Uimsg.references_anchor in
+      let refs = El.a ~at:[href] [El.txt_of Uimsg.these_n_references n] in
+      let at = [Hclass.message; Hclass.info] in
+      El.p ~at [El.txt Uimsg.it_will_be_removed_from; El.sp; refs;
+                El.txt "."]
+  in
+  let no_undo_warn =
+    El.p ~at:[Hclass.message; Hclass.warn] [El.txt Uimsg.this_cannot_be_undone]
+  in
   let at = At.[Hclass.entity; Hclass.editing] in
-  El.section ~at [ h1_person uf ~self ~orcid:true p; ui_msg; bs; ]
+  El.section ~at
+    [ h1_person uf ~self ~orcid:true p; really; used; no_undo_warn; bs; ]
 
 let deleted g p =
   let person = Hfrag.uncapitalize Uimsg.person in
@@ -102,9 +104,9 @@ let edit_submit uf ~submit p =
   | `Duplicate -> Person.Url.v (Duplicate (Person.id p)), Uimsg.create_duplicate
   in
   let r = Hfrag.hc_request uf url and e = Hc.effect `Element in
-  let q = Hc.query "form:up" in
+  let q = Hc.query "form:up" and rescue = Hc.query_rescue true in
   let t = Hc.target ":up :up :up" in
-  let at = At.[t; r; e; q; Hui.Class.submit] in
+  let at = At.[t; r; e; q; rescue; Hui.Class.submit] in
   Hui.button ~at (El.txt label)
 
 let edit_cancel uf ~submit p = match submit with
@@ -148,25 +150,13 @@ let duplicate_form g p ~ref_count =
   | n ->
       let href = Hfrag.anchor_href Uimsg.references_anchor in
       let refs = El.a ~at:[href] [El.txt_of Uimsg.these_n_references n] in
-      let at = [Hclass.ui_msg] in
+      let at = [Hclass.message; Hclass.info] in
       El.p ~at [El.txt Uimsg.person_duplicate_will_be_added_to; El.sp;
                 refs; El.txt "."]
   in
   edit_person g ~self p ~submit:`Duplicate ~msg
 
-let input_person ~name ~persons =
-  (* XXX this doesn't scale. *)
-  let persons = List.sort Person.order_by_last_name persons in
-  let option p =
-    let at = [At.value (Res.Id.to_string (Person.id p))] in
-    El.option ~at [El.txt_of Person.names_lf p]
-  in
-  let at =
-    [Hclass.person; Hui.Class.input; Hclass.select; At.required; At.name name]
-  in
-  El.select ~at (List.map option persons)
-
-let replace_form g p ~ref_count ~persons =
+let replace_form g p ~ref_count =
   let self = Person.Url.page p in
   let uf = Page.Gen.url_fmt g in
   let buttons =
@@ -176,15 +166,18 @@ let replace_form g p ~ref_count ~persons =
   in
   let intro =
     let intro = Uimsg.replace_person_by (Person.names_fl p) in
-    El.p ~at:[Hclass.ui_msg] [El.txt intro]
+    El.p [El.txt intro]
   in
-  let input_person = input_person ~name:Entity.Url.replace_by ~persons in
+  let input_person =
+    let for_list = false and input_name = Entity.Url.replace_by in
+    Entity_html.person_input_finder uf ~for_list ~input_name ~role:None
+  in
   let msg = match ref_count with
   | 0 -> El.void
   | n ->
       let href = Hfrag.anchor_href Uimsg.references_anchor in
       let refs = El.a ~at:[href] [El.txt_of Uimsg.these_n_references n] in
-      let at = [Hclass.ui_msg] in
+      let at = [Hclass.message; Hclass.info] in
       El.p ~at [El.txt Uimsg.replacement_person_will_be_added_to; El.sp;
                 refs; El.txt "."]
   in
@@ -194,7 +187,8 @@ let replace_form g p ~ref_count ~persons =
     At.[Hclass.entity; Hclass.editing; r; e]
   in
   let h1 = h1_person uf ~self ~orcid:true p in
-  El.form ~at [h1; intro; El.div [input_person]; msg; buttons]
+  let replace = El.div ~at:[Hclass.replace] [input_person] in
+  El.form ~at [h1; intro; replace; msg; buttons]
 
 let view_note = Entity_html.view_note (module Person)
 let view_private_note = Entity_html.view_private_note (module Person)

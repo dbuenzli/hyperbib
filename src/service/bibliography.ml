@@ -42,7 +42,7 @@ module Url = struct
   | Help
   | Bibtex_file of string
 
-  let dec_page u v = let* `GET = Kurl.Allow.(meths [get] u) in Kurl.ok v
+  let dec_page u v = let* `GET = Kurl.allow Http.Meth.[get] u in Kurl.ok v
   let dec u = match Kurl.Bare.path u with
   | [""] -> dec_page u Home
   | ["help"] -> dec_page u Help

@@ -20,7 +20,7 @@ type reference = t
 
 val v :
   id:id -> abstract:string -> container:Container.id option ->
-  date:Date.partial option -> doi:Doi.t option -> isbn:string -> issue:string ->
+  date:Date.partial option -> doi:Doi.t -> isbn:string -> issue:string ->
   note:string -> pages:string -> private_note:string ->
   public:bool -> publisher:string -> title:string -> type':string ->
   volume:string -> t
@@ -28,10 +28,12 @@ val v :
 
 val row :
   id -> string -> Container.id option -> Date.year option ->
-  Date.md_partial option -> Doi.t option -> string -> string ->
-  string -> string -> string -> bool -> string -> string -> string ->
-  string -> t
+  Date.md_partial option -> Doi.t -> string -> string -> string -> string ->
+  string -> bool -> string -> string -> string -> string -> t
 (** [row] is {!v} unlabelled. *)
+
+val new' : t
+(** [new'] is a new reference. *)
 
 val id : t -> Id.t
 (** [id] is the reference's id. *)
@@ -42,7 +44,7 @@ val container : t -> Container.id option
 val date : t -> Date.partial option
 (** [date] is the publication date of the reference. *)
 
-val doi : t -> Doi.t option
+val doi : t -> Doi.t
 (** [doi] is the DOI name of the reference. *)
 
 val isbn : t -> string
@@ -105,7 +107,7 @@ val abstract' : (t, string) Col.t
 val container' : (t, Container.id option) Col.t
 val date_year' : (t, int option) Col.t
 val date_md' : (t, Date.md_partial option) Col.t
-val doi' : (t, Doi.t option) Col.t
+val doi' : (t, Doi.t) Col.t
 val isbn' : (t, string) Col.t
 val issue' : (t, string) Col.t
 val note' : (t, string) Col.t
@@ -117,6 +119,9 @@ val title' : (t, string) Col.t
 val type'' : (t, string) Col.t
 val volume' : (t, string) Col.t
 val table : t Table.t
+
+
+val col_values_for_date : Date.partial option -> t Col.value * t Col.value
 
 (** {2:relations Relations} *)
 
@@ -288,6 +293,9 @@ module Cites : sig
     (id, Bag.unordered) Bag.t -> (id * id, Bag.unordered) Bag.t
 
   val internal_row : (id * id) Ask.Row.t
+
+  val set_list :
+    reference:id -> dois:Doi.t list -> (Db.t -> (unit, Db.error) result)
 end
 
 (** {2:queries Queries} *)
@@ -326,6 +334,7 @@ val ids_citing_doi : Doi.t Ask.value -> (id, Bag.unordered) Bag.t
 val citing_doi : Doi.t Ask.value -> (t, Bag.unordered) Bag.t
 val dois_cited : id Ask.value -> (Doi.t, Bag.unordered) Bag.t
 val find_dois : (Doi.t, 'a) Bag.t -> (t, Bag.unordered) Bag.t
+val find_doi : Doi.t Ask.value -> (t, Bag.unordered) Bag.t
 
 (** {2:renderdata Render data} *)
 
@@ -354,6 +363,7 @@ module Url : sig
   | Duplicate_form of id
 *)
   | Edit_form of id
+  | Fill_in_form of Doi.t
   | Index
   | New_form of { cancel : Entity.Url.cancel_url }
   | Page of named_id

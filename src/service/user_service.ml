@@ -15,13 +15,13 @@ let auth_disabled = "auth disabled"
 
 let goto_or_service_path ~explain req ~goto =
   let goto = match goto with
-  | None -> Http.Path.encode (Req.service_path req)
+  | None -> Http.Path.encode (Http.Req.service_path req)
   | Some goto -> goto
   in
-  Resp.redirect ~explain Http.found_302 goto
+  Http.Resp.redirect ~explain Http.found_302 goto
 
 let authenticated ~explain app username ~goto = match goto with
-| Some goto -> Resp.redirect ~explain Http.found_302 goto
+| Some goto -> Http.Resp.redirect ~explain Http.found_302 goto
 | None -> Page.resp (User_html.page (Webapp.page_gen app) username)
 
 let authenticate app sess req ~goto = match Webapp.editable app with
@@ -29,8 +29,8 @@ let authenticate app sess req ~goto = match Webapp.editable app with
     Ok (sess, goto_or_service_path ~explain:auth_disabled req ~goto)
 | `With_login ->
     Session.for_error None @@
-    let* q = Req.to_query req in
-    let err e = Resp.v ~explain:e Http.server_error_500 in
+    let* q = Http.Req.to_query req in
+    let err e = Http.Resp.v ~explain:e Http.server_error_500 in
     let users_file = Hyperbib.Data_conf.users_file (Webapp.data_conf app) in
     let* users = Result.map_error err (User.load users_file) in
     let username = Http.Query.find User.Url.username_key q in
@@ -83,13 +83,13 @@ let view app sess req private' =
   Result.ok @@
   match sess with
   | None ->
-      None, Resp.empty ~headers Http.unauthorized_401
+      None, Http.Resp.empty ~headers Http.unauthorized_401
   | Some (Webapp.Session.Unsafe _) ->
       let sess = Some (Webapp.Session.Unsafe { private_view = private' }) in
-      sess, Resp.empty ~headers Http.ok_200
+      sess, Http.Resp.empty ~headers Http.ok_200
   | Some (Webapp.Session.User s) ->
       let sess = Some (Webapp.Session.User { s with private_view = private'}) in
-      sess, Resp.empty ~headers Http.ok_200
+      sess, Http.Resp.empty ~headers Http.ok_200
 
 let resp r app sess req = match (r : User.Url.t) with
 | Login { goto } -> login app sess req ~goto

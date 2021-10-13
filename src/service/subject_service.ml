@@ -9,9 +9,10 @@ open Result.Syntax
 (* Data lookups *)
 
 let select_subjects db ~only_public sel =
-  (* FIXME only_public, FIXME Ask escape % and _ in selector *)
+  (* FIXME only_public, FIXME Ask escape % and _ in selector, order by *)
   if String.trim sel = "" then Ok [] else
-  Db.list db (Subject.select_stmt sel)
+  let* ss = Db.list db (Subject.select_stmt sel) in
+  Ok (List.sort Subject.order_by_name ss)
 
 let get_subject = Entity_service.get_entity (module Subject)
 let get_subject_ref_count db s =
@@ -71,7 +72,7 @@ let delete =
 let duplicate app req src =
   let* () = Entity_service.check_edit_authorized app in
   Webapp.with_db_transaction' `Immediate app @@ fun db ->
-  let* q = Req.to_query req in
+  let* q = Http.Req.to_query req in
   let ignore = [Col.V Subject.id'] in
   let* vs = Hquery.careless_find_table_cols ~ignore Subject.table q in
   let* dst = Db.insert' db (Subject.create_cols ~ignore_id:true vs) in
@@ -79,7 +80,7 @@ let duplicate app req src =
   let* () = Db.exec' db (Subject.Label.copy_applications_stmt ~src ~dst) in
   let uf = Webapp.url_fmt app in
   let headers = Hfrag.hc_redirect uf (Subject.Url.v (Page (None, dst))) in
-  Ok (Resp.empty ~headers Http.ok_200)
+  Ok (Http.Resp.empty ~headers Http.ok_200)
 
 let duplicate_form app req id =
   let* () = Entity_service.check_edit_authorized app in
@@ -131,7 +132,7 @@ let page app ref =
 let replace app req this =
   let* () = Entity_service.check_edit_authorized app in
   Webapp.with_db_transaction' `Immediate app @@ fun db ->
-  let* q = Req.to_query req in
+  let* q = Http.Req.to_query req in
   let* by = Entity.Url.replace_by_of_query q in
   if this = by then view_fields_resp app db req this else
   let copy = Reference.Subject.copy_applications_stmt ~src:this ~dst:by in
@@ -139,7 +140,7 @@ let replace app req this =
   let* () = Db.exec' db (Subject.delete this) in
   let uf = Webapp.url_fmt app in
   let headers = Hfrag.hc_redirect uf (Subject.Url.v (Page (None, by))) in
-  Ok (Resp.empty ~headers Http.ok_200)
+  Ok (Http.Resp.empty ~headers Http.ok_200)
 
 let replace_form app req this =
   (* TODO what handle children *)
@@ -147,12 +148,29 @@ let replace_form app req this =
   Webapp.with_db_transaction' `Deferred app @@ fun db ->
   let* s = get_subject db this in
   let* ref_count = get_subject_ref_count db s in
-  let* subjects = Db.list' db (Subject.list_stmt ~only_public:false) in
-  let g = Webapp.page_gen app in
-  let replace = Subject_html.replace_form g s ~ref_count ~subjects in
+  let replace = Subject_html.replace_form (Webapp.page_gen app) s ~ref_count in
   Ok (Page.resp_part replace)
 
-let select app sel =
+let input app ~for_list ~input_name id =
+  let* () = Entity_service.check_edit_authorized app in
+  Webapp.with_db_transaction' `Deferred app @@ fun db ->
+  let uf = Page.Gen.url_fmt (Webapp.page_gen app) in
+  let* s = get_subject db id in
+  let finder = match for_list with
+  | true -> Entity_html.subject_input_finder uf ~for_list ~input_name
+  | false -> El.void
+  in
+  let s = Entity_html.subject_input uf ~for_list ~input_name s in
+  Ok (Page.resp_part (El.splice [s; finder]))
+
+let input_finder app ~for_list ~input_name =
+  let* () = Entity_service.check_edit_authorized app in
+  Webapp.with_db_transaction' `Deferred app @@ fun db ->
+  let uf = Page.Gen.url_fmt (Webapp.page_gen app) in
+  let finder = Entity_html.subject_input_finder uf ~for_list ~input_name in
+  Ok (Page.resp_part finder)
+
+let input_finder_find app ~for_list ~input_name sel =
   let* () = Entity_service.check_edit_authorized app in
   Webapp.with_db_transaction `Deferred app @@ fun db ->
   let g = Webapp.page_gen app in
@@ -160,23 +178,16 @@ let select app sel =
   let only_public = Page.Gen.only_public g in
   let* parents = Db.id_map db Subject.parents_stmt Subject.id in
   let* ss = select_subjects db ~only_public sel in
-  let sel = Entity_html.addable_subject_list uf ~parents ss in
-  Ok (Page.resp_part sel)
-
-let select_add app id =
-  let* () = Entity_service.check_edit_authorized app in
-  Webapp.with_db_transaction' `Deferred app @@ fun db ->
-  let g = Webapp.page_gen app in
-  let* s = get_subject db id in
-  let sel = Entity_html.add_subject (Page.Gen.url_fmt g) in
-  let s = Entity_html.removable_subject s in
-  let add = El.splice [s; sel] in
-  Ok (Page.resp_part add)
+  let finder =
+    Entity_html.subject_input_finder_results uf
+      ~for_list ~input_name ~parents ss
+  in
+  Ok (Page.resp_part finder)
 
 let update app req id =
   let* () = Entity_service.check_edit_authorized app in
   Webapp.with_db_transaction' `Immediate app @@ fun db ->
-  let* q = Req.to_query req in
+  let* q = Http.Req.to_query req in
   let ignore = [Col.V Subject.id'] in
   let* vs = Hquery.careless_find_table_cols ~ignore Subject.table q in
   let* () = Db.exec' db (Subject.update id vs) in
@@ -184,7 +195,7 @@ let update app req id =
   let g = Webapp.page_gen app in
   let uf = Page.Gen.url_fmt g in
   let* parent, refs = get_page_data db g s in
-  let self = Subject.Url.page s in (* assume comes from that page *)
+  let self = Subject.Url.page s in (* assume comes from that page FIXME *)
   let title = Subject_html.page_full_title g s in
   let html = Subject_html.view_full g s ~self ~parent refs in
   let headers = Hfrag.hc_page_location_update uf self ~title () in
@@ -206,8 +217,11 @@ let resp r app sess req = match (r : Subject.Url.t) with
 | Page ref -> page app ref
 | Replace id -> replace app req id
 | Replace_form id -> replace_form app req id
-| Select sel -> select app sel
-| Select_add id -> select_add app id
+| Input (for_list, input_name, id) -> input app ~for_list ~input_name id
+| Input_create (for_list, n, s) -> Http.Resp.not_implemented_501 ()
+| Input_finder (for_list, input_name) -> input_finder app ~for_list ~input_name
+| Input_finder_find (for_list, input_name, sel) ->
+    input_finder_find app ~for_list ~input_name sel
 | Update id -> update app req id
 | View_fields id  -> view_fields app req id
 
