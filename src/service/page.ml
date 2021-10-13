@@ -174,7 +174,7 @@ let user_view_ui ?(ui_ext = fun _ ~self:_ -> El.void) g uf ~self =
       let ui = [user_view; labels; ui_ext] in
       Hui.group ~at:At.[Hclass.edit_ui] ~dir:`V ui
 
-let ui ?ui_ext g ~menu_items ~self =
+let ui ?ui_ext g ~self =
   let uf = Gen.url_fmt g in
   let link_home =
     let home = Bibliography.Url.v Home in
@@ -212,7 +212,7 @@ let full_title g ~title =
 
 let html ?ui_ext g ~self ~title ~content =
   let title = full_title g ~title in
-  let body = body g ~ui:(ui ?ui_ext g ~self ~menu_items) ~content in
+  let body = body g ~ui:(ui ?ui_ext g ~self) ~content in
   { url = self; doc = frame g ~self ~title ~body; part = false }
 
 let html_part g ~self ~content = { url = self; doc = content; part = true }

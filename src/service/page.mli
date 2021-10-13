@@ -64,12 +64,6 @@ val body : Gen.t -> ui:El.html -> content:El.html -> El.html
 (** [body g ~ui ~content] has the basic HTML page structure of
     hyperbib pages. *)
 
-val ui :
-  ?ui_ext:(Gen.t -> self:Kurl.t -> El.html) ->
-  Gen.t -> menu_items:(string * Kurl.t) list -> self:Kurl.t -> El.html
-(** Can be removed once we get rid of have Legacy_html.page.
-    We can also remove the menu_items arg internally. *)
-
 (** {1:pages Pages} *)
 
 type t

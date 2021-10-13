@@ -118,7 +118,6 @@ let hyperbib =
       Fut.return (Fpath.Set.(singleton (stamp_ml b) |> add (stamp_mli b)))
     in
     Fpath.[`Dir (v "src");
-           `Dir (v "src/legacy");
            `Dir (v "src/service");
            `X stamp_mli_src;
            `Fut stamp]

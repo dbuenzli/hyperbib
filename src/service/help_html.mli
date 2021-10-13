@@ -7,7 +7,6 @@
 
 open Hyperbib.Std
 
-val page_html : Page.Gen.t -> El.html (* exported for Legacy. *)
 val page : Page.Gen.t -> Page.t
 
 (*---------------------------------------------------------------------------

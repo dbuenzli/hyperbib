@@ -17,21 +17,9 @@ let diagram () =
   Format.printf "%a@." (Ask_kit.Schema_diagram.pp_dot ()) Schema.tables;
   Hyperbib.Exit.ok
 
-let test conf =
-  let open Ask.Syntax in
-  let b =
-(*    let* p = Bag.table Person.table in *)
-    Bag.yield (Bag.row (fun x y -> x, y) $ Int.v 1 $ Text.v "hey")
-  in
-  let b = Sql.of_bag Row.Quick.(t2 (int "id") (text "name")) b in
-  ignore (Db.show_sql b);
-  Hyperbib.Exit.ok
-
 let db conf action data_conf = match action with
 | `Schema -> schema ()
 | `Diagram -> diagram ()
-| `Import_legacy -> Legacy.import data_conf
-| `Test -> test ()
 
 (* Command line interface *)
 
@@ -45,8 +33,7 @@ let man = [
   `P "The $(tname) manages the app database."; ]
 
 let action =
-  let action = [ "schema", `Schema; "diagram", `Diagram;
-                 "import-legacy", `Import_legacy; "test", `Test; ] in
+  let action = [ "schema", `Schema; "diagram", `Diagram ] in
   let doc =
     let alts = Arg.doc_alts_enum action in
     Fmt.str "The action to perform. $(docv) must be one of %s." alts

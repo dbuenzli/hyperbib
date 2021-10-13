@@ -27,7 +27,6 @@ let url_fmt ~init:uf =
      to derive a self from referer rather than assume like is now in many
      cases for fragments that the request comes from a specific page. *)
   let uf = Kurl.Fmt.bind [""] Page.error_url_kind uf in
-  let uf = Kurl.Fmt.bind ["legacy"] Legacy.Page_url.kind uf in (* FIXME del *)
   uf
 
 (* FIXME still quite unhappy what goes where betwen

@@ -8,7 +8,7 @@ open Cmdliner
 
 let cmds =
   [ Cmd_add_user.cmd; Cmd_db.cmd; Cmd_html.cmd; Cmd_import.cmd;
-    Legacy_cmd.cmd; Cmd_serve.cmd; ]
+    Cmd_serve.cmd; ]
 
 let hyperbib =
   let doc = "Annotates bibliographies" in
