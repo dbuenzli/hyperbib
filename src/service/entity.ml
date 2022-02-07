@@ -119,7 +119,8 @@ module Publicable_queries (E : PUBLICABLE) :
 
   let list_stmt =
     let f =
-      Sql.Bag.(func @@ bool @-> ret (Table.row E.table) (fun b -> list b))
+      Sql.Bag.(func @@ bool @-> ret (Table.row E.table)
+                         (fun b -> list ~only_public:b))
     in
     fun ~only_public -> f only_public
 end

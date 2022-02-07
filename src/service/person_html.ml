@@ -226,7 +226,7 @@ let page_404 g ~self =
   Page.html_404 ~ui_ext g ~kind:Uimsg.person ~self ~consult
 
 let page_title s = Hfrag.title ~sub:(Person.names_fl s) ~sup:Uimsg.person
-let page_full_title g s = Page.full_title g (page_title s)
+let page_full_title g s = Page.full_title g ~title:(page_title s)
 let page g p refs =
   let self = Person.Url.page p in
   let title = page_title p in

@@ -211,7 +211,7 @@ let page_404 g ~self =
   Page.html_404 ~ui_ext g ~kind:Uimsg.container ~self ~consult
 
 let page_title c = Hfrag.title ~sub:(Container.title c) ~sup:Uimsg.container
-let page_full_title g s = Page.full_title g (page_title s)
+let page_full_title g s = Page.full_title g ~title:(page_title s)
 let page g c refs =
   let self = Container.Url.page c in
   let title = page_title c in

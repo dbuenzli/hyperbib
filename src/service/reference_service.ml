@@ -233,7 +233,7 @@ let create app req = (* create and update are very similar factor out a bit. *)
   let cites = Hquery.find_cites q in
   let* vs = maybe_create_container db vs q in
   let* id = Db.insert' db (Reference.create_cols ~ignore_id:true vs) in
-  let* () = Reference.Subject.set_list id sids db |> Db.error_resp in
+  let* () = Reference.Subject.set_list ~reference:id sids db |> Db.error_resp in
   let* () =
     Reference.Contributor.set_list ~reference:id ~authors:aids ~editors:eids db
     |> Db.error_resp
@@ -266,7 +266,7 @@ let update app req id =
   let* aids, eids = authors_editors_maybe_create db q in
   let* vs = maybe_create_container db vs q in
   let* () = Db.exec' db (Reference.update id vs) in
-  let* () = Reference.Subject.set_list id sids db |> Db.error_resp in
+  let* () = Reference.Subject.set_list ~reference:id sids db |> Db.error_resp in
   let* () =
     Reference.Contributor.set_list ~reference:id ~authors:aids ~editors:eids db
     |> Db.error_resp

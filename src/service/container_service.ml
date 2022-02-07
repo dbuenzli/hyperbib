@@ -231,7 +231,7 @@ let resp r app sess req = match (r : Container.Url.t) with
 | Replace id -> replace app req id
 | Replace_form id -> replace_form app req id
 | Input (input_name, id) -> input app ~input_name id
-| Input_create (n, c) -> input_create app n c
+| Input_create (input_name, c) -> input_create app ~input_name c
 | Input_finder input_name -> input_finder app ~input_name
 | Input_finder_find (input_name, sel) -> input_finder_find app ~input_name sel
 | Update id -> update app req id

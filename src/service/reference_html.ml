@@ -476,7 +476,7 @@ let deleted g s =
   El.section [ El.h1 [El.txt Uimsg.deleted]; El.p [msg]; El.p [goto]]
 
 let page_title r = Hfrag.title ~sub:(Reference.title r) ~sup:Uimsg.reference
-let page_full_title g r = Page.full_title g (page_title r)
+let page_full_title g r = Page.full_title g ~title:(page_title r)
 let page g r ~render_data ~cites ~cited_by =
   let self = Reference.Url.page r in
   let title = page_title r in

@@ -22,7 +22,7 @@ let goto_or_service_path ~explain req ~goto =
 
 let authenticated ~explain app username ~goto = match goto with
 | Some goto -> Http.Resp.redirect ~explain Http.found_302 goto
-| None -> Page.resp (User_html.page (Webapp.page_gen app) username)
+| None -> Page.resp (User_html.page (Webapp.page_gen app) ~username)
 
 let authenticate app sess req ~goto = match Webapp.editable app with
 | `No | `Unsafe ->

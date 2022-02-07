@@ -222,7 +222,7 @@ let deleted g s =
   El.section [ El.h1 [El.txt Uimsg.deleted]; El.p [msg]; El.p [goto]]
 
 let page_title s = Hfrag.title ~sub:(Subject.name s) ~sup:Uimsg.subject
-let page_full_title g s = Page.full_title g (page_title s)
+let page_full_title g s = Page.full_title g ~title:(page_title s)
 let page g s ~parent refs =
   let self = Subject.Url.page s in
   let title = page_title s in
