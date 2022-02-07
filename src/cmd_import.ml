@@ -30,8 +30,7 @@ let db conf action data_conf reset = match action with
 open Cmdliner
 
 let doc = "Import data in the database"
-let sdocs = Manpage.s_common_options
-let man_xrefs = [ `Main ]
+let exits = Hyperbib.Exit.Info.base_cmd
 let man = [
   `S Manpage.s_description;
   `P "The $(tname) imports data in the database."; ]
@@ -50,9 +49,10 @@ let action =
   Arg.(required & pos 0 (some action) None & info [] ~doc ~docv:"ACTION")
 
 let cmd =
-  Term.(const db $ Hyperbib.Cli.conf $ action $
-        Hyperbib.Cli.data_conf ~pos:1 $ reset),
-  Term.info "import" ~doc ~sdocs ~man ~man_xrefs
+  Cmd.v (Cmd.info "import" ~doc ~exits ~man)
+    Term.(const db $ Hyperbib.Cli.conf $ action $
+          Hyperbib.Cli.data_conf ~pos:1 $ reset)
+
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2021 University of Bern

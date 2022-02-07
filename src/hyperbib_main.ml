@@ -12,14 +12,16 @@ let cmds =
 
 let hyperbib =
   let doc = "Annotates bibliographies" in
-  let main = Term.(ret (const (`Help (`Auto, None)))) in
-  main, Term.info "hyperbib" ~version:Stamp.version ~doc
+  let exits = Hyperbib.Exit.Info.base_cmd in
+  let default = Term.(ret (const (`Help (`Auto, None)))) in
+  let info = Cmd.info "hyperbib" ~version:Stamp.version ~doc ~exits in
+  Cmd.group info ~default cmds
 
 let main () =
   B00_cli.Exit.exit ~exec_error:Hyperbib.Exit.some_error @@
   B00_cli.Exit.of_eval_result @@
   Log.time (fun _ m -> m "total time hyperbib %s" Stamp.version) @@ fun () ->
-  Term.eval_choice hyperbib cmds
+  Cmd.eval_value hyperbib
 
 let () = if !Sys.interactive then () else main ()
 

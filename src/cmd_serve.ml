@@ -50,8 +50,7 @@ let serve
 open Cmdliner
 
 let doc = "Serve the app over HTTP/1.1"
-let sdocs = Manpage.s_common_options
-let man_xrefs = [ `Main ]
+let exits = Hyperbib.Exit.Info.base_cmd
 let man = [
   `S Manpage.s_description;
   `P "The $(tname) serves the application."; ]
@@ -107,11 +106,11 @@ let insecure_cookie =
   Arg.(value & flag & info ["insecure-cookie"] ~doc)
 
 let cmd =
+  Cmd.v (Cmd.info "serve" ~doc ~exits ~man)
   Term.(const serve $ Hyperbib.Cli.conf $ Hyperbib.Cli.data_conf ~pos:0 $
         Webs_cli.listener () $ Webs_cli.service_path () $
         Webs_cli.max_connections () $ backup_every_s $ editable $
-        insecure_cookie $ testing),
-  Term.info "serve" ~doc ~sdocs ~man ~man_xrefs
+        insecure_cookie $ testing)
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2021 University of Bern

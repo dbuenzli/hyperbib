@@ -27,9 +27,7 @@ let add_user conf data_conf name password force =
 open Cmdliner
 
 let doc = "Add an application user"
-let sdocs = Manpage.s_common_options
 let exits = Hyperbib.Exit.Info.base_cmd
-let man_xrefs = [ `Main; ]
 let man = [
   `S Manpage.s_description;
   `P "The $(tname) command adds an application user."; ]
@@ -47,9 +45,10 @@ let force =
   Arg.(value & flag & info ["f";"force"] ~doc)
 
 let cmd =
-  Term.(const add_user $ Hyperbib.Cli.conf $ Hyperbib.Cli.data_conf ~pos:0 $
-        username $ pass $ force),
-  Term.info "add-user" ~doc ~sdocs ~exits ~man ~man_xrefs
+  Cmd.v (Cmd.info "add-user" ~doc ~exits ~man)
+    Term.(const add_user $ Hyperbib.Cli.conf $ Hyperbib.Cli.data_conf ~pos:0 $
+          username $ pass $ force)
+
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2021 University of Bern

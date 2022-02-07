@@ -7,7 +7,7 @@
 
 open Hyperbib.Std
 
-val cmd : Os.Exit.t Cmdliner.Term.t * Cmdliner.Term.info
+val cmd : Os.Exit.t Cmdliner.Cmd.t
 (** [cmd] is the command line for [db]. *)
 
 (*---------------------------------------------------------------------------

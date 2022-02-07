@@ -26,8 +26,7 @@ let db conf action data_conf = match action with
 open Cmdliner
 
 let doc = "Manage the database"
-let sdocs = Manpage.s_common_options
-let man_xrefs = [ `Main ]
+let exits = Hyperbib.Exit.Info.base_cmd
 let man = [
   `S Manpage.s_description;
   `P "The $(tname) manages the app database."; ]
@@ -42,8 +41,9 @@ let action =
   Arg.(required & pos 0 (some action) None & info [] ~doc ~docv:"ACTION")
 
 let cmd =
-  Term.(const db $ Hyperbib.Cli.conf $ action $ Hyperbib.Cli.data_conf ~pos:1),
-  Term.info "db" ~doc ~sdocs ~man ~man_xrefs
+  Cmd.v (Cmd.info "db" ~doc ~exits ~man)
+    Term.(const db $ Hyperbib.Cli.conf $ action $
+          Hyperbib.Cli.data_conf ~pos:1)
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2021 University of Bern

@@ -35,8 +35,7 @@ let html conf data_conf inside_dir file_browsable =
 open Cmdliner
 
 let doc = "Static HTML generation"
-let sdocs = Manpage.s_common_options
-let man_xrefs = [ `Main ]
+let exits = Hyperbib.Exit.Info.base_cmd
 let man = [
   `S Manpage.s_description;
   `P "The $(tname) command extracts the public bibliography as a set of \
@@ -56,9 +55,10 @@ let file_browsable =
   Arg.(value & flag & info ["file-browsable"] ~doc)
 
 let cmd =
-  Term.(const html $ Hyperbib.Cli.conf $ Hyperbib.Cli.data_conf ~pos:0 $
-        dest $ file_browsable),
-  Term.info "html" ~doc ~sdocs ~man ~man_xrefs
+  Cmd.v (Cmd.info "html" ~doc ~exits ~man)
+    Term.(const html $ Hyperbib.Cli.conf $ Hyperbib.Cli.data_conf ~pos:0 $
+          dest $ file_browsable)
+
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2021 University of Bern

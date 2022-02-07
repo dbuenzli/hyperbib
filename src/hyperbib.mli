@@ -85,7 +85,7 @@ module Exit : sig
 
   (** Cmdliner documentation. *)
   module Info : sig
-    val base_cmd : Cmdliner.Term.exit_info list
+    val base_cmd : Cmdliner.Cmd.Exit.info list
   end
 end
 

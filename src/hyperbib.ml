@@ -78,11 +78,11 @@ module Exit = struct
   let conf_error = Os.Exit.Code 122
   let some_error = Os.Exit.Code 123
   module Info = struct
-    let e c doc = Cmdliner.Term.exit_info (Os.Exit.get_code c) ~doc
+    let e c doc = Cmdliner.Cmd.Exit.info (Os.Exit.get_code c) ~doc
     let user_exists = e user_exists "on adding an exisiting user."
     let conf_error = e conf_error "on configuration error."
     let some_error = e some_error "on indiscriminate errors reported on stderr."
-    let base_cmd = conf_error :: some_error :: Cmdliner.Term.default_exits
+    let base_cmd = conf_error :: some_error :: Cmdliner.Cmd.Exit.defaults
   end
 end
 
@@ -130,11 +130,11 @@ module Cli = struct
   let docs = Manpage.s_common_options
   let conf =
     let log_level =
-      let env = Arg.env_var "HYPERBIB_VERBOSITY" in
+      let env = Cmd.Env.info "HYPERBIB_VERBOSITY" in
       B00_cli.B00_std.log_level ~docs ~env ()
     in
     let tty_cap =
-      let env = Arg.env_var "HYPERBIB_COLOR" in
+      let env = Cmd.Env.info "HYPERBIB_COLOR" in
       B00_cli.B00_std.tty_cap ~docs ~env ()
     in
     Term.term_result Term.(const Conf.with_cli $ log_level $ tty_cap)
