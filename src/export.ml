@@ -159,6 +159,50 @@ let static_html ~inside_dir data_conf db g =
   Static_html.write_data ~dir:inside_dir data_conf db g
 
 module Bibtex = struct
+  type type' =
+  [ `Article | `Book | `Booklet
+  | `Conference (* Use inproceedings *) | `Inbook | `Incollection
+  | `Inproceedings | `Manual | `Mastersthesis | `Misc | `Phdthesis
+  | `Proceedings | `Techreport | `Unpublished ]
+
+  let type_to_string = function
+  | `Article -> "article" | `Book -> "book" | `Booklet -> "booklet"
+  | `Conference -> "conference" | `Inbook -> "inbook"
+  | `Incollection -> "incollection" | `Inproceedings -> "inproceedings"
+  | `Manual -> "manual" | `Mastersthesis -> "mastersthesis"
+  | `Misc -> "misc" | `Phdthesis -> "phdthesis" | `Proceedings -> "proceedings"
+  | `Techreport -> "techreport" | `Unpublished -> "unpublished"
+
+ let type_of_crossref_type :
+   string -> [ `Article | `Book | `Inproceedings | `Phdthesis | `Misc ] =
+   function
+   | "book" -> `Book
+   | "book-chapter" | "book-part" | "book-section" ->
+       (* This seems more adapted than `Inbook if you have a chap. title. *)
+       `Inproceedings
+   | "book-series" | "book-set" | "book-track" -> `Book
+   | "component" -> `Article
+   | "dataset" -> `Misc
+   | "dissertation" -> `Phdthesis
+   | "edited-book" -> `Book
+   | "journal" -> `Book
+   | "journal-article" -> `Article
+   | "journal-issue" -> `Book
+   | "journal-volume" -> `Book
+   | "monograph" -> `Book
+   | "other" -> `Misc
+   | "peer-review" -> `Misc
+   | "posted-content" -> `Article (* is that pre-prints (?) *)
+   | "proceedings" -> `Book
+   | "proceedings-article" -> `Inproceedings
+   | "proceedings-series" -> `Book
+   | "reference-book" -> `Book
+   | "reference-entry" -> `Book
+   | "report" -> `Book
+   | "report-series" -> `Book
+   | "standard" -> `Book
+   | "standard-series" -> `Book
+   | _ -> `Misc
 
   let lowercase = String.Ascii.lowercase
 
@@ -173,7 +217,7 @@ module Bibtex = struct
   let cite_key_part_of_author rs r =
     let mangle n = (* TODO improve *)
       if Char.Ascii.is_white n then '-' else
-      if not (Char.Ascii.is_print n) then 'X' else n
+      if not (Char.Ascii.is_alphanum n) then 'X' else n
     in
     let name = match Id.Map.get_list (Reference.id r) rs.Reference.authors with
     | [] -> "Anonymous"
@@ -230,12 +274,20 @@ module Bibtex = struct
     | [] -> ""
     | authors -> String.concat " and " (List.map person_to_bib authors)
 
+  let ref_editor rs r =
+    match Id.Map.get_list (Reference.id r) rs.Reference.editors with
+    | [] -> ""
+    | editors -> String.concat " and " (List.map person_to_bib editors)
+
   let ref_keywords rs r =
     match Id.Map.get_list (Reference.id r) rs.Reference.subjects with
     | [] -> "" | ss -> String.concat ", " (List.map Subject.name ss)
 
   let ref_year r = match Reference.date r with
-  | None -> "" | Some (y, _) -> Fmt.str "%d" y
+  | Some (y, _) -> Fmt.str "%d" y | None -> ""
+
+  let ref_month r = match Reference.date r with
+  | Some (_, (Some (m, _))) -> Fmt.str "%d" m | _ -> ""
 
   let ref_to_bib rs r =
     let add_if_non_empty k v m = if v = "" then m else String.Map.add k v m in
@@ -243,26 +295,40 @@ module Bibtex = struct
       let find_container c = Id.Map.find_opt c rs.Reference.containers in
       Option.bind (Reference.container r) find_container
     in
-    let cite_key = ref_to_cite_key rs r in
-    let type' = (* FIXME Reference.type' *) "article" in
-    let journal =
+    let container_title =
       Option.value ~default:"" (Option.map Container.title container)
     in
-    (* FIXME these fields should depend on type' e.g. handle book. *)
-    let fields =
+    let cite_key = ref_to_cite_key rs r in
+    let base_fields =
       String.Map.empty
-      |> add_if_non_empty "annote" (Reference.note r)
+      |> add_if_non_empty "note" (Reference.note r)
       |> add_if_non_empty "author" (ref_author rs r)
-      |> add_if_non_empty "journal" journal
       |> add_if_non_empty "doi" (Reference.doi r)
+      |> add_if_non_empty "editor" (ref_editor rs r)
       |> add_if_non_empty "keywords" (ref_keywords rs r)
       |> add_if_non_empty "number" (Reference.issue r)
       |> add_if_non_empty "pages" (Reference.pages r)
+      |> add_if_non_empty "publisher" (Reference.publisher r)
       |> add_if_non_empty "title" (Reference.title r)
       |> add_if_non_empty "volume" (Reference.volume r)
       |> add_if_non_empty "year" (ref_year r)
+      |> add_if_non_empty "month" (ref_month r)
     in
-    Bibtex.v ~type' ~cite_key ~fields ()
+    let type', fields =
+      let t = type_of_crossref_type (Reference.type' r) in
+      match t with
+      | `Article ->
+          t, base_fields |> String.Map.add "journal" container_title
+      | `Book ->
+          t, base_fields |> add_if_non_empty "series" container_title
+      | `Inproceedings ->
+          t, base_fields |> add_if_non_empty "booktitle" container_title
+      | `Phdthesis ->
+          t, base_fields
+      | `Misc ->
+          t, base_fields
+    in
+    Bibtex.v ~type':(type_to_string type') ~cite_key ~fields ()
 
   let of_refs ~now bib_conf rrender_data =
     let t = Bibliography.project_title bib_conf in
