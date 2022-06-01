@@ -173,6 +173,7 @@ let default =
         "ocamlfind", {|build|};
         "b0", {|build|};
         "cmdliner", {|>= "1.0.4"|};
+        "ptime", {||};
         "webs", {||};
         "hc", {||};
         "ask", {||};
@@ -182,7 +183,7 @@ let default =
     |> add B0_opam.Meta.pin_depends
       ["hc.~dev", "git+https://erratique.ch/repos/hc.git#master";
        "ask.~dev", "git+https://erratique.ch/repos/ask.git#master";
-       "webs.~dev", "git+https://erratique.ch/repos/webs.git#masterx"]
+       "webs.~dev", "git+https://erratique.ch/repos/webs.git#master"]
     |> add B0_opam.Meta.build {|[["b0"]]|}
     |> tag B0_opam.tag
   in
