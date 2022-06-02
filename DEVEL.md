@@ -1,4 +1,3 @@
-
 # Testing 
 
 Given a test database in `app/` the following invocation makes it easy 

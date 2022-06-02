@@ -17,6 +17,7 @@ val doi : At.t
 val edit_pages : At.t
 val edit_ui : At.t
 val editing : At.t
+val editors : At.t
 val entity : At.t
 val entity_kind : At.t
 val entity_menu : At.t

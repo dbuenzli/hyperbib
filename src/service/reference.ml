@@ -83,6 +83,12 @@ module Reference = struct
 
   (* Derived  *)
 
+  let is_monograph_part r = match r.type' with
+  (* Consider moving away from crossrefs types ? *)
+  | "book-chapter" | "book-part" | "book-section"
+  | "proceedings-article" -> true
+  | _ -> false
+
   let date_year r = Option.map fst r.date
   let date_md r = Option.join (Option.map snd r.date)
   let year r = match r.date with None -> 0 | Some (y, _) -> y

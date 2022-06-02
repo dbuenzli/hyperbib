@@ -284,6 +284,16 @@ let view_title ~linkify uf ~self r =
   let href = Kurl.Fmt.rel_url uf ~src:self ~dst:(Reference.Url.page r) in
   Hfrag.link ~at ~href title
 
+let view_persons ~class' uf ~self ps r = match ps with
+| [] -> El.void
+| ps ->
+    let persons = List.map (Hfrag.link_person uf ~self) ps in
+    let persons = El.splice ~sep:(El.txt ", ") persons in
+    El.splice [ El.span ~at:[class'] [persons]; El.sp ]
+
+let view_authors = view_persons ~class':Hclass.authors
+let view_editors = view_persons ~class':Hclass.editors
+
 let view_container_loc r =
   let vi = match Reference.(volume r, issue r) with
   | "", "" -> "" | n, "" | "", n -> n  | n, i -> Fmt.str "%s(%s)" n i
@@ -293,18 +303,37 @@ let view_container_loc r =
   | "", v | v, "" -> Fmt.str "%s" v
   | vi, pp -> Fmt.str "%s, %s" vi pp
 
-let view_container ~details uf ~self r c =
+let view_container ~details uf ~self r rd c =
   let loc = if not details then "" else view_container_loc r in
   let loc_at = At.[Hclass.container_loc; viz r] in
   match c, loc with
   | None, "" -> El.void
   | None, d -> El.span ~at:loc_at [El.txt_of (Fmt.str "%s. ") d]
-  | Some c, ""  ->
-      El.span ~at:[viz r] [Hfrag.link_container uf ~self c; El.txt ". "]
-  | Some c, d ->
-      El.span ~at:[viz r]
-        [ Hfrag.link_container uf ~self c;
-          El.span ~at:loc_at [El.txt_of (Fmt.str ", %s. ") d]]
+  | Some c, loc  ->
+      let eds = match Reference.is_monograph_part r with
+      | false -> El.void
+      | true ->
+          let in' = El.txt (Fmt.str "%s " Uimsg.in') in
+          let editors = find_editors r rd in
+          let eds = view_editors uf ~self editors r in
+          let at = [Hclass.person; Hclass.value] (* Humpf… *) in
+          match editors with
+          | [] -> in'
+          | [_] ->
+              let abbr = El.txt (Fmt.str " (%s) " Uimsg.editor_abbr) in
+              El.splice [in'; eds; El.span ~at [abbr]]
+          | _ ->
+              let abbr = El.txt (Fmt.str " (%s) " Uimsg.editors_abbr) in
+              El.splice [in'; eds; El.span ~at [abbr]]
+      in
+      let title = match loc with
+      | "" -> El.span ~at:[viz r] [Hfrag.link_container uf ~self c; El.txt ". "]
+      | loc ->
+          El.span ~at:[viz r]
+            [ Hfrag.link_container uf ~self c;
+              El.span ~at:loc_at [El.txt_of (Fmt.str ", %s. ") loc]]
+      in
+      El.splice [eds; title]
 
 let view_publisher r = match Reference.publisher r with
 | "" -> El.void | p -> El.txt_of (Fmt.str " %s. ") p
@@ -312,13 +341,6 @@ let view_publisher r = match Reference.publisher r with
 let view_year uf ~self r = match Reference.year r with
 | 0 -> El.void
 | n -> El.splice [Hfrag.link_year uf ~self (Reference.year r); El.sp]
-
-let view_authors uf ~self ps r = match ps with
-| [] -> El.void
-| ps ->
-    let persons = List.map (Hfrag.link_person uf ~self) ps in
-    let persons = El.splice ~sep:(El.txt ", ") persons in
-    El.splice [ El.span ~at:[Hclass.authors] [persons]; El.sp ]
 
 let view_subjects uf ~self r = function
 | [] -> El.void
@@ -382,7 +404,7 @@ let list_item g ~self r rs =
   let anchor_id = Fmt.str "%d" (Reference.id r) in
   let title = view_title ~linkify:true uf ~self r in
   let container = find_container r rs in
-  let container = view_container ~details:false uf ~self r container in
+  let container = view_container ~details:false uf ~self r rs container in
   let year = view_year uf ~self r in
   let authors = find_authors r rs in
   let authors = view_authors uf ~self authors r in
@@ -424,20 +446,20 @@ let edit_ui g uf r =
   let left = Hui.group ~dir:`H [edit] in
   Hui.group ~at:[Hclass.entity_ui] ~align:`Justify ~dir:`H [left; del]
 
-let view_fields g ~self r ~render_data =
+let view_fields g ~self r ~render_data:rd =
   let uf = Page.Gen.url_fmt g in
   let h1 = h1_reference uf ~self r in
   let title = view_title ~linkify:false uf ~self r in
-  let container = find_container r render_data in
-  let container = view_container ~details:false uf ~self r container in
+  let container = find_container r rd in
+  let container = view_container ~details:false uf ~self r rd container in
 (*  let pub = view_publisher r in *)
-  let authors = find_authors r render_data in
+  let authors = find_authors r rd in
   let authors = view_authors uf ~self authors r in
   let year = view_year uf ~self r in
   let ref =
     El.p ~at:[Hclass.ref] [ title; El.sp; container; (* pub; *) year; authors]
   in
-  let subjects = find_subjects r render_data in
+  let subjects = find_subjects r rd in
   let subjects = view_subjects uf ~self r subjects in
   let more_details = view_more_details ~notes:false g ~self r in
   let ref =

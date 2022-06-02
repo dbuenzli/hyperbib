@@ -102,7 +102,6 @@ let write_static_file_stamp b =
   B00.Memo.file_ready m mli;
   B00.Memo.copy m ~src:mli (stamp_mli b)
 
-
 let hyperbib =
   let doc = "hyperbib tool" in
   let requires =

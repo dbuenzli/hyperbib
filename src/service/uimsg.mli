@@ -51,7 +51,9 @@ val doi_error : string
 val duplicate : string
 val edit : string
 val editor : string
+val editor_abbr : string
 val editors : string
+val editors_abbr : string
 val email : string
 val error : string
 val fill_in_form_with_doi : string
@@ -65,6 +67,7 @@ val go_back_to_bib : string
 val goto_kind_index : string -> string
 val help : string
 val here : string
+val in' : string
 val isbn : string
 val issn : string
 val issue : string
