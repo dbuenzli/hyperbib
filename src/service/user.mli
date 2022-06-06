@@ -8,6 +8,13 @@
 open Hyperbib.Std
 open B00_serialk_json
 
+(** 1:user User} *)
+
+type t
+
+val name : t -> string
+(** [name u] is the name of [u]. *)
+
 (** {1:users Users} *)
 
 type s
@@ -30,6 +37,9 @@ val add : name:string -> password:string -> s -> s
 val check : name:string -> password:string -> s -> bool
 (** [check ~name ~password us] is [true] iff [name] exists and its
     password matches [pass]. *)
+
+val fold : (t -> 'a -> 'a) -> s -> 'a -> 'a
+(** [fold f us] folds over the users of [us]. *)
 
 (** {1:serial Serialiazing} *)
 
@@ -59,7 +69,6 @@ val load : Fpath.t -> (s, string) result
 
 val save : Fpath.t -> s -> (unit, string) result
 (** [save file us] saves users us to the JSON file [file]. *)
-
 
 (** {1:caps Capabilities} *)
 

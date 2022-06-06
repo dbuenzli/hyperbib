@@ -34,6 +34,7 @@ let make_password pass =
 
 type t = { name : string; password : password; }
 let user name password = { name; password }
+let name u = u.name
 
 type s = t String.Map.t
 let empty = String.Map.empty
@@ -53,6 +54,8 @@ let check ~name ~password:pass us = match String.Map.find_opt name us with
     let salt = u.password.salt in
     let k = Webs_kit.Sha_256.pbkdf2_hmac ~key_len ~iterations ~pass ~salt () in
     Webs_kit.Sha_256.equal_key k u.password.key
+
+let fold f us acc = String.Map.fold (fun _ u -> f u) us acc
 
 (* Serialising
 

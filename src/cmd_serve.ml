@@ -21,7 +21,6 @@ let log_startup c app =
   if (Webapp.editable app = `Unsafe) then
     Log.warn (fun m -> m "Anyone can edit the bibliography, no login required.")
 
-
 let log_shutdown () =
   Log.app (fun m -> m "Everyone has been served! Goodbye.")
 
@@ -49,11 +48,11 @@ let serve
 
 open Cmdliner
 
-let doc = "Serve the app over HTTP/1.1"
+let doc = "Serve the web application over HTTP/1.1"
 let exits = Hyperbib.Exit.Info.base_cmd
 let man = [
   `S Manpage.s_description;
-  `P "The $(tname) serves the application."; ]
+  `P "The $(tname) serves the web application."; ]
 
 let backup_every_s =
   let backup_every_s =
@@ -107,7 +106,7 @@ let insecure_cookie =
 
 let cmd =
   Cmd.v (Cmd.info "serve" ~doc ~exits ~man)
-  Term.(const serve $ Hyperbib.Cli.conf $ Hyperbib.Cli.data_conf ~pos:0 $
+  Term.(const serve $ Hyperbib.Cli.conf $ Hyperbib.Cli.data_conf $
         Webs_cli.listener () $ Webs_cli.service_path () $
         Webs_cli.max_connections () $ backup_every_s $ editable $
         insecure_cookie $ testing)

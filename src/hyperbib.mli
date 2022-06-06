@@ -163,10 +163,9 @@ module Cli : sig
       Term evaluation sets up logging level and color output
       by side effect. *)
 
-  val data_conf : pos:int -> Data_conf.t Cmdliner.Term.t
-  (** [app_conf ~pos] is a cmdliner term for application
-      configuration. [pos] indicates the mandatory positional argument
-      for {!Data_conf.app_dir} argument. *)
+  val data_conf : Data_conf.t Cmdliner.Term.t
+  (** [app_conf] is a cmdliner term for application
+      configuration. *)
 end
 
 (*---------------------------------------------------------------------------

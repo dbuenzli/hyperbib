@@ -51,7 +51,7 @@ let action =
 let cmd =
   Cmd.v (Cmd.info "import" ~doc ~exits ~man)
     Term.(const db $ Hyperbib.Cli.conf $ action $
-          Hyperbib.Cli.data_conf ~pos:1 $ reset)
+          Hyperbib.Cli.data_conf $ reset)
 
 
 (*---------------------------------------------------------------------------

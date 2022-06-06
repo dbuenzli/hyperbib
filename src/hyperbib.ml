@@ -120,6 +120,20 @@ module Data_conf = struct
 
   let with_cli app_dir =
     Result.map_error (fun e -> `Msg e) @@
+    let* app_dir = match app_dir with
+    | Some app_dir -> Ok app_dir
+    | None ->
+        let* dir = Os.Dir.cwd () in
+        let db_file = db_file (v ~app_dir:dir ()) in
+        let* exists = Os.Path.exists db_file in
+        if exists then Ok dir else
+        Fmt.error
+          "Working directory is not an application directory.\n\
+           %a: Use option %a to specify one or %a to use this directory\n\
+          \      as an application directory."
+                  Fmt.(tty_string [`Fg `Yellow]) "Hint"
+                  Fmt.(code string) "-a" Fmt.(code string) "-a ."
+    in
     let* app_dir = Os.Path.realpath app_dir in
     Ok (v ~app_dir ())
 end
@@ -139,10 +153,14 @@ module Cli = struct
     in
     Term.term_result Term.(const Conf.with_cli $ log_level $ tty_cap)
 
-  let data_conf ~pos:p =
+  let data_conf =
     let app_dir =
-      let doc = "Application directory." and docv = "APP_DIR" in
-      Arg.(required & pos p (some B00_cli.fpath) None & info [] ~doc ~docv)
+      let doc = "Application directory. If unspecified defaults to the \
+                 current working directory."
+      and docv = "APP_DIR" in
+      let env = Cmd.Env.info "HYPERBIB_APP_DIR" in
+      Arg.(value & opt (some ~none:"." B00_cli.fpath) None &
+           info ["a"; "app-dir"] ~doc ~docv ~env)
     in
     Term.term_result Term.(const Data_conf.with_cli $ app_dir)
 end

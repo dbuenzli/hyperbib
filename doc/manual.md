@@ -48,7 +48,7 @@ Group=$HYPERBIB_USER
 ExecStart=hyperbib serve \
           --listen $HYPERBIB_LISTEN \
           --service-path $HYPERBIB_SERVICE_PATH \
-          $HYPERBIB_APP_DIR
+          --app-dir $HYPERBIB_APP_DIR
 
 [Install]
 WantedBy=multi-user.target
@@ -106,7 +106,7 @@ One use case it enables is to edit the bibliography locally and
 publish it via a simple webserver:
 
 ```
-hyperbib serve app --        # Edit your bibliography locally.
+hyperbib serve -a . --        # Edit your bibliography locally.
 rm -rf /var/www/mybib     
 hyperbib html app /var/www/mybib 
 ```

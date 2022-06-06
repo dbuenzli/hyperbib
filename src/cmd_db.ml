@@ -43,7 +43,7 @@ let action =
 let cmd =
   Cmd.v (Cmd.info "db" ~doc ~exits ~man)
     Term.(const db $ Hyperbib.Cli.conf $ action $
-          Hyperbib.Cli.data_conf ~pos:1)
+          Hyperbib.Cli.data_conf)
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2021 University of Bern

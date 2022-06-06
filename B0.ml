@@ -123,11 +123,11 @@ let hyperbib =
            `Fut stamp]
   in
   let meta =
-    let scope_dir b u = Fut.return (B0_build.scope_dir b u) in
+    let app_dir b u = Fut.return Fpath.(B0_build.scope_dir b u / "app") in
     B0_meta.(empty
              (* B0 FIXME supported_code doesn't work. *)
              |> add B0_ocaml.Meta.needs_code `Native
-             |> add B0_unit.Action.exec_cwd scope_dir)
+             |> add B0_unit.Action.exec_cwd app_dir)
   in
   let wrap proc b =
     B0_build.require b hyperbib_js;

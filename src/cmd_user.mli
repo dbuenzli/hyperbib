@@ -3,12 +3,12 @@
    Distributed under the ISC license, see terms at the end of the file.
   ---------------------------------------------------------------------------*)
 
-(** Add an application user.  *)
+(** Manage application users.  *)
 
 open Hyperbib.Std
 
 val cmd : Os.Exit.t Cmdliner.Cmd.t
-(** [cmd] is the command line for [add-user]. *)
+(** [cmd] is the command line for [user]. *)
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2021 University of Bern

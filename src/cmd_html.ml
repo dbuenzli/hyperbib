@@ -56,7 +56,7 @@ let file_browsable =
 
 let cmd =
   Cmd.v (Cmd.info "html" ~doc ~exits ~man)
-    Term.(const html $ Hyperbib.Cli.conf $ Hyperbib.Cli.data_conf ~pos:0 $
+    Term.(const html $ Hyperbib.Cli.conf $ Hyperbib.Cli.data_conf $
           dest $ file_browsable)
 
 

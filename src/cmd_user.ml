@@ -6,7 +6,7 @@
 open Hyperbib.Std
 open Result.Syntax
 
-let add_user conf data_conf name password force =
+let add conf data_conf name password force =
   Log.if_error ~use:Hyperbib.Exit.some_error @@
   let users_file = Hyperbib.Data_conf.users_file data_conf in
   let* users = User.load users_file in
@@ -22,15 +22,16 @@ let add_user conf data_conf name password force =
       let* () = User.save users_file users in
       Ok Hyperbib.Exit.ok
 
+let list conf data_conf =
+  Log.if_error ~use:Hyperbib.Exit.some_error @@
+  let users_file = Hyperbib.Data_conf.users_file data_conf in
+  let* users = User.load users_file in
+  User.fold (fun u () -> Log.app (fun m -> m "%s" (User.name u))) users ();
+  Ok Hyperbib.Exit.ok
+
 (* Command line interface *)
 
 open Cmdliner
-
-let doc = "Add an application user"
-let exits = Hyperbib.Exit.Info.base_cmd
-let man = [
-  `S Manpage.s_description;
-  `P "The $(tname) command adds an application user."; ]
 
 let username =
   let doc = "The username." and docv = "USERNAME" in
@@ -44,11 +45,31 @@ let force =
   let doc = "Proceed even if user exists." in
   Arg.(value & flag & info ["f";"force"] ~doc)
 
-let cmd =
-  Cmd.v (Cmd.info "add-user" ~doc ~exits ~man)
-    Term.(const add_user $ Hyperbib.Cli.conf $ Hyperbib.Cli.data_conf ~pos:0 $
+let add_cmd =
+  let doc = "Add an application user" in
+  let exits = Hyperbib.Exit.Info.base_cmd in
+  let man =
+    [ `S Manpage.s_description;
+      `P "The $(tname) command adds an application user."; ]
+  in
+  Cmd.v (Cmd.info "add" ~doc ~exits ~man)
+    Term.(const add $ Hyperbib.Cli.conf $ Hyperbib.Cli.data_conf $
           username $ pass $ force)
 
+let list_cmd =
+  let doc = "Lists application users" in
+  let exits = Hyperbib.Exit.Info.base_cmd in
+  let man =
+    [ `S Manpage.s_description;
+      `P "The $(tname) command lists application users."; ]
+  in
+  Cmd.v (Cmd.info "list" ~doc ~exits ~man)
+    Term.(const list $ Hyperbib.Cli.conf $ Hyperbib.Cli.data_conf)
+
+let cmd =
+  let doc = "Manage application users" in
+  let info = Cmd.info "user" ~doc in
+  Cmd.group info [add_cmd; list_cmd]
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2021 University of Bern

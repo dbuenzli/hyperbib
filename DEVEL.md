@@ -4,7 +4,7 @@ Given a test database in `app/` the following invocation makes it easy
 to test the webapp in any browser on http://localhost:8000/ 
 
 ```
-b0 -a hyperbib -- serve app --edit=unsafe --insecure-cookie
+b0 -a hyperbib -- serve --edit=unsafe --insecure-cookie
 ```
 
 # Code layout 

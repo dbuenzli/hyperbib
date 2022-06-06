@@ -7,7 +7,7 @@ open Hyperbib.Std
 open Cmdliner
 
 let cmds =
-  [ Cmd_add_user.cmd; Cmd_db.cmd; Cmd_html.cmd; Cmd_import.cmd;
+  [ Cmd_user.cmd; Cmd_db.cmd; Cmd_html.cmd; Cmd_import.cmd;
     Cmd_serve.cmd; ]
 
 let hyperbib =

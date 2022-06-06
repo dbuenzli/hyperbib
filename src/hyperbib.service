@@ -8,7 +8,7 @@ RestartSec=10s
 User=philo
 Group=philo
 
-ExecStart=hyperbib serve --listen localhost:8000 /var/www/hyperbib
+ExecStart=hyperbib serve --listen localhost:8000 --app-dir /var/www/hyperbib
 
 [Install]
 WantedBy=multi-user.target
