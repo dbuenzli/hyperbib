@@ -11,8 +11,8 @@ open Result.Syntax
 let get_reference = Entity_service.get_entity (module Reference)
 
 let find_doi db doi =
-  let r = Reference.find_doi (Ask.Text.v doi) in
-  Db.first db (Ask.Sql.of_bag' Reference.table r)
+  let r = Reference.find_doi (Rel.Text.v doi) in
+  Db.first db (Rel.Sql.of_bag' Reference.table r)
 
 let get_reference_of_page_ref =
   let page_url n id = Reference.Url.v (Page (n, id)) in
@@ -26,8 +26,8 @@ let get_reference_of_page_ref =
 let get_reference_data db g r =
   Db.error_resp @@
   let only_public = Page.Gen.only_public g in
-  let only_public = Ask.Bool.v only_public in
-  let rid = Ask.Int.v (Reference.id r) in
+  let only_public = Rel.Bool.v only_public in
+  let rid = Rel.Int.v (Reference.id r) in
   let ref = Reference.find_id rid in
   Reference.render_data ~only_public ref db
 
@@ -35,15 +35,15 @@ let get_page_data db g r =
   (* The render_data calls could be streamlined to a single one. *)
   Db.error_resp @@
   let only_public = Page.Gen.only_public g in
-  let only_public = Ask.Bool.v only_public in
-  let rid = Ask.Int.v (Reference.id r) in
+  let only_public = Rel.Bool.v only_public in
+  let rid = Rel.Int.v (Reference.id r) in
   let ref = Reference.find_id rid in
   let* render_data = Reference.render_data ~only_public ref db in
   let cites = Reference.find_dois (Reference.dois_cited rid) in
   let* cites = Reference.render_data ~only_public cites db in
   let cited_by = match Reference.doi r with
   | "" -> Bag.empty
-  | doi -> Reference.citing_doi (Ask.Text.v doi)
+  | doi -> Reference.citing_doi (Rel.Text.v doi)
   in
   let* cited_by = Reference.render_data ~only_public cited_by db in
   Ok (render_data, cites, cited_by)
@@ -52,10 +52,10 @@ let view_fields_resp app db req id =
   let* r = get_reference db id in
   let g = Webapp.page_gen app in
   let self = Reference.Url.page r in (* assume comes from that page *)
-  let rid = Ask.Int.v (Reference.id r) in
+  let rid = Rel.Int.v (Reference.id r) in
   let ref = Reference.find_id rid in
   let only_public = Page.Gen.only_public g in
-  let only_public = Ask.Bool.v only_public in
+  let only_public = Rel.Bool.v only_public in
   let* render_data =
     Reference.render_data ~only_public ref db |> Db.error_resp
   in
@@ -86,7 +86,7 @@ let edit_form app req id =
 let index app =
   Webapp.with_db_transaction `Deferred app @@ fun db ->
   let g = Webapp.page_gen app in
-  let only_public = Ask.Bool.v (Page.Gen.only_public g) in
+  let only_public = Rel.Bool.v (Page.Gen.only_public g) in
   let refs = Reference.list ~only_public in
   let* render_data = Reference.render_data ~only_public refs db in
   let page = Reference_html.index g render_data in

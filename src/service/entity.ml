@@ -50,7 +50,7 @@ module type IDENTIFIABLE_QUERIES = sig
   val create_cols : ignore_id:bool -> t Col.value list -> unit Sql.Stmt.t
   val delete : id -> unit Sql.Stmt.t
   val update : id -> t Col.value list -> unit Sql.Stmt.t
-  val find_id : id Ask.value -> (t, Bag.unordered) Bag.t
+  val find_id : id Rel.value -> (t, Bag.unordered) Bag.t
   val find_id_stmt : id -> t Sql.Stmt.t
   val find_ids : (id, 'a) Bag.t -> (t, Bag.unordered) Bag.t
 end
@@ -63,7 +63,7 @@ end
 module Identifiable_queries (E : IDENTIFIABLE) :
   (IDENTIFIABLE_QUERIES with type t := E.t and type id := E.id) = struct
 
-  open Ask.Syntax
+  open Rel.Syntax
 
   type id = E.id
   type t = E.t
@@ -96,7 +96,7 @@ end
 
 module type PUBLICABLE_QUERIES = sig
   include IDENTIFIABLE_QUERIES
-  val list : only_public:bool Ask.value -> (t, Ask.Bag.unordered) Ask.Bag.t
+  val list : only_public:bool Rel.value -> (t, Rel.Bag.unordered) Rel.Bag.t
   val list_stmt : only_public:bool -> t Sql.Stmt.t
 end
 
@@ -110,7 +110,7 @@ module Publicable_queries (E : PUBLICABLE) :
 
   include Identifiable_queries (E)
 
-  open Ask.Syntax
+  open Rel.Syntax
 
   let list ~only_public =
     let* r = Bag.table E.table in

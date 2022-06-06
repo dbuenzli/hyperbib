@@ -12,8 +12,8 @@ open Webs_html
 
 module Class = struct
 
-  let for_col c = At.class' (Ask.Col.name c)
-  let for_table t = At.class' (Ask.Table.name t)
+  let for_col c = At.class' (Rel.Col.name c)
+  let for_table t = At.class' (Rel.Table.name t)
 
   let autogrow = At.class' "autogrow"
   let button = At.class' "button"
@@ -147,20 +147,20 @@ let input_bool' ?(at = []) ~name v =
   El.input ~at:(Class.input :: Class.bool :: at) ()
 
 let input_bool ?at ~col r =
-  let name = Ask.Col.name col and v = Ask.Col.proj col r in
+  let name = Rel.Col.name col and v = Rel.Col.proj col r in
   input_bool' ?at ~name v
 
 let input_string ?at ?autocomplete ?autogrow ~min_size ~col r =
-  let name = Ask.Col.name col and v = Ask.Col.proj col r in
+  let name = Rel.Col.name col and v = Rel.Col.proj col r in
   input_string' ?at ?autocomplete ?autogrow ~min_size ~name v
 
 let input_text ?at ?autogrow ~min_rows ~col r =
-  let name = Ask.Col.name col and v = Ask.Col.proj col r in
+  let name = Rel.Col.name col and v = Rel.Col.proj col r in
   input_text' ?at ?autogrow ~min_rows ~name v
 
 let input_select ?(at = []) ~option_text ~option_value ~options ~col r =
-  let rv = option_value (Ask.Col.proj col r) in
-  let name = At.name (Ask.Col.name col) in
+  let rv = option_value (Rel.Col.proj col r) in
+  let name = At.name (Rel.Col.name col) in
   let option o =
     let text = option_text o and ov = option_value o in
     let at = At.[if' (String.equal rv ov) selected; value ov] in

@@ -6,7 +6,7 @@
 open Hyperbib.Std
 
 let filter ~year refs =
-  let open Ask.Syntax in
+  let open Rel.Syntax in
   let* r = refs in
   let ref_year = r #. Reference.date_year' in
   Bag.where (Option.has_value ~eq:Int.( = ) year ref_year) (Bag.yield r)

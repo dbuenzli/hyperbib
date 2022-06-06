@@ -197,7 +197,7 @@ module Contributor = struct
           Index (Index.v [Col.V person']);
           Index (Index.v [Col.V reference'])]
 
-  open Ask.Syntax
+  open Rel.Syntax
 
   let create ?or_action c = Sql.insert_into ?or_action table c
   let of_ref_ids rids =
@@ -274,7 +274,7 @@ module Subject = struct
                          ~on_delete:`Cascade ());
           Index (Index.v [Col.V subject'])]
 
-  open Ask.Syntax
+  open Rel.Syntax
 
   let create ?or_action a = Sql.insert_into ?or_action table a
   let of_ref_ids rids =
@@ -294,7 +294,7 @@ module Subject = struct
     Bag.where is_used (Bag.yield s)
 
   let filter ~subjects refs =
-    (* FIXME Ask make that work if subjects is a constant yield *)
+    (* FIXME Rel make that work if subjects is a constant yield *)
     let* subj = subjects in
     let* ref = refs in
     let* app = Bag.table table in
@@ -377,7 +377,7 @@ module Cites = struct
     in
     Table.v "cites" ~params Row.(unit row * reference' * doi')
 
-  open Ask.Syntax
+  open Rel.Syntax
 
   let create c = Sql.insert_into table c
   let of_ref_ids rids =
@@ -415,7 +415,7 @@ end
 
 include Entity.Publicable_queries (Reference)
 
-open Ask.Syntax
+open Rel.Syntax
 
 let ids_of_refs refs = let* r = refs in Bag.yield (r #. id')
 

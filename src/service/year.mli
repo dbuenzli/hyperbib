@@ -8,7 +8,7 @@
 open Hyperbib.Std
 
 val filter :
-  year:Date.year Ask.value -> (Reference.t, 'a) Bag.t ->
+  year:Date.year Rel.value -> (Reference.t, 'a) Bag.t ->
   (Reference.t, Bag.unordered) Bag.t
 (** [filter ~year refs] are the reference of [refs] which have [year]. *)
 

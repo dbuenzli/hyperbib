@@ -108,13 +108,13 @@ module Label : Label.APPLICATION
 include Entity.PUBLICABLE_QUERIES with type t := t and type id := id
 
 val match' :
-  title:string Ask.value -> isbn:string Ask.value -> issn:string Ask.value ->
-  (t, Bag.unordered) Ask.Bag.t
+  title:string Rel.value -> isbn:string Rel.value -> issn:string Rel.value ->
+  (t, Bag.unordered) Rel.Bag.t
 
 val match_stmt :
   title:string -> isbn:string -> issn:string -> t Sql.Stmt.t
 
-val select : string Ask.value -> (t, Bag.unordered) Ask.Bag.t
+val select : string Rel.value -> (t, Bag.unordered) Rel.Bag.t
 val select_stmt : string -> t Sql.Stmt.t
 
 (** {1:urls URLs} *)

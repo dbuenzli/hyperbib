@@ -185,7 +185,7 @@ module Contributor : sig
   val of_ref_ids : (id, 'a) Bag.t -> (t, Bag.unordered) Bag.t
 
   val persons :
-    only_public:bool Ask.value -> (t, 'a) Bag.t ->
+    only_public:bool Rel.value -> (t, 'a) Bag.t ->
     (Person.t, Bag.unordered) Bag.t
   (** [persons ~only_public cs] are the persons mentioned in [cs],
       No duplicates. *)
@@ -235,7 +235,7 @@ module Subject : sig
   val of_ref_ids : (id, 'a) Bag.t -> (t, Bag.unordered) Bag.t
 
   val subjects :
-    only_public:bool Ask.value -> (t, 'a) Bag.t ->
+    only_public:bool Rel.value -> (t, 'a) Bag.t ->
     (Subject.t, Bag.unordered) Bag.t
   (** [subjects apps] are the subjects mentioned by [apps].
       No duplicates. *)
@@ -245,7 +245,7 @@ module Subject : sig
     (reference, 'a) Bag.t  -> (reference, Bag.unordered) Bag.t
 
   val filter_subject_id :
-    Subject.id Ask.value -> (reference, 'a) Bag.t ->
+    Subject.id Rel.value -> (reference, 'a) Bag.t ->
     (reference, Bag.unordered) Bag.t
 
   val ref_count_stmt : Subject.id -> int Sql.Stmt.t
@@ -296,7 +296,7 @@ module Cites : sig
   val internal_of_ref_ids :
     (id, Bag.unordered) Bag.t -> (id * id, Bag.unordered) Bag.t
 
-  val internal_row : (id * id) Ask.Row.t
+  val internal_row : (id * id) Rel.Row.t
 
   val set_list :
     reference:id -> dois:Doi.t list -> (Db.t -> (unit, Db.error) result)
@@ -310,18 +310,18 @@ val ids_of_refs : (t, 'a) Bag.t -> (id, Bag.unordered) Bag.t
 (** [ids_of_refs refs] are the identifiers of [refs]. *)
 
 val containers_of_refs :
-  only_public:bool Ask.value -> (t, 'a) Bag.t ->
+  only_public:bool Rel.value -> (t, 'a) Bag.t ->
   (Container.t, Bag.unordered) Bag.t
 (** [containers_of_refs refs] are the containers mentioned in [refs].
     No duplicates.*)
 
 val filter_person_id :
-  Person.id Ask.value -> (t, 'a) Bag.t -> (t, Bag.unordered) Bag.t
+  Person.id Rel.value -> (t, 'a) Bag.t -> (t, Bag.unordered) Bag.t
 (** [filter_person_id pid refs] are the elements of [refs] that
     are have the person identified by [pid] in author or editor position. *)
 
 val filter_container_id :
-  Container.id Ask.value -> (t, 'a) Bag.t -> (t, Bag.unordered) Bag.t
+  Container.id Rel.value -> (t, 'a) Bag.t -> (t, Bag.unordered) Bag.t
 
 val persons_public_ref_count_stmt : (Person.id * int) Sql.Stmt.t
 val person_ref_count_stmt : Person.id -> int Sql.Stmt.t
@@ -334,16 +334,16 @@ val subject_public_ref_count_stmt : (int * int) Sql.Stmt.t
 val replace_container_stmt :
   this:Container.id -> by:Container.id -> unit Sql.Stmt.t
 
-val ids_citing_doi : Doi.t Ask.value -> (id, Bag.unordered) Bag.t
-val citing_doi : Doi.t Ask.value -> (t, Bag.unordered) Bag.t
-val dois_cited : id Ask.value -> (Doi.t, Bag.unordered) Bag.t
+val ids_citing_doi : Doi.t Rel.value -> (id, Bag.unordered) Bag.t
+val citing_doi : Doi.t Rel.value -> (t, Bag.unordered) Bag.t
+val dois_cited : id Rel.value -> (Doi.t, Bag.unordered) Bag.t
 val find_dois : (Doi.t, 'a) Bag.t -> (t, Bag.unordered) Bag.t
-val find_doi : Doi.t Ask.value -> (t, Bag.unordered) Bag.t
+val find_doi : Doi.t Rel.value -> (t, Bag.unordered) Bag.t
 
 (** {2:renderdata Render data} *)
 
 val render_data :
-  only_public:bool Ask.value -> (t, 'a) Bag.t ->
+  only_public:bool Rel.value -> (t, 'a) Bag.t ->
   (Db.t -> (render_data, Db.error) result)
 (** [dataset refs] is a function that looks up a database for the
     the data needed to render [refs]. If [only_public] is [true]

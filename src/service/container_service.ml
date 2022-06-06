@@ -21,10 +21,10 @@ let get_container_ref_count db s =
   Ok (Option.value ~default:0 ref_count)
 
 let get_page_data db g s =
-  let only_public = Ask.Bool.v (Page.Gen.only_public g) in
+  let only_public = Rel.Bool.v (Page.Gen.only_public g) in
   let all = Reference.list ~only_public in
   let id = Container.id s in
-  let refs = Reference.filter_container_id (Ask.Int.v id) all in
+  let refs = Reference.filter_container_id (Rel.Int.v id) all in
   let* refs = Reference.render_data ~only_public refs db |> Db.error_resp in
   Ok refs
 

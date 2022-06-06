@@ -111,7 +111,7 @@ module Label = Label.For_entity (Subject)
 
 include Entity.Publicable_queries (Subject)
 
-open Ask.Syntax
+open Rel.Syntax
 
 let some_id_is_public id =
   let eq_id id s = Int.(Option.get id = s #. id') in

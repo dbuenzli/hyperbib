@@ -14,7 +14,7 @@ let schema () =
   Ok Hyperbib.Exit.ok
 
 let diagram () =
-  Format.printf "%a@." (Ask_kit.Schema_diagram.pp_dot ()) Schema.tables;
+  Format.printf "%a@." (Rel_kit.Schema_diagram.pp_dot ()) Schema.tables;
   Hyperbib.Exit.ok
 
 let db conf action data_conf = match action with

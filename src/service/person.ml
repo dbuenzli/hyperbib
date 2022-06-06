@@ -112,7 +112,7 @@ module Label = Label.For_entity (Person)
 
 include Entity.Publicable_queries (Person)
 
-open Ask.Syntax
+open Rel.Syntax
 
 let select sel =
   let* p = Bag.table table in

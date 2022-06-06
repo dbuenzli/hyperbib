@@ -33,8 +33,8 @@ module Static_html = struct
     Os.File.write ~force:true ~make_path:true file (Page.doc_to_string p)
 
   let write_reference ~dir db g r =
-    let only_public = Ask.Bool.true' in
-    let rid = Ask.Int.v (Reference.id r) in
+    let only_public = Rel.Bool.true' in
+    let rid = Rel.Int.v (Reference.id r) in
     let ref = Reference.find_id rid in
     let* render_data =
       Reference.render_data ~only_public ref db |> Db.error_string
@@ -42,13 +42,13 @@ module Static_html = struct
     let cites = Reference.find_dois (Reference.dois_cited rid) in
     let* cites = refs_render_data ~only_public cites db in
     let cited_by = match Reference.doi r with
-    | "" -> Bag.empty | doi -> Reference.citing_doi (Ask.Text.v doi)
+    | "" -> Bag.empty | doi -> Reference.citing_doi (Rel.Text.v doi)
     in
     let* cited_by = refs_render_data ~only_public cited_by db in
     write_page ~dir g (Reference_html.page g r ~render_data ~cites ~cited_by)
 
   let write_references ~dir db g =
-    let only_public = Ask.Bool.true' in
+    let only_public = Rel.Bool.true' in
     let all = Reference.list ~only_public in
     let* rs = refs_render_data ~only_public all db in
     let index = Reference_html.index g rs in
@@ -59,10 +59,10 @@ module Static_html = struct
     Ok ()
 
   let write_container ~dir db g c =
-    let only_public = Ask.Bool.true' in
+    let only_public = Rel.Bool.true' in
     let all = Reference.list ~only_public in
     let id = Container.id c in
-    let refs = Reference.filter_container_id (Ask.Int.v id) all in
+    let refs = Reference.filter_container_id (Rel.Int.v id) all in
     let* refs = refs_render_data ~only_public refs db in
     write_page ~dir g (Container_html.page g c refs)
 
@@ -78,10 +78,10 @@ module Static_html = struct
     Ok ()
 
   let write_person ~dir db g p =
-    let only_public = Ask.Bool.true' in
+    let only_public = Rel.Bool.true' in
     let all = Reference.list ~only_public in
     let id = Person.id p in
-    let refs = Reference.filter_person_id (Ask.Int.v id) all in
+    let refs = Reference.filter_person_id (Rel.Int.v id) all in
     let* refs = refs_render_data ~only_public refs db  in
     write_page ~dir g (Person_html.page g p refs)
 
@@ -97,10 +97,10 @@ module Static_html = struct
     Ok ()
 
   let write_subject ~dir db g s =
-    let only_public = Ask.Bool.true' in
+    let only_public = Rel.Bool.true' in
     let all = Reference.list ~only_public in
     let id = Subject.id s in
-    let refs = Reference.Subject.filter_subject_id (Ask.Int.v id) all in
+    let refs = Reference.Subject.filter_subject_id (Rel.Int.v id) all in
     let* parent = match Subject.parent s with
     | None -> Ok None
     | Some pid -> Db.first db (Subject.find_id_stmt pid) |> Db.error_string
@@ -120,9 +120,9 @@ module Static_html = struct
     Ok ()
 
   let write_year ~dir db g (year, _) =
-    let only_public = Ask.Bool.true' in
+    let only_public = Rel.Bool.true' in
     let all = Reference.list ~only_public in
-    let refs = Year.filter ~year:(Ask.Int.v year) all in
+    let refs = Year.filter ~year:(Rel.Int.v year) all in
     let* render_data = refs_render_data ~only_public refs db in
     write_page ~dir g (Year_html.page g ~year render_data)
 

@@ -74,7 +74,7 @@ database connections are pooled with the same size.
 # Database use and schema
 
 Database use is abstracted by the [`src/db.mli`](src/db.mli) module, there 
-should be no mention of the `Ask_sqlite3` anywhere else.
+should be no mention of the `Rel_sqlite3` anywhere else.
 
 ## Usage
 

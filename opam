@@ -23,7 +23,7 @@ depends: [
   "ptime"
   "webs"
   "hc"
-  "ask"
+  "rel"
   "note"
   "brr"
   "js_of_ocaml"
@@ -32,6 +32,6 @@ build: "b0"
 dev-repo: "git+https://erratique.ch/repos/hyperbib.git"
 pin-depends: [
   ["hc.~dev" "git+https://erratique.ch/repos/hc.git#master"]
-  ["ask.~dev" "git+https://erratique.ch/repos/ask.git#master"]
+  ["rel.~dev" "git+https://erratique.ch/repos/rel.git#master"]
   ["webs.~dev" "git+https://erratique.ch/repos/webs.git#master"]
 ]

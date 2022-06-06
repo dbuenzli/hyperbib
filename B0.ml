@@ -3,10 +3,10 @@ open B00_std
 
 (* OCaml libraries *)
 
-let ask = B0_ocaml.libname "ask"
-let ask_kit = B0_ocaml.libname "ask.kit"
-let ask_pool = B0_ocaml.libname "ask.pool"
-let ask_sqlite3 = B0_ocaml.libname "ask.sqlite3"
+let rel = B0_ocaml.libname "rel"
+let rel_kit = B0_ocaml.libname "rel.kit"
+let rel_pool = B0_ocaml.libname "rel.pool"
+let rel_sqlite3 = B0_ocaml.libname "rel.sqlite3"
 let b00_kit = B0_ocaml.libname "b0.b00.kit"
 let b00_std = B0_ocaml.libname "b0.b00.std"
 let brr = B0_ocaml.libname "brr"
@@ -106,7 +106,7 @@ let hyperbib =
   let doc = "hyperbib tool" in
   let requires =
     [ threads; cmdliner; ptime; ptime_clock; b00_std; b00_kit;
-      ask; ask_kit; ask_sqlite3; ask_pool;
+      rel; rel_kit; rel_sqlite3; rel_pool;
       webs; webs_connector; webs_kit; webs_unix; webs_cli; webs_httpc;
       webs_html; hc ]
   in
@@ -175,13 +175,13 @@ let default =
         "ptime", {||};
         "webs", {||};
         "hc", {||};
-        "ask", {||};
+        "rel", {||};
         "note", {||};
         "brr", {||};
         "js_of_ocaml", {||};]
     |> add B0_opam.Meta.pin_depends
       ["hc.~dev", "git+https://erratique.ch/repos/hc.git#master";
-       "ask.~dev", "git+https://erratique.ch/repos/ask.git#master";
+       "rel.~dev", "git+https://erratique.ch/repos/rel.git#master";
        "webs.~dev", "git+https://erratique.ch/repos/webs.git#master"]
     |> add B0_opam.Meta.build {|[["b0"]]|}
     |> tag B0_opam.tag

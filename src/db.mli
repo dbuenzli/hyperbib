@@ -19,7 +19,7 @@ val error_message : error -> string
 val error_string : ('a, error) result -> ('a, string) result
 (** [error_string] is [Result.map_error error_string]. *)
 
-type pool = (t, error) Ask_pool.t
+type pool = (t, error) Rel_pool.t
 (** The type for database connection pools. *)
 
 val pool : ?read_only:bool -> Fpath.t -> size:int -> pool
@@ -79,7 +79,7 @@ val id_map_related_list :
 
 val error_resp :
   ?retry_after_s:int -> ('a, error) result -> ('a, Http.resp) result
-(** [error_resp e] is a webs response for [Error e]. {!Ask.Error.busy_time_out}
+(** [error_resp e] is a webs response for [Error e]. {!Rel.Error.busy_time_out}
     errors are mapped to a {!Webs.Http.service_unavailable_503} with
     a {!Webs.Http.retry_after} header of [retry_after_s] seconds (default
     to [2]). *)

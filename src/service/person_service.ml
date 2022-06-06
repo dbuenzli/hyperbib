@@ -16,10 +16,10 @@ let get_person_ref_count db s =
 
 let get_page_data db g s =
   let only_public = Page.Gen.only_public g in
-  let only_public = Ask.Bool.v only_public in
+  let only_public = Rel.Bool.v only_public in
   let all = Reference.list ~only_public in
   let id = Person.id s in
-  let refs = Reference.filter_person_id (Ask.Int.v id) all in
+  let refs = Reference.filter_person_id (Rel.Int.v id) all in
   let* refs = Reference.render_data ~only_public refs db |> Db.error_resp in
   Ok refs
 
@@ -33,7 +33,7 @@ let get_person_for_page_ref =
     ~page_url ~page_404 ~entity_find_id_stmt ~entity_public ~entity_res_name
 
 let select_persons db ~only_public sel =
-  (* FIXME only_public, FIXME Ask escape % and _ in selector, order by *)
+  (* FIXME only_public, FIXME Rel escape % and _ in selector, order by *)
   if String.trim sel = "" then Ok [] else
   let* ps = Db.list db (Person.select_stmt sel) in
   Ok (List.sort Person.order_by_last_name ps)

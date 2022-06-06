@@ -72,7 +72,7 @@ let edit_isbn r =
   Hui.field_string ~autogrow:true ~min_size:8 ~label ~col r
 
 let edit_container uf r c =
-  let input_name = Ask.Col.name Reference.container' in
+  let input_name = Rel.Col.name Reference.container' in
   let input = match c with
   | None -> Entity_html.container_input_finder uf ~input_name
   | Some (`Exists c) -> Entity_html.container_input uf ~input_name c

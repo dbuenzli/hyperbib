@@ -44,17 +44,17 @@ module Std : sig
   end
 
 
-  (** {1:ask Ask open}
+  (** {1:rel Rel open}
 
-      This is open {!Ask.Std}. *)
+      This is open {!Rel.Std}. *)
 
-  module Type = Ask.Type
-  module Col = Ask.Col
-  module Row = Ask.Row
-  module Index = Ask.Index
-  module Table = Ask.Table
-  module Bag = Ask.Bag
-  module Sql = Ask.Sql
+  module Type = Rel.Type
+  module Col = Rel.Col
+  module Row = Rel.Row
+  module Index = Rel.Index
+  module Table = Rel.Table
+  module Bag = Rel.Bag
+  module Sql = Rel.Sql
 
   (** {1:webs Webs_* opens} *)
 

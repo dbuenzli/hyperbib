@@ -122,18 +122,18 @@ let for_serve a caps ~auth_ui ~user_view ~private_data =
 
 (* Convenience db brackets *)
 
-let with_db a f = Db.error_resp @@ Result.join @@ Ask_pool.with' a.db_pool f
+let with_db a f = Db.error_resp @@ Result.join @@ Rel_pool.with' a.db_pool f
 
 let with_db' a f =
-  Result.join @@ Db.error_resp @@ Ask_pool.with' a.db_pool f
+  Result.join @@ Db.error_resp @@ Rel_pool.with' a.db_pool f
 
 let with_db_transaction k a f =
   Db.error_resp @@ Result.join @@ Result.join @@
-  Ask_pool.with' a.db_pool (fun db -> Db.with_transaction k db f)
+  Rel_pool.with' a.db_pool (fun db -> Db.with_transaction k db f)
 
 let with_db_transaction' k a f =
   Result.join @@ Db.error_resp @@ Result.join @@
-  Ask_pool.with' a.db_pool (fun db -> Db.with_transaction k db f)
+  Rel_pool.with' a.db_pool (fun db -> Db.with_transaction k db f)
 
 (* Serving *)
 
@@ -150,7 +150,7 @@ let setup_db a =
   Db.error_string @@
   if a.editable = `No then Ok () (* FIXME check schema version *) else
   let* () =
-    Result.join @@ Ask_pool.with' a.db_pool @@ fun db ->
+    Result.join @@ Rel_pool.with' a.db_pool @@ fun db ->
     let* () = Db.setup ~schema:Schema.tables ~drop_if_exists:false db in
     Ok ()
   in
@@ -220,7 +220,7 @@ let serve a ~url_fmt service =
 
 let finish a =
   let errs es = String.concat "\n" (List.map Db.error_message es) in
-  Result.map_error errs (Ask_pool.dispose a.db_pool)
+  Result.map_error errs (Rel_pool.dispose a.db_pool)
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2021 University of Bern

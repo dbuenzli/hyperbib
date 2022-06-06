@@ -12,7 +12,7 @@ let bibtex_file app file =
   match String.equal file (Bibliography.bibtex_filename b) with
   | false -> Http.Resp.not_found_404 ()
   | true ->
-      let only_public = Ask.Bool.true' in
+      let only_public = Rel.Bool.true' in
       let refs = Reference.list ~only_public in
       let* refs =
         Webapp.with_db app (Reference.render_data ~only_public refs)

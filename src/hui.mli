@@ -23,8 +23,8 @@ open Webs_html
 (** Classes. *)
 module Class : sig
 
-  val for_col : ('a, 'b) Ask.Col.t -> At.t
-  val for_table : 'a Ask.Table.t -> At.t
+  val for_col : ('a, 'b) Rel.Col.t -> At.t
+  val for_table : 'a Rel.Table.t -> At.t
 
   val text : At.t
   val button : At.t
@@ -145,23 +145,23 @@ val input_text' :
 
 val input_bool' : ?at:At.t list -> name:string -> bool -> El.html
 
-val input_bool : ?at:At.t list -> col:('a, bool) Ask.Col.t -> 'a -> El.html
+val input_bool : ?at:At.t list -> col:('a, bool) Rel.Col.t -> 'a -> El.html
 
 val input_string :
   ?at:At.t list -> ?autocomplete:bool -> ?autogrow:bool -> min_size:int ->
-  col:('a, string) Ask.Col.t -> 'a -> El.html
+  col:('a, string) Rel.Col.t -> 'a -> El.html
 
 val input_text :
   ?at:At.t list -> ?autogrow:bool -> min_rows:int ->
-  col:('a, string) Ask.Col.t -> 'a -> El.html
+  col:('a, string) Rel.Col.t -> 'a -> El.html
 
 val input_select :
   ?at:At.t list -> option_text:('a -> string) -> option_value:('a -> string) ->
-  options:'a list -> col:('r, 'a) Ask.Col.t -> 'r -> El.html
+  options:'a list -> col:('r, 'a) Rel.Col.t -> 'r -> El.html
 
 val field_bool :
   ?input_at:At.t list -> ?at:At.t list -> label:El.html ->
-  col:('r, bool) Ask.Col.t -> 'r -> El.html
+  col:('r, bool) Rel.Col.t -> 'r -> El.html
 
 val field_string' :
   ?input_at:At.t list -> ?at:At.t list -> ?autocomplete:bool ->
@@ -171,16 +171,16 @@ val field_string' :
 val field_string :
   ?input_at:At.t list -> ?at:At.t list -> ?autocomplete:bool ->
   ?autogrow:bool -> min_size:int -> label:El.html ->
-  col:('r, string) Ask.Col.t -> 'r -> El.html
+  col:('r, string) Rel.Col.t -> 'r -> El.html
 
 val field_text :
   ?textarea_at:At.t list -> ?at:At.t list -> ?autogrow:bool -> min_rows:int ->
-  label:El.html -> col:('r, string) Ask.Col.t -> 'r -> El.html
+  label:El.html -> col:('r, string) Rel.Col.t -> 'r -> El.html
 
 val field_select :
   ?select_at:At.t list -> ?at:At.t list -> label:El.html ->
   option_text:('a -> string) -> option_value:('a -> string) ->
-  options:'a list -> col:('r, 'a) Ask.Col.t -> 'r -> El.html
+  options:'a list -> col:('r, 'a) Rel.Col.t -> 'r -> El.html
 
 
 (*---------------------------------------------------------------------------

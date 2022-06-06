@@ -76,7 +76,7 @@ module type APPLICATION = sig
   val create : t -> unit Sql.Stmt.t
   val applications : (entity_id, 'a) Bag.t -> (t, Bag.unordered) Bag.t
   val of_applications :
-   only_public:bool Ask.value -> (t, 'a) Bag.t -> (label, Bag.unordered) Bag.t
+   only_public:bool Rel.value -> (t, 'a) Bag.t -> (label, Bag.unordered) Bag.t
   val copy_applications_stmt :
     src:entity_id -> dst:entity_id -> unit Sql.Stmt.t
 end
@@ -110,7 +110,7 @@ module For_entity (E : Entity.IDENTIFIABLE) = struct
     in
     Table.v name ~params Row.(unit row * entity' * label')
 
-  open Ask.Syntax
+  open Rel.Syntax
 
   let create r = Sql.insert_into table r
 

@@ -16,7 +16,7 @@ let int_option_of_string = function
 | s -> Option.map Option.some (int_of_string_opt s)
 
 let parse_kind ~kind kind_of_string col acc k v = match kind_of_string v with
-| Some v -> Ok (Ask.Col.Value (col, v) :: acc)
+| Some v -> Ok (Rel.Col.Value (col, v) :: acc)
 | None ->
     let reason = Fmt.str "key %s: not a %s" k kind in
     Http.Resp.bad_request_400 ~reason ()
@@ -26,13 +26,13 @@ let unhandled key t =
   Http.Resp.server_error_500 ~explain ()
 
 let add_col_value (type c) ~col:(col : ('a, c) Col.t) q acc =
-  let key = Ask.Col.name col in
+  let key = Rel.Col.name col in
   match Http.Query.find key q with
   | None ->
       begin match Col.type' col with
       | Type.Bool ->
           (* That's the way HTML checkboxes work :-( *)
-          Ok (Ask.Col.Value (col, false) :: acc)
+          Ok (Rel.Col.Value (col, false) :: acc)
       | _ ->  Ok acc
       end
   | Some v ->
@@ -45,7 +45,7 @@ let add_col_value (type c) ~col:(col : ('a, c) Col.t) q acc =
           parse_kind ~kind:"int64" Int64.of_string_opt col acc key v
       | Type.Float ->
           parse_kind ~kind:"float" float_of_string_opt col acc key v
-      | Type.Text -> Ok (Ask.Col.Value (col, v) :: acc)
+      | Type.Text -> Ok (Rel.Col.Value (col, v) :: acc)
       | Type.Option Type.Int ->
           parse_kind ~kind:"int option"
             int_option_of_string col acc key v
