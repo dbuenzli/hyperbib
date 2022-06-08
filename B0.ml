@@ -146,11 +146,6 @@ let pull_data =
   let dst = B0_cmdlet.in_scope_dir env (Fpath.v "app/tables") in
   B00_rsync.copy ~delete:true ~src_host:philo_remote ~src dst
 
-let sql =
-  B0_cmdlet.v "sql" ~doc:"Invoke sqlite3 on the test db" @@ fun env args ->
-  let db = Fpath.v "app/data/bib.sqlite3" in
-  B0_cmdlet.exec_tool (Fpath.v "sqlite3") env Cmd.(args %% path db)
-
 (* Packs *)
 
 let all = B0_pack.v "all" ~locked:true @@ B0_unit.list ()

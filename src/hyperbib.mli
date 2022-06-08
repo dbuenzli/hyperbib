@@ -21,6 +21,7 @@ module Std : sig
   module List = B00_std.List
   module Fpath = B00_std.Fpath
   module Log = B00_std.Log
+  module Cmd = B00_std.Cmd
   module Os = B00_std.Os
 
   (** Other needs *)
