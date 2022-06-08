@@ -88,7 +88,6 @@ location $HYPERBIB_SERVICE_PATH
 }
 ```
 
-
 ## Publishing as static HTML
 
 The static HTML output can be used to publish a bibliography as a set

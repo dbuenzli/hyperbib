@@ -6,44 +6,43 @@
 open Hyperbib.Std
 open Result.Syntax
 
-let schema () =
-  Log.if_error ~use:Hyperbib.Exit.some_error @@
-  let schema = Sql.create_schema Schema.tables in
-  let stmts = [schema] in
-  Log.app (fun m -> m "@[<v>%a@]" (Fmt.list Sql.Stmt.pp_src) stmts);
-  Ok Hyperbib.Exit.ok
-
 let diagram () =
   Format.printf "%a@." (Rel_kit.Schema_diagram.pp_dot ()) Schema.tables;
   Hyperbib.Exit.ok
 
-let db conf action data_conf = match action with
-| `Schema -> schema ()
-| `Diagram -> diagram ()
+let schema () =
+  let schema = Sql.create_schema Schema.tables in
+  let stmts = [schema] in
+  Log.app (fun m -> m "@[<v>%a@]" (Fmt.list Sql.Stmt.pp_src) stmts);
+  Hyperbib.Exit.ok
 
 (* Command line interface *)
 
 open Cmdliner
 
-let doc = "Manage the database"
-let exits = Hyperbib.Exit.Info.base_cmd
-let man = [
-  `S Manpage.s_description;
-  `P "The $(tname) manages the app database."; ]
+let schema_cmd =
+  let doc = "Output database SQL schema." in
+  Cmd.v (Cmd.info "schema" ~doc) Term.(const schema $ const ())
 
-let action =
-  let action = [ "schema", `Schema; "diagram", `Diagram ] in
-  let doc =
-    let alts = Arg.doc_alts_enum action in
-    Fmt.str "The action to perform. $(docv) must be one of %s." alts
+let diagram_cmd =
+  let doc = "Output database schema diagram" in
+  let exits = Hyperbib.Exit.Info.base_cmd in
+  let man = [
+    `S Manpage.s_description;
+    `P "$(tname) outputs the database schema $(b,.dot) file format.";
+    `P "Pipe to $(v,dot -Tsvg) to generate an SVG file."; ]
   in
-  let action = Arg.enum action in
-  Arg.(required & pos 0 (some action) None & info [] ~doc ~docv:"ACTION")
+  Cmd.v (Cmd.info "diagram" ~doc ~exits ~man) Term.(const diagram $ const ())
 
 let cmd =
-  Cmd.v (Cmd.info "db" ~doc ~exits ~man)
-    Term.(const db $ Hyperbib.Cli.conf $ action $
-          Hyperbib.Cli.data_conf)
+  let doc = "Manage the database of the application." in
+  let exits = Hyperbib.Exit.Info.base_cmd in
+  let man = [
+    `S Manpage.s_description;
+    `P "The $(tname) command manages the application database."; ]
+  in
+  Cmd.group (Cmd.info "db" ~doc ~exits ~man) [diagram_cmd; schema_cmd]
+
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2021 University of Bern
