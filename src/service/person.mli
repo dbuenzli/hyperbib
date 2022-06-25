@@ -127,12 +127,13 @@ module Label : Label.APPLICATION
 
 include Entity.PUBLICABLE_QUERIES with type t := t and type id := id
 
-val select : string Rel.value -> (t, Bag.unordered) Rel.Bag.t
+val select : string Rel_query.value -> (t, Bag.unordered) Bag.t
 val select_stmt : string -> t Sql.Stmt.t
 
 val match' :
-  last:string Rel.value -> first:string Rel.value -> orcid:string Rel.value ->
-  (t, Bag.unordered) Rel.Bag.t
+  last:string Rel_query.value -> first:string Rel_query.value ->
+  orcid:string Rel_query.value ->
+  (t, Bag.unordered) Rel_query.Bag.t
 
 val match_stmt :
   last:string -> first:string -> orcid:string -> t Sql.Stmt.t

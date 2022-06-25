@@ -97,10 +97,10 @@ module Person = struct
   let private_note' = Col.v "private_note" Type.Text private_note
   let public' = Col.v "public" Type.Bool public
   let table =
+    let primary_key = [Col.V id'] in
     Table.v "person"
       Row.(unit row * id' * last_name' * first_names' * orcid' * note' *
-           private_note' * public')
-      ~params:Table.[Primary_key [Col.V id']]
+           private_note' * public') ~primary_key
 end
 
 include Person
@@ -112,7 +112,7 @@ module Label = Label.For_entity (Person)
 
 include Entity.Publicable_queries (Person)
 
-open Rel.Syntax
+open Rel_query.Syntax
 
 let select sel =
   let* p = Bag.table table in
@@ -122,7 +122,7 @@ let select sel =
   Bag.where (sel_by_id || sel_by_last || sel_by_first) (Bag.yield p)
 
 let select_stmt =
-  Sql.Bag.(func @@ text @-> ret (Table.row table) select)
+  Rel_query.Sql.(func @@ text @-> ret (Table.row table) select)
 
 let match' ~last ~first ~orcid =
   let* p = Bag.table table in
@@ -133,8 +133,8 @@ let match' ~last ~first ~orcid =
   Bag.where (match_orcid || match_lf) (Bag.yield p)
 
 let match_stmt =
-  Sql.Bag.(func @@ text @-> text @-> text @-> ret (Table.row table)
-                     (fun last first orcid -> match' ~last ~first ~orcid))
+  Rel_query.Sql.(func @@ text @-> text @-> text @-> ret (Table.row table)
+                           (fun last first orcid -> match' ~last ~first ~orcid))
 
 let match_stmt ~last ~first ~orcid = match_stmt last first orcid
 

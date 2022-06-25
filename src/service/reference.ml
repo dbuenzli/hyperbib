@@ -114,19 +114,23 @@ module Reference = struct
   let type'' = Col.v "type" Type.Text type'
   let volume' = Col.v "volume" Type.Text volume
   let table =
-    Table.v "reference"
+    let primary_key = [Col.V id'] in
+    let foreign_keys =
+      let parent = Container.table, [Col.V Container.id'] in
+      let on_delete = `Set_null in
+      [Table.foreign_key ~cols:[Col.V container'] ~parent ~on_delete ()]
+    in
+    let indices = [
+      Table.index [Col.V doi'];
+      Table.index [Col.V container'];
+      Table.index [Col.V date_year']; ]
+    in
+    let row =
       Row.(unit row * id' * abstract' * container' * date_year' * date_md' *
            doi' * isbn' * issue' * note' * pages' * private_note' * public' *
            publisher' * title' * type'' * volume')
-      ~params:Table.[
-          Primary_key [Col.V id'];
-          Foreign_key (foreign_key
-                         ~cols:[Col.V container']
-                         ~reference:(Container.table, [Col.V Container.id'])
-                         ~on_delete:`Set_null ());
-          Index (Index.v [Col.V doi']);
-          Index (Index.v [Col.V container']);
-          Index (Index.v [Col.V date_year'])]
+    in
+    Table.v "reference" row ~primary_key ~foreign_keys ~indices
 
   let col_values_for_date = function
   | None -> Col.Value (date_year', None), Col.Value (date_md', None)
@@ -182,24 +186,22 @@ module Contributor = struct
   let role' = Col.v "role" Person.role_type role
   let position' = Col.v "position" Type.Int position
   let table =
-    Table.v "reference_contributor"
-      Row.(unit row * reference' * person' * role' * position')
-      ~params:Table.[
-          Primary_key [Col.V reference'; Col.V person'; Col.V role'];
-          Foreign_key (foreign_key
-                         ~cols:[Col.V reference']
-                         ~reference:(table, [Col.V id'])
-                         ~on_delete:`Cascade ());
-          Foreign_key (foreign_key
-                         ~cols:[Col.V person']
-                         ~reference:(Person.table, [Col.V Person.id'])
-                         ~on_delete:`Cascade ());
-          Index (Index.v [Col.V person']);
-          Index (Index.v [Col.V reference'])]
+    let primary_key = [Col.V reference'; Col.V person'; Col.V role']; in
+    let foreign_keys =
+      [ Table.foreign_key
+          ~cols:[Col.V reference'] ~parent:(table, [Col.V id'])
+          ~on_delete:`Cascade ();
+        Table.foreign_key
+          ~cols:[Col.V person'] ~parent:(Person.table, [Col.V Person.id'])
+          ~on_delete:`Cascade () ]
+    in
+    let indices = [ Table.index [Col.V person']; Table.index [Col.V reference']] in
+    let row = Row.(unit row * reference' * person' * role' * position') in
+    Table.v "reference_contributor" row ~primary_key ~foreign_keys ~indices
 
-  open Rel.Syntax
+  open Rel_query.Syntax
 
-  let create ?or_action c = Sql.insert_into ?or_action table c
+  let create ?or_action c = Sql.insert_into Db.dialect ?or_action table c
   let of_ref_ids rids =
     let* rid = rids in
     let* c = Bag.table table in
@@ -232,7 +234,7 @@ module Contributor = struct
     (* We could diff to devise delete and insert ops, for now it seems
        easier this way. *)
     let ref_col = Col.Value (reference', id) in
-    let delete_all id = Sql.delete_from table ~where:[ref_col] in
+    let delete_all id = Sql.delete_from Db.dialect table ~where:[ref_col] in
     let contributor role i pid =
       v ~reference:id ~person:pid ~role ~position:i
     in
@@ -261,22 +263,23 @@ module Subject = struct
   let reference' = Col.v "reference" Type.Int reference
   let subject' = Col.v "subject" Type.Int subject
   let table =
-    Table.v "reference_subject" Row.(unit row * reference' * subject')
-      ~params:Table.[
-          Primary_key [Col.V reference'; Col.V subject'];
-          Foreign_key (foreign_key
-                         ~cols:[Col.V reference']
-                         ~reference:(table, [Col.V id'])
-                         ~on_delete:`Cascade ());
-          Foreign_key (foreign_key
-                         ~cols:[Col.V subject']
-                         ~reference:(Subject.table, [Col.V Subject.id'])
-                         ~on_delete:`Cascade ());
-          Index (Index.v [Col.V subject'])]
+    let primary_key = [Col.V reference'; Col.V subject'] in
+    let foreign_keys = [
+      Table.foreign_key
+        ~cols:[Col.V reference'] ~parent:(table, [Col.V id'])
+        ~on_delete:`Cascade ();
+      Table.foreign_key
+        ~cols:[Col.V subject'] ~parent:(Subject.table, [Col.V Subject.id'])
+        ~on_delete:`Cascade ();
+    ]
+    in
+    let indices = [Table.index [Col.V subject']] in
+    let row = Row.(unit row * reference' * subject') in
+    Table.v "reference_subject" row ~primary_key ~foreign_keys ~indices
 
-  open Rel.Syntax
+  open Rel_query.Syntax
 
-  let create ?or_action a = Sql.insert_into ?or_action table a
+  let create ?or_action a = Sql.insert_into Db.dialect ?or_action table a
   let of_ref_ids rids =
     let* rid = rids in
     let* rel = Bag.table table in
@@ -320,7 +323,7 @@ module Subject = struct
        FROM reference_subject as s
        WHERE s.subject = ?1"
     in
-    Sql.Stmt.(func sql @@ int @-> ret Row.Quick.(t1 @@ int "ref_count"))
+    Sql.Stmt.(func sql @@ int @-> ret Row.(t1 @@ int "ref_count"))
 
   let copy_applications_stmt =
     (* FIXME ask this is insert 'r table with 'r Bag.t *)
@@ -337,16 +340,17 @@ module Subject = struct
     let* app = Bag.table table in
     Bag.where Int.(app #. reference' = id) (Bag.yield app)
 
-  let ref_id_stmt = Sql.Bag.(func @@ int @-> ret (Table.row table) of_ref_id)
+  let ref_id_stmt =
+    Rel_query.Sql.(func @@ int @-> ret (Table.row table) of_ref_id)
 
   let set_list ~reference:id ss = fun db ->
     (* We could diff to devise delete and insert ops, for now it seems
        easier this way. *)
     let ref_col = Col.Value (reference', id) in
-    let delete_all id = Sql.delete_from table ~where:[ref_col] in
+    let delete_all id = Sql.delete_from Db.dialect table ~where:[ref_col] in
     let insert sid =
       Db.exec db @@
-      Sql.insert_into_cols table [ref_col; Col.Value (subject', sid)]
+      Sql.insert_into_cols Db.dialect table [ref_col; Col.Value (subject', sid)]
     in
     let open Result.Syntax in
     let* () = Db.exec db (delete_all id) in
@@ -368,18 +372,18 @@ module Cites = struct
   let reference' = Col.v "reference" Type.Int reference
   let doi' = Col.v "doi" Type.Text doi
   let table =
-    let params = Table.[
-        Foreign_key (foreign_key
-                       ~cols:[Col.V reference']
-                       ~reference:(table, [Col.V id'])
-                       ~on_delete:`Cascade ());
-        Primary_key [Col.V reference'; Col.V doi']];
+    let primary_key = [Col.V reference'; Col.V doi'] in
+    let foreign_keys =
+      [ Table.foreign_key
+          ~cols:[Col.V reference'] ~parent:(table, [Col.V id'])
+          ~on_delete:`Cascade () ]
     in
-    Table.v "cites" ~params Row.(unit row * reference' * doi')
+    let row = Row.(unit row * reference' * doi') in
+    Table.v "cites" row ~primary_key ~foreign_keys
 
-  open Rel.Syntax
+  open Rel_query.Syntax
 
-  let create c = Sql.insert_into table c
+  let create c = Sql.insert_into Db.dialect table c
   let of_ref_ids rids =
     let* rid = rids in
     let* rel = Bag.table table in
@@ -398,12 +402,12 @@ module Cites = struct
     let rel' = pair (rel #. reference') (ref #. id') in
     Bag.where (is_rid && is_internal_doi) (Bag.yield rel')
 
-  let internal_row = Row.Quick.(t2 (int "ref") (int "cited"))
+  let internal_row = Row.(t2 (int "ref") (int "cited"))
   let set_list ~reference:id ~dois = fun db ->
     (* We could diff to devise delete and insert ops, for now it seems
        easier this way. *)
     let ref_col = Col.Value (reference', id) in
-    let delete_all id = Sql.delete_from table ~where:[ref_col] in
+    let delete_all id = Sql.delete_from Db.dialect table ~where:[ref_col] in
     let cite doi = v ~reference:id ~doi in
     let cites = List.map cite dois in
     let insert c = Db.exec db @@ create c in
@@ -415,7 +419,7 @@ end
 
 include Entity.Publicable_queries (Reference)
 
-open Rel.Syntax
+open Rel_query.Syntax
 
 let ids_of_refs refs = let* r = refs in Bag.yield (r #. id')
 
@@ -454,7 +458,7 @@ let filter_container_id cid refs =
    query to list all and return their ref count, we'd need left join
    support. *)
 
-let ref_count_row = Row.Quick.(t2 (int "id") (int "ref_count"))
+let ref_count_row = Row.(t2 (int "id") (int "ref_count"))
 let persons_public_ref_count_stmt =
   let sql =
     "SELECT c.person, COUNT(*)
@@ -473,7 +477,7 @@ let person_ref_count_stmt =
      FROM reference_contributor as c
      WHERE c.person = ?1"
   in
-  Sql.Stmt.(func sql @@ int @-> ret Row.Quick.(t1 @@ int "ref_count"))
+  Sql.Stmt.(func sql @@ int @-> ret Row.(t1 @@ int "ref_count"))
 
 let container_public_ref_count_stmt =
   let sql =
@@ -490,7 +494,7 @@ let container_ref_count_stmt =
      FROM reference as r
      WHERE r.container = ?1"
   in
-  Sql.Stmt.(func sql @@ int @-> ret Row.Quick.(t1 @@ int "ref_count"))
+  Sql.Stmt.(func sql @@ int @-> ret Row.(t1 @@ int "ref_count"))
 
 let subject_public_ref_count_stmt =
   let sql =
@@ -504,7 +508,7 @@ let subject_public_ref_count_stmt =
 let replace_container_stmt ~this ~by =
   let this = Col.Value (container', (Some this)) in
   let by = Col.Value (container', (Some by)) in
-  Sql.update table ~set:[by] ~where:[this]
+  Sql.update Db.dialect table ~set:[by] ~where:[this]
 
 let ids_citing_doi doi =
   let* c = Bag.table Cites.table in
@@ -539,14 +543,15 @@ let render_data ~only_public refs =
   let persons = Contributor.persons ~only_public ref_contributors in
   let subjects = Subject.subjects ~only_public ref_subjects in
   let containers = containers_of_refs ~only_public refs in
-  let ref_labels_stmt = Sql.of_bag' Label.table ref_labels in
-  let ref_contributors_stmt = Sql.of_bag' Contributor.table ref_contributors in
-  let ref_subjects_stmt = Sql.of_bag' Subject.table ref_subjects in
-  let labels_stmt = Sql.of_bag' label_table labels in
-  let persons_stmt = Sql.of_bag' Person.table persons  in
-  let subjects_stmt = Sql.of_bag' subject_table subjects in
-  let refs_stmt = Sql.of_bag' table refs in
-  let containers_stmt = Sql.of_bag' Container.table containers in
+  let ref_labels_stmt = Rel_query.Sql.of_bag' Label.table ref_labels in
+  let ref_contributors_stmt =
+    Rel_query.Sql.of_bag' Contributor.table ref_contributors in
+  let ref_subjects_stmt = Rel_query.Sql.of_bag' Subject.table ref_subjects in
+  let labels_stmt = Rel_query.Sql.of_bag' label_table labels in
+  let persons_stmt = Rel_query.Sql.of_bag' Person.table persons  in
+  let subjects_stmt = Rel_query.Sql.of_bag' subject_table subjects in
+  let refs_stmt = Rel_query.Sql.of_bag' table refs in
+  let containers_stmt = Rel_query.Sql.of_bag' Container.table containers in
   fun db ->
     let open Result.Syntax in
     let* list = Db.list db refs_stmt in

@@ -48,15 +48,14 @@ module Std = struct
       Os.Dir.fold_files ?dotfiles ?follow_symlinks ~rel:true ~recurse cp src ()
   end
 
-  (* Ask needs. *)
+  (* Rel needs. *)
 
   module Type = Rel.Type
   module Col = Rel.Col
   module Row = Rel.Row
-  module Index = Rel.Index
   module Table = Rel.Table
-  module Bag = Rel.Bag
-  module Sql = Rel.Sql
+  module Bag = Rel_query.Bag
+  module Sql = Rel_sql
 
   (* Webs needs *)
 

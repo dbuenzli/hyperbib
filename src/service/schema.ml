@@ -32,6 +32,8 @@ let tables =
     Table.V Reference.Cites.table;
   ]
 
+let v = Rel.Schema.v ~tables ()
+
 (*---------------------------------------------------------------------------
    Copyright (c) 2021 University of Bern
 

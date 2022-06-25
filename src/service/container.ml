@@ -67,11 +67,11 @@ module Container = struct
   let private_note' = Col.v "private_note" Type.Text private_note
   let public' = Col.v "public" Type.Bool public
   let table =
+    let primary_key = [Col.V id'] in
     let row = Row.(unit row * id' * title' * isbn' * issn' * note' *
                    private_note' * public')
     in
-    let params = Table.[Primary_key [Col.V id']] in
-    Table.v "container" row ~params
+    Table.v "container" row ~primary_key
 end
 
 include Container
@@ -79,7 +79,7 @@ type container = t
 module Label = Label.For_entity (Container)
 
 let match' ~title ~isbn ~issn =
-  let open Rel.Syntax in
+  let open Rel_query.Syntax in
   let* c = Bag.table table in
   let match_isbn = Text.(not (isbn = empty) && isbn = c #. isbn') in
   let match_issn = Text.(not (issn = empty) && issn = c #. issn') in
@@ -87,21 +87,21 @@ let match' ~title ~isbn ~issn =
   Bag.where (match_isbn || match_issn || match_title) (Bag.yield c)
 
 let match_stmt =
-  Sql.Bag.(func @@ text @-> text @-> text @-> ret (Table.row table)
-                     (fun title isbn issn -> match' ~title ~isbn ~issn))
+  Rel_query.Sql.(func @@ text @-> text @-> text @-> ret (Table.row table)
+                           (fun title isbn issn -> match' ~title ~isbn ~issn))
 
 let match_stmt ~title ~isbn ~issn = match_stmt title isbn issn
 
 let select sel =
   (* FIXME trim spaces in both pattern and scrutinee *)
-  let open Rel.Syntax in
+  let open Rel_query.Syntax in
   let* c = Bag.table table in
   let sel_by_id = Text.(of_int (c #. id') = sel) in
   let sel_by_title = Text.(like (c #. title') (sel ^ v "%") ) in
   Bag.where (sel_by_id || sel_by_title) (Bag.yield c)
 
 let select_stmt =
-  Sql.Bag.(func @@ text @-> ret (Table.row table) select)
+  Rel_query.Sql.(func @@ text @-> ret (Table.row table) select)
 
 (* Queries *)
 

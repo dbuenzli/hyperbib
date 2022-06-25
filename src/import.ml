@@ -272,7 +272,7 @@ module Legacy = struct
     Imap.fold make_subject imap []
 
   let insert_subject db (s, see_also) =
-    Db.error_string @@
+    Db.string_error @@
     let* () = Db.exec db (Subject.create ~ignore_id:false s) in
     Bazaar.list_iter_stop_on_error
       (Db.exec db) (List.map Subject.See_also.create see_also)
@@ -379,7 +379,7 @@ module Legacy = struct
     match doi_ref with
     | None -> Fmt.error "%s: not found (404)" ref.doi
     | Some doi_ref ->
-        Db.error_string @@
+        Db.string_error @@
         let* container_id = get_container_id db doi_ref in
         let note = ref.note and public = ref.public in
         let r = Doi.reference_of_ref ~container_id doi_ref ~note ~public in

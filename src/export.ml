@@ -16,7 +16,7 @@ module Static_html = struct
      for now.  *)
 
   let refs_render_data ~only_public refs db =
-    Reference.render_data ~only_public refs db |> Db.error_string
+    Reference.render_data ~only_public refs db |> Db.string_error
 
   let filepath_of_url uf u =
     let uf = Kurl.Fmt.with_fmt ~use_exts:true uf in
@@ -33,22 +33,22 @@ module Static_html = struct
     Os.File.write ~force:true ~make_path:true file (Page.doc_to_string p)
 
   let write_reference ~dir db g r =
-    let only_public = Rel.Bool.true' in
-    let rid = Rel.Int.v (Reference.id r) in
+    let only_public = Rel_query.Bool.true' in
+    let rid = Rel_query.Int.v (Reference.id r) in
     let ref = Reference.find_id rid in
     let* render_data =
-      Reference.render_data ~only_public ref db |> Db.error_string
+      Reference.render_data ~only_public ref db |> Db.string_error
     in
     let cites = Reference.find_dois (Reference.dois_cited rid) in
     let* cites = refs_render_data ~only_public cites db in
     let cited_by = match Reference.doi r with
-    | "" -> Bag.empty | doi -> Reference.citing_doi (Rel.Text.v doi)
+    | "" -> Bag.empty | doi -> Reference.citing_doi (Rel_query.Text.v doi)
     in
     let* cited_by = refs_render_data ~only_public cited_by db in
     write_page ~dir g (Reference_html.page g r ~render_data ~cites ~cited_by)
 
   let write_references ~dir db g =
-    let only_public = Rel.Bool.true' in
+    let only_public = Rel_query.Bool.true' in
     let all = Reference.list ~only_public in
     let* rs = refs_render_data ~only_public all db in
     let index = Reference_html.index g rs in
@@ -59,18 +59,18 @@ module Static_html = struct
     Ok ()
 
   let write_container ~dir db g c =
-    let only_public = Rel.Bool.true' in
+    let only_public = Rel_query.Bool.true' in
     let all = Reference.list ~only_public in
     let id = Container.id c in
-    let refs = Reference.filter_container_id (Rel.Int.v id) all in
+    let refs = Reference.filter_container_id (Rel_query.Int.v id) all in
     let* refs = refs_render_data ~only_public refs db in
     write_page ~dir g (Container_html.page g c refs)
 
   let write_containers ~dir db g =
     let containers = Container.list_stmt ~only_public:true in
-    let* cs = Db.list db containers |> Db.error_string in
+    let* cs = Db.list db containers |> Db.string_error in
     let ref_count = Reference.container_public_ref_count_stmt in
-    let* ref_count = Db.id_map db ref_count fst |> Db.error_string in
+    let* ref_count = Db.id_map db ref_count fst |> Db.string_error in
     let index = Container_html.index g cs ~ref_count in
     let* () = write_page ~dir g index in
     let write_container = write_container ~dir db g in
@@ -78,18 +78,18 @@ module Static_html = struct
     Ok ()
 
   let write_person ~dir db g p =
-    let only_public = Rel.Bool.true' in
+    let only_public = Rel_query.Bool.true' in
     let all = Reference.list ~only_public in
     let id = Person.id p in
-    let refs = Reference.filter_person_id (Rel.Int.v id) all in
+    let refs = Reference.filter_person_id (Rel_query.Int.v id) all in
     let* refs = refs_render_data ~only_public refs db  in
     write_page ~dir g (Person_html.page g p refs)
 
   let write_persons ~dir db g =
     let persons = Person.list_stmt ~only_public:true in
-    let* ps = Db.list db persons |> Db.error_string in
+    let* ps = Db.list db persons |> Db.string_error in
     let ref_count = Reference.persons_public_ref_count_stmt in
-    let* ref_count = Db.id_map db ref_count fst |> Db.error_string in
+    let* ref_count = Db.id_map db ref_count fst |> Db.string_error in
     let index = Person_html.index g ps ~ref_count in
     let* () = write_page ~dir g index in
     let write_person = write_person ~dir db g in
@@ -97,22 +97,22 @@ module Static_html = struct
     Ok ()
 
   let write_subject ~dir db g s =
-    let only_public = Rel.Bool.true' in
+    let only_public = Rel_query.Bool.true' in
     let all = Reference.list ~only_public in
     let id = Subject.id s in
-    let refs = Reference.Subject.filter_subject_id (Rel.Int.v id) all in
+    let refs = Reference.Subject.filter_subject_id (Rel_query.Int.v id) all in
     let* parent = match Subject.parent s with
     | None -> Ok None
-    | Some pid -> Db.first db (Subject.find_id_stmt pid) |> Db.error_string
+    | Some pid -> Db.first db (Subject.find_id_stmt pid) |> Db.string_error
     in
     let* refs = refs_render_data ~only_public refs db in
     write_page ~dir g (Subject_html.page g s ~parent refs)
 
   let write_subjects ~dir db g =
-    let subjects = Sql.of_bag' Subject.table Subject.visible_list in
-    let* ss = Db.list db subjects |> Db.error_string in
+    let subjects = Rel_query.Sql.of_bag' Subject.table Subject.visible_list in
+    let* ss = Db.list db subjects |> Db.string_error in
     let ref_count = Reference.subject_public_ref_count_stmt in
-    let* ref_count = Db.id_map db ref_count fst |> Db.error_string in
+    let* ref_count = Db.id_map db ref_count fst |> Db.string_error in
     let index = Subject_html.index g ss ~ref_count in
     let* () = write_page ~dir g index in
     let write_subject = write_subject ~dir db g in
@@ -120,15 +120,15 @@ module Static_html = struct
     Ok ()
 
   let write_year ~dir db g (year, _) =
-    let only_public = Rel.Bool.true' in
+    let only_public = Rel_query.Bool.true' in
     let all = Reference.list ~only_public in
-    let refs = Year.filter ~year:(Rel.Int.v year) all in
+    let refs = Year.filter ~year:(Rel_query.Int.v year) all in
     let* render_data = refs_render_data ~only_public refs db in
     write_page ~dir g (Year_html.page g ~year render_data)
 
   let write_years ~dir db g =
     let years = Year.public_domain_stmt in
-    let* years = Db.list db years |> Db.error_string in
+    let* years = Db.list db years |> Db.string_error in
     let index = Year_html.index g years in
     let* () = write_page ~dir g index in
     let write_year = write_year ~dir db g in

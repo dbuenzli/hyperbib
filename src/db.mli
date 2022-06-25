@@ -7,6 +7,9 @@
 
 open Hyperbib.Std
 
+val dialect : Rel_sql.dialect
+(** The the database SQL dialect. *)
+
 type t
 (** The type for the database. *)
 
@@ -16,8 +19,8 @@ type error
 val error_message : error -> string
 (** [error_message e] is an english error message for [e]. *)
 
-val error_string : ('a, error) result -> ('a, string) result
-(** [error_string] is [Result.map_error error_string]. *)
+val string_error : ('a, error) result -> ('a, string) result
+(** [string_error] is [Result.map_error error_message]. *)
 
 type pool = (t, error) Rel_pool.t
 (** The type for database connection pools. *)
@@ -32,9 +35,18 @@ val open' :
 (** [open' file] opens the database [file]. If [read_only] is [true]
     (defaults to [false]), no writes are allowed. *)
 
+val close : t -> (unit, error) result
+(** [close db] closes the database *)
+
+val with_open : Fpath.t -> (t -> 'a) -> ('a, error) result
+(** [with_open file f] calls [f] with a database open on [file]. *)
+
 val setup :
-  t -> schema:Table.v list -> drop_if_exists:bool -> (unit, error) result
+  t -> schema:Rel.Schema.t -> (unit, error) result
 (** [setup db] setups the database if needed. *)
+
+val reset :
+  t -> schema:Rel.Schema.t -> (unit, error) result
 
 val backup : Fpath.t -> t -> (unit, string) result
 (** [backup file db] backups [db] to [file]. [file] is replaced
@@ -74,6 +86,9 @@ val id_map_related_list :
   ?order:('b -> 'b -> int) ->
   t -> 'a Sql.Stmt.t -> id:('a -> int) -> related:('a -> int) ->
   related_by_id:'b Id.Map.t -> ('b list Id.Map.t, error) result
+
+val schema :
+  ?schema:Rel.Schema.name -> t -> (Rel.Schema.t * string list, error) result
 
 (** {1:webs Webs responding convenience} *)
 

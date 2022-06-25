@@ -47,12 +47,12 @@ module Label = struct
   let note' = Col.v "note" Type.Text note
   let private_note' = Col.v "private_note" Type.Text private_note
   let public' = Col.v "public" Type.Bool public
-
   let table =
-    let params = Table.[Primary_key [Col.V id']; Unique [Col.V name']] in
-    Table.v "label" ~params
+    let primary_key = [Col.V id'] in
+    let unique_keys = [Table.unique_key [Col.V name']] in
+    Table.v "label"
       Row.(unit row * id' * name' * synopsis' * color' * note' * private_note' *
-           public')
+           public') ~primary_key ~unique_keys
 end
 
 include Label
@@ -76,7 +76,8 @@ module type APPLICATION = sig
   val create : t -> unit Sql.Stmt.t
   val applications : (entity_id, 'a) Bag.t -> (t, Bag.unordered) Bag.t
   val of_applications :
-   only_public:bool Rel.value -> (t, 'a) Bag.t -> (label, Bag.unordered) Bag.t
+    only_public:
+      bool Rel_query.value -> (t, 'a) Bag.t -> (label, Bag.unordered) Bag.t
   val copy_applications_stmt :
     src:entity_id -> dst:entity_id -> unit Sql.Stmt.t
 end
@@ -95,24 +96,20 @@ module For_entity (E : Entity.IDENTIFIABLE) = struct
   let label' = Col.v "label" Type.Int label
   let table =
     let name = Table.name E.table ^ "_label" in
-    let params =
-      Table.[
-        Primary_key [Col.V entity'; Col.V label'];
-        Foreign_key (foreign_key
-                       ~cols:[Col.V entity']
-                       ~reference:(E.table, [Col.V E.id'])
-                       ~on_delete:`Cascade ());
-        Foreign_key (foreign_key
-                       ~cols:[Col.V label']
-                       ~reference:(Label.table, [Col.V id'])
-                       ~on_delete:`Cascade ());
-        Index (Index.v [Col.V label'])]
+    let primary_key = [Col.V entity'; Col.V label'] in
+    let foreign_keys = Table.[
+        foreign_key ~cols:Col.[V entity'] ~parent:(E.table, Col.[V E.id'])
+          ~on_delete:`Cascade ();
+        foreign_key ~cols:Col.[V label'] ~parent:(Label.table, Col.[V id'])
+          ~on_delete:`Cascade ()]
     in
-    Table.v name ~params Row.(unit row * entity' * label')
+    let indices = [Table.index [Col.V label']] in
+    Table.v name Row.(unit row * entity' * label')
+      ~primary_key ~foreign_keys ~indices
 
-  open Rel.Syntax
+  open Rel_query.Syntax
 
-  let create r = Sql.insert_into table r
+  let create r = Sql.insert_into Db.dialect table r
 
   let applications eids =
     let* eid = eids in

@@ -27,11 +27,11 @@ let get_subject_parent db s = match Subject.parent s with
 
 let get_page_data db g s =
   let only_public = Page.Gen.only_public g in
-  let only_public = Rel.Bool.v only_public in
+  let only_public = Rel_query.Bool.v only_public in
   let* parent = get_subject_parent db s in
   let all = Reference.list ~only_public in
   let id = Subject.id s in
-  let refs = Reference.Subject.filter_subject_id (Rel.Int.v id) all in
+  let refs = Reference.Subject.filter_subject_id (Rel_query.Int.v id) all in
   let* refs = Reference.render_data ~only_public refs db |> Db.error_resp in
   Ok (parent, refs)
 

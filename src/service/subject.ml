@@ -64,21 +64,18 @@ module Subject = struct
   let public' = Col.v "public" Type.Bool public
   let parent' = Col.v "parent" Type.(Option Int) parent
   let see' = Col.v "see" Type.(Option Int) see
-  let rec table =
-    { Table.name = "subject";
-      params =
-        Table.[ Primary_key [Col.V id'];
-                Foreign_key ({ cols = [Col.V see'];
-                               reference = (table, [Col.V id']);
-                               on_delete = Some `Cascade (* FIXME maybe not.*);
-                               on_update = None });
-                Foreign_key ({ cols = [Col.V parent'];
-                               reference = (table, [Col.V id']);
-                               on_delete = Some `Set_null;
-                               on_update = None });
-              ];
-      row = lazy (Row.(unit row * id' * name' * parent' * see' * description' *
-                       private_note' * public')) }
+  let table =
+    let row =
+      Row.(unit row * id' * name' * parent' * see' * description' *
+           private_note' * public');
+    in
+    let foreign_keys =
+      [ Table.self_foreign_key ~cols:[Col.V see'] ~parent:[Col.V id']
+          ~on_delete:`Cascade () (* FIXME maybe not *);
+        Table.self_foreign_key ~cols:[Col.V parent'] ~parent:[Col.V id']
+          ~on_delete:`Set_null () ]
+    in
+    Table.v "subject" row ~primary_key:[Col.V id'] ~foreign_keys
 end
 
 include Subject
@@ -93,16 +90,16 @@ module See_also = struct
   let given' = Col.v "given" Type.Int given
   let that' = Col.v "that" Type.Int that
   let table =
-    let reference = table, [Col.V id'] in
-    let on_delete = `Cascade in
-    let params = Table.[
-        Primary_key Col.[V given'; V that'];
-        Foreign_key (foreign_key ~cols:[Col.V given'] ~reference ~on_delete ());
-        Foreign_key (foreign_key ~cols:[Col.V that'] ~reference ~on_delete ())]
+    let primary_key = Col.[V given'; V that'] in
+    let parent = (table, [Col.V id']) and on_delete = `Cascade in
+    let foreign_keys =
+      [ Table.foreign_key ~cols:[Col.V given'] ~parent ~on_delete ();
+        Table.foreign_key ~cols:[Col.V that'] ~parent ~on_delete (); ]
     in
-    Table.v "subject_see_also" Row.(unit row * given' * that') ~params
+    Table.v "subject_see_also" Row.(unit row * given' * that')
+      ~primary_key ~foreign_keys
 
-  let create r = Sql.insert_into table r
+  let create r = Sql.insert_into Db.dialect table r
 end
 
 module Label = Label.For_entity (Subject)
@@ -111,7 +108,7 @@ module Label = Label.For_entity (Subject)
 
 include Entity.Publicable_queries (Subject)
 
-open Rel.Syntax
+open Rel_query.Syntax
 
 let some_id_is_public id =
   let eq_id id s = Int.(Option.get id = s #. id') in
@@ -129,7 +126,7 @@ let visible_list =
   let* s = Bag.table table in
   Bag.where (visible s) (Bag.yield s)
 
-let visible_list_stmt = Sql.of_bag' table visible_list
+let visible_list_stmt = Rel_query.Sql.of_bag' table visible_list
 
 let list_visibility =
   let* s = Bag.table table in
@@ -140,21 +137,22 @@ let list_visibility_stmt =
   let publishable = Col.v "visible" Type.Bool snd in
   let ret = Row.unit (fun s p -> s, p) in
   let res = Row.(cat ret ~proj:fst row * publishable) in
-  Sql.Bag.(func @@ ret res list_visibility)
+  Rel_query.Sql.(func @@ ret res list_visibility)
 
 let parents =
   let* s = Bag.table table in
   let has_no_parent = Option.is_none (s #. parent') in
   Bag.where has_no_parent (Bag.yield s)
 
-let parents_stmt = Sql.of_bag' table parents
+let parents_stmt = Rel_query.Sql.of_bag' table parents
 
 let children id =
   let* s = Bag.table table in
   let is_parent = Option.has_value ~eq:Int.equal id (s #. parent') in
   Bag.where is_parent (Bag.yield s)
 
-let children_stmt = Sql.Bag.(func @@ int @-> ret (Table.row table) children)
+let children_stmt =
+  Rel_query.Sql.(func @@ int @-> ret (Table.row table) children)
 
 let select sel =
   (* FIXME trim spaces in both pattern and scrutinee *)
@@ -164,7 +162,7 @@ let select sel =
   Bag.where (sel_by_id || sel_by_name) (Bag.yield s)
 
 let select_stmt =
-  Sql.Bag.(func @@ text @-> ret (Table.row table) select)
+  Rel_query.Sql.(func @@ text @-> ret (Table.row table) select)
 
 module Url = struct
   open Result.Syntax

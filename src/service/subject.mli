@@ -141,18 +141,18 @@ module Label : Label.APPLICATION
 
 include Entity.PUBLICABLE_QUERIES with type t := t and type id := id
 
-val visible : t Rel.value -> bool Rel.value
+val visible : t Rel_query.value -> bool Rel_query.value
 val visible_list : (t, Bag.unordered) Bag.t
-val list_visibility : (t * bool, Bag.unordered) Rel.Bag.t
+val list_visibility : (t * bool, Bag.unordered) Bag.t
 val list_visibility_stmt : (t * bool) Sql.Stmt.t
 
 val parents : (t, Bag.unordered) Bag.t
 val parents_stmt : t Sql.Stmt.t
 
-val children : id Rel.value -> (t, Bag.unordered) Bag.t
+val children : id Rel_query.value -> (t, Bag.unordered) Bag.t
 val children_stmt : id -> t Sql.Stmt.t
 
-val select : string Rel.value -> (t, Bag.unordered) Rel.Bag.t
+val select : string Rel_query.value -> (t, Bag.unordered) Bag.t
 val select_stmt : string -> t Sql.Stmt.t
 
 (** {1:url Urls} *)

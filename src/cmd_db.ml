@@ -6,15 +6,28 @@
 open Hyperbib.Std
 open Result.Syntax
 
-let diagram () =
-  Format.printf "%a@." (Rel_kit.Schema_diagram.pp_dot ()) Schema.tables;
-  Hyperbib.Exit.ok
-
-let schema () =
-  let schema = Sql.create_schema Schema.tables in
-  let stmts = [schema] in
-  Log.app (fun m -> m "@[<v>%a@]" (Fmt.list Sql.Stmt.pp_src) stmts);
-  Hyperbib.Exit.ok
+let schema conf data_conf which format =
+  let output_schema ~format s = match format with
+  | `Dot rankdir ->
+      Log.app (fun m -> m "@[%a@]" (Rel.Schema.pp_dot ~rankdir) s);
+  | `Sqlite3 ->
+      let stmts = Rel_sql.create_schema Db.dialect s in
+      Log.app (fun m -> m "@[<v>%a@]" (Fmt.list Rel_sql.Stmt.pp_src) stmts);
+  | `Ocaml kind ->
+      Log.app (fun m -> m "@[%a@]" (Rel.Schema.pp_ocaml kind) s)
+  in
+  match which with
+  | `Live ->
+      let use = Hyperbib.Exit.some_error in
+      Log.if_error ~use @@ Db.string_error @@ Result.join @@
+      Db.with_open (Hyperbib.Data_conf.db_file data_conf) @@ fun db ->
+      let* live, issues = Db.schema db in
+      output_schema ~format live;
+      List.iter (fun i -> Log.warn (fun m -> m "%a" Fmt.lines i)) issues;
+      Ok Hyperbib.Exit.ok
+  | `App ->
+      output_schema ~format Schema.v;
+      Hyperbib.Exit.ok
 
 let sql conf data_conf args =
   Log.if_error ~use:Hyperbib.Exit.some_error @@
@@ -33,29 +46,30 @@ let sql conf data_conf args =
 
 open Cmdliner
 
-let diagram_cmd =
-  let doc = "Output database schema diagram" in
-  let exits = Hyperbib.Exit.Info.base_cmd in
-  let man = [
-    `S Manpage.s_description;
-    `P "$(tname) outputs the database schema $(b,.dot) file format. Pipe \
-        to $(b,dot -Tsvg) to generate an SVG file."; ]
-  in
-  Cmd.v (Cmd.info "diagram" ~doc ~exits ~man) Term.(const diagram $ const ())
+let exits = Hyperbib.Exit.Info.base_cmd
 
 let schema_cmd =
-  let doc = "Output database SQL schema" in
-  let exits = Hyperbib.Exit.Info.base_cmd in
+  let doc = "Output the app or live database schema" in
   let man = [
     `S Manpage.s_description;
-    `P "$(tname) outputs the datbase schema in the SQL data definition \
-        language."]
+    `P "$(tname) outputs the app or live database schema in various formats."]
   in
-  Cmd.v (Cmd.info "schema" ~doc ~exits ~man) Term.(const schema $ const ())
+  let which =
+    let e = ["app", Some `App; "live", Some `Live] in
+    let doc = Fmt.str
+        "Schema to output. Must be %s. $(b,app) is the schema assumed by \
+         the software. $(b,live) is the schema of the database."
+        (Arg.doc_alts_enum e)
+    in
+    let docv = "WHICH" in
+    Arg.(required & pos 0 (Arg.enum e) None & info [] ~doc ~docv)
+  in
+  Cmd.v (Cmd.info "schema" ~doc ~exits ~man)
+    Term.(const schema $ Hyperbib.Cli.conf $ Hyperbib.Cli.data_conf $
+          which $ Rel_cli.schema_format ~default:`Sqlite3 ())
 
 let sql_cmd =
   let doc = "SQL prompt on the database" in
-  let exits = Hyperbib.Exit.Info.base_cmd in
   let man = [
      `S Manpage.s_synopsis;
     `P "$(mname) $(tname) [$(i,OPTION)]… $(b,--) $(i,OPTION)… [$(i,SQL)]";
@@ -72,12 +86,11 @@ let sql_cmd =
 
 let cmd =
   let doc = "Manage the database of the application." in
-  let exits = Hyperbib.Exit.Info.base_cmd in
   let man = [
     `S Manpage.s_description;
     `P "The $(tname) command manages the application database."; ]
   in
-  Cmd.group (Cmd.info "db" ~doc ~exits ~man) [diagram_cmd; schema_cmd; sql_cmd]
+  Cmd.group (Cmd.info "db" ~doc ~exits ~man) [schema_cmd; sql_cmd]
 
 
 (*---------------------------------------------------------------------------

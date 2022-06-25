@@ -16,10 +16,10 @@ let get_person_ref_count db s =
 
 let get_page_data db g s =
   let only_public = Page.Gen.only_public g in
-  let only_public = Rel.Bool.v only_public in
+  let only_public = Rel_query.Bool.v only_public in
   let all = Reference.list ~only_public in
   let id = Person.id s in
-  let refs = Reference.filter_person_id (Rel.Int.v id) all in
+  let refs = Reference.filter_person_id (Rel_query.Int.v id) all in
   let* refs = Reference.render_data ~only_public refs db |> Db.error_resp in
   Ok refs
 

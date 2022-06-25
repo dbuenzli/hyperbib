@@ -15,10 +15,11 @@ let import_legacy data_conf reset =
   | true ->
       let db_file = Hyperbib.Data_conf.db_file data_conf in
       let file_error e = Fmt.str "%a: %s" Fpath.pp_unquoted db_file e in
-      Result.join @@ Result.map_error file_error @@ Db.error_string @@
+      Result.join @@ Result.map_error file_error @@ Db.string_error @@
       let foreign_keys = false in
       let* db = Db.open' ~foreign_keys (Hyperbib.Data_conf.db_file data_conf) in
-      let* () = Db.setup ~schema:Schema.tables ~drop_if_exists:true db in
+      let* () = Db.reset db ~schema:Schema.v in
+      let* () = Db.setup ~schema:Schema.v db in
       let* ret = Import.legacy db data_conf in
       Ok (Result.map (Fun.const Hyperbib.Exit.ok) ret)
 

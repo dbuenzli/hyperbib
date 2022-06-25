@@ -47,15 +47,14 @@ module Std : sig
 
   (** {1:rel Rel open}
 
-      This is open {!Rel.Std}. *)
+      {b FIXME try to get rid of most of these}.  *)
 
   module Type = Rel.Type
   module Col = Rel.Col
   module Row = Rel.Row
-  module Index = Rel.Index
   module Table = Rel.Table
-  module Bag = Rel.Bag
-  module Sql = Rel.Sql
+  module Bag = Rel_query.Bag
+  module Sql = Rel_sql
 
   (** {1:webs Webs_* opens} *)
 

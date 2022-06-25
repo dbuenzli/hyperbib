@@ -6,13 +6,13 @@
 open Hyperbib.Std
 
 let filter ~year refs =
-  let open Rel.Syntax in
+  let open Rel_query.Syntax in
   let* r = refs in
   let ref_year = r #. Reference.date_year' in
   Bag.where (Option.has_value ~eq:Int.( = ) year ref_year) (Bag.yield r)
 
 let public_domain_stmt =
-  let typ = Sql.Stmt.(ret Row.Quick.(t2 (int "year") (int "count"))) in
+  let typ = Sql.Stmt.(ret Row.(t2 (int "year") (int "count"))) in
   let sql =
     (* FIXME where is my nice query language ? *)
     Fmt.str "SELECT r.date_year, COUNT(*) FROM %s as r WHERE r.public \

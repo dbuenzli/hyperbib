@@ -90,12 +90,12 @@ format is recommended by the [Library of congress][loc]).
 The SQL database definition can be output via 
 
 ```
-b0 -a hyperbib -- db schema
+b0 -a hyperbib -- db schema app
 ```
 
 To visualize the schema diagram use 
 ```
-b0 -a hyperbib -- db diagram | dot -Tsvg > /tmp/hyperbib.svg \
+b0 -a hyperbib -- db schema app --dot | dot -Tsvg > /tmp/hyperbib.svg \
   && show-uri /tmp/hyperbib.svg
 ```
 

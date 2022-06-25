@@ -6,12 +6,14 @@
 open Hyperbib.Std
 open Result.Syntax
 
+let dialect = Rel_sqlite3.dialect
+
 type t = Rel_sqlite3.t
 type error = Rel_sqlite3.error
 type pool = (t, error) Rel_pool.t
 
 let error_message = Rel_sqlite3.Error.message
-let error_string = Rel_sqlite3.error_string
+let string_error = Rel_sqlite3.string_error
 
 let open' ?foreign_keys ?(read_only = false) file =
   let mode = Rel_sqlite3.(if read_only then Read else Read_write_create) in
@@ -21,11 +23,24 @@ let open' ?foreign_keys ?(read_only = false) file =
   let* () = Rel_sqlite3.busy_timeout_ms db 5000 in
   Ok db
 
-let setup db ~schema:s ~drop_if_exists =
+let close = Rel_sqlite3.close
+
+let with_open db_file f =
+  let* db = open' db_file in
+  let finally () = Log.if_error ~use:() (close db |> string_error) in
+  let v = Fun.protect ~finally @@ fun () -> f db in
+  Ok v
+
+let setup db ~schema:s =
   let* () = Rel_sqlite3.exec_sql db "PRAGMA journal_mode=WAL" in
   Result.join @@ Rel_sqlite3.with_transaction `Immediate db @@ fun db ->
-  let* () = Rel_sqlite3.exec_once db (Sql.create_schema ~drop_if_exists s) in
-  Ok ()
+  let stmts = Sql.create_schema dialect s in
+  Bazaar.list_iter_stop_on_error (Rel_sqlite3.exec db) stmts
+
+let reset db ~schema:s =
+  Result.join @@ Rel_sqlite3.with_transaction `Immediate db @@ fun db ->
+  let stmts = Sql.drop_schema dialect ~if_exists:() s in
+  Bazaar.list_iter_stop_on_error (Rel_sqlite3.exec db) stmts
 
 let pool ?read_only file ~size =
   let create () = open' ?read_only file in
@@ -34,7 +49,7 @@ let pool ?read_only file ~size =
 
 let vaccum_into file db =
   let err e = Fmt.str "Vacuum into %a: %s" Fpath.pp_unquoted file e in
-  Result.map_error err @@ Rel_sqlite3.error_string @@
+  Result.map_error err @@ Rel_sqlite3.string_error @@
   let vacuum = Sql.Stmt.(func "VACUUM INTO ?1" (text @-> unit)) in
   let vacuum = vacuum (Fpath.to_string file) in
   Rel_sqlite3.exec db vacuum
@@ -50,7 +65,7 @@ let backup_thread pool ~every_s file =
   let handle_error v =
     let err e = Fmt.str "Backup thread: %s" e in
     Log.if_error ~use:() @@
-    Result.map_error err @@ Result.join @@ Rel_sqlite3.error_string v
+    Result.map_error err @@ Result.join @@ Rel_sqlite3.string_error v
   in
   (* TODO we should do a clean termination. Do a control pipe
      and use select() *)
@@ -105,6 +120,8 @@ let id_map_related_list ?order db rel_stmt ~id ~related ~related_by_id =
   match order with
   | None -> Ok m
   | Some order -> Ok (Id.Map.map (List.sort order) m)
+
+let schema = Rel_sqlite3.schema_of_db
 
 (* Webs convenience *)
 

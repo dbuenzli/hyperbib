@@ -50,7 +50,7 @@ module type IDENTIFIABLE_QUERIES = sig
   val create_cols : ignore_id:bool -> t Col.value list -> unit Sql.Stmt.t
   val delete : id -> unit Sql.Stmt.t
   val update : id -> t Col.value list -> unit Sql.Stmt.t
-  val find_id : id Rel.value -> (t, Bag.unordered) Bag.t
+  val find_id : id Rel_query.value -> (t, Bag.unordered) Bag.t
   val find_id_stmt : id -> t Sql.Stmt.t
   val find_ids : (id, 'a) Bag.t -> (t, Bag.unordered) Bag.t
 end
@@ -63,21 +63,21 @@ end
 module Identifiable_queries (E : IDENTIFIABLE) :
   (IDENTIFIABLE_QUERIES with type t := E.t and type id := E.id) = struct
 
-  open Rel.Syntax
+  open Rel_query.Syntax
 
   type id = E.id
   type t = E.t
 
   let create ~ignore_id p =
     let ignore = if ignore_id then [Col.V E.id'] else [] in
-    Sql.insert_into ~ignore E.table p
+    Sql.insert_into Db.dialect ~ignore E.table p
 
   let create_cols ~ignore_id cols =
     let ignore = if ignore_id then [Col.V E.id'] else [] in
-    Sql.insert_into_cols ~ignore E.table cols
+    Sql.insert_into_cols Db.dialect ~ignore E.table cols
 
   let delete id =
-    Sql.delete_from E.table ~where:[Col.Value (E.id', id)]
+    Sql.delete_from Db.dialect E.table ~where:[Col.Value (E.id', id)]
 
   let find_id id =
     let* p = Bag.table E.table in
@@ -85,18 +85,18 @@ module Identifiable_queries (E : IDENTIFIABLE) :
     Bag.where eq_id (Bag.yield p)
 
   let find_id_stmt =
-    Sql.Bag.(func @@ int @-> ret (Table.row E.table) find_id)
+    Rel_query.Sql.(func @@ int @-> ret (Table.row E.table) find_id)
 
   let find_ids ids = let* id = ids in find_id id
 
   let update id cols =
-    Sql.update E.table ~set:cols ~where:[Col.Value (E.id', id)]
+    Sql.update Db.dialect E.table ~set:cols ~where:[Col.Value (E.id', id)]
 end
 
 
 module type PUBLICABLE_QUERIES = sig
   include IDENTIFIABLE_QUERIES
-  val list : only_public:bool Rel.value -> (t, Rel.Bag.unordered) Rel.Bag.t
+  val list : only_public:bool Rel_query.value -> (t, Bag.unordered) Bag.t
   val list_stmt : only_public:bool -> t Sql.Stmt.t
 end
 
@@ -110,7 +110,7 @@ module Publicable_queries (E : PUBLICABLE) :
 
   include Identifiable_queries (E)
 
-  open Rel.Syntax
+  open Rel_query.Syntax
 
   let list ~only_public =
     let* r = Bag.table E.table in
@@ -119,8 +119,8 @@ module Publicable_queries (E : PUBLICABLE) :
 
   let list_stmt =
     let f =
-      Sql.Bag.(func @@ bool @-> ret (Table.row E.table)
-                         (fun b -> list ~only_public:b))
+      Rel_query.Sql.(func @@ bool @-> ret (Table.row E.table)
+                               (fun b -> list ~only_public:b))
     in
     fun ~only_public -> f only_public
 end

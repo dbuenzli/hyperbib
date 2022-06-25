@@ -8,11 +8,10 @@
 open Hyperbib.Std
 
 type conf = string * string
-val conf : conf Table.t
+val conf : conf Rel.Table.t
 
 val version : int
-val tables : Table.v list
-
+val v : Rel.Schema.t
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2021 University of Bern

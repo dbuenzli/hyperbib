@@ -147,11 +147,11 @@ let immutable_session_service service app sess req =
   Webs_kit.Session.for_result sess (service app sess req)
 
 let setup_db a =
-  Db.error_string @@
+  Db.string_error @@
   if a.editable = `No then Ok () (* FIXME check schema version *) else
   let* () =
     Result.join @@ Rel_pool.with' a.db_pool @@ fun db ->
-    let* () = Db.setup ~schema:Schema.tables ~drop_if_exists:false db in
+    let* () = Db.setup ~schema:Schema.v db in
     Ok ()
   in
   match a.backup_every_s with

@@ -5,6 +5,7 @@ open B00_std
 
 let rel = B0_ocaml.libname "rel"
 let rel_kit = B0_ocaml.libname "rel.kit"
+let rel_cli = B0_ocaml.libname "rel.cli"
 let rel_pool = B0_ocaml.libname "rel.pool"
 let rel_sqlite3 = B0_ocaml.libname "rel.sqlite3"
 let b00_kit = B0_ocaml.libname "b0.b00.kit"
@@ -106,7 +107,7 @@ let hyperbib =
   let doc = "hyperbib tool" in
   let requires =
     [ threads; cmdliner; ptime; ptime_clock; b00_std; b00_kit;
-      rel; rel_kit; rel_sqlite3; rel_pool;
+      rel; rel_kit; rel_cli; rel_sqlite3; rel_pool;
       webs; webs_connector; webs_kit; webs_unix; webs_cli; webs_httpc;
       webs_html; hc ]
   in

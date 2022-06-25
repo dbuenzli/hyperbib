@@ -111,7 +111,7 @@ module type IDENTIFIABLE_QUERIES = sig
   val update : id -> t Col.value list -> unit Sql.Stmt.t
   (** [update id cols] updates the columsn [cols] of row [id]. *)
 
-  val find_id : id Rel.value -> (t, Bag.unordered) Bag.t
+  val find_id : id Rel_query.value -> (t, Bag.unordered) Bag.t
   (** [find_id id] is the row identified by [id]. *)
 
   val find_id_stmt : id -> t Sql.Stmt.t
@@ -136,7 +136,9 @@ module Identifiable_queries (E : IDENTIFIABLE) : IDENTIFIABLE_QUERIES
 module type PUBLICABLE_QUERIES = sig
   include IDENTIFIABLE_QUERIES
 
-  val list : only_public:bool Rel.value -> (t, Rel.Bag.unordered) Rel.Bag.t
+  val list :
+    only_public:bool Rel_query.value ->
+    (t, Rel_query.Bag.unordered) Rel_query.Bag.t
   (** [list ~only_public] are the rows of the table or only the public
       ones if [only_public] is [true]. *)
 

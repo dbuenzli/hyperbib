@@ -21,9 +21,9 @@ let html conf data_conf inside_dir file_browsable =
   let* () = Hyperbib.Data_conf.ensure_data_dir data_conf in
   let db_file = Hyperbib.Data_conf.db_file data_conf in
   Result.map_error (fun e -> Fmt.str "%a: %s" Fpath.pp_unquoted db_file e) @@
-  Db.error_string @@
+  Db.string_error @@
   let* db = Db.open' (Hyperbib.Data_conf.db_file data_conf) in
-  let* () = Db.setup ~schema:Schema.tables ~drop_if_exists:false db in
+  let* () = Db.setup ~schema:Schema.v db in
   Db.with_transaction `Deferred db @@ fun db ->
   let* b = Bibliography.get () in
   let page_gen = page_gen ~file_browsable b in
