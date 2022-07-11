@@ -14,7 +14,7 @@ open Hyperbib.Std
 type role = Author | Editor (** *)
 (** The type for person roles. *)
 
-val role_type : role Type.t
+val role_type : role Rel.Type.t
 (** [role_type] encodes roles in Ask values. *)
 
 val role_to_string : role -> string
@@ -95,6 +95,8 @@ val index_letter : t -> char option
 
 (** {1:tables Tables} *)
 
+open Rel
+
 val id' : (t, id) Col.t
 (** [id'] is the column for {!val-id}. *)
 
@@ -128,7 +130,7 @@ module Label : Label.APPLICATION
 include Entity.PUBLICABLE_QUERIES with type t := t and type id := id
 
 val select : string Rel_query.value -> (t, Bag.unordered) Bag.t
-val select_stmt : string -> t Sql.Stmt.t
+val select_stmt : string -> t Rel_sql.Stmt.t
 
 val match' :
   last:string Rel_query.value -> first:string Rel_query.value ->
@@ -136,7 +138,7 @@ val match' :
   (t, Bag.unordered) Rel_query.Bag.t
 
 val match_stmt :
-  last:string -> first:string -> orcid:string -> t Sql.Stmt.t
+  last:string -> first:string -> orcid:string -> t Rel_sql.Stmt.t
 
 (** {1:url URLs} *)
 

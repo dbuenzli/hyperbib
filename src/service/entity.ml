@@ -4,6 +4,7 @@
   ---------------------------------------------------------------------------*)
 
 open Hyperbib.Std
+open Rel
 
 module type IDENTIFIABLE = sig
   type id = Id.t
@@ -46,12 +47,12 @@ end
 module type IDENTIFIABLE_QUERIES = sig
   type id = Id.t
   type t
-  val create : ignore_id:bool -> t -> unit Sql.Stmt.t
-  val create_cols : ignore_id:bool -> t Col.value list -> unit Sql.Stmt.t
-  val delete : id -> unit Sql.Stmt.t
-  val update : id -> t Col.value list -> unit Sql.Stmt.t
+  val create : ignore_id:bool -> t -> unit Rel_sql.Stmt.t
+  val create_cols : ignore_id:bool -> t Col.value list -> unit Rel_sql.Stmt.t
+  val delete : id -> unit Rel_sql.Stmt.t
+  val update : id -> t Col.value list -> unit Rel_sql.Stmt.t
   val find_id : id Rel_query.value -> (t, Bag.unordered) Bag.t
-  val find_id_stmt : id -> t Sql.Stmt.t
+  val find_id_stmt : id -> t Rel_sql.Stmt.t
   val find_ids : (id, 'a) Bag.t -> (t, Bag.unordered) Bag.t
 end
 
@@ -70,14 +71,14 @@ module Identifiable_queries (E : IDENTIFIABLE) :
 
   let create ~ignore_id p =
     let ignore = if ignore_id then [Col.V E.id'] else [] in
-    Sql.insert_into Db.dialect ~ignore E.table p
+    Rel_sql.insert_into Db.dialect ~ignore E.table p
 
   let create_cols ~ignore_id cols =
     let ignore = if ignore_id then [Col.V E.id'] else [] in
-    Sql.insert_into_cols Db.dialect ~ignore E.table cols
+    Rel_sql.insert_into_cols Db.dialect ~ignore E.table cols
 
   let delete id =
-    Sql.delete_from Db.dialect E.table ~where:[Col.Value (E.id', id)]
+    Rel_sql.delete_from Db.dialect E.table ~where:[Col.Value (E.id', id)]
 
   let find_id id =
     let* p = Bag.table E.table in
@@ -90,14 +91,14 @@ module Identifiable_queries (E : IDENTIFIABLE) :
   let find_ids ids = let* id = ids in find_id id
 
   let update id cols =
-    Sql.update Db.dialect E.table ~set:cols ~where:[Col.Value (E.id', id)]
+    Rel_sql.update Db.dialect E.table ~set:cols ~where:[Col.Value (E.id', id)]
 end
 
 
 module type PUBLICABLE_QUERIES = sig
   include IDENTIFIABLE_QUERIES
   val list : only_public:bool Rel_query.value -> (t, Bag.unordered) Bag.t
-  val list_stmt : only_public:bool -> t Sql.Stmt.t
+  val list_stmt : only_public:bool -> t Rel_sql.Stmt.t
 end
 
 module type PUBLICABLE_WITH_QUERIES = sig

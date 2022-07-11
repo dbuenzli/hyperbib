@@ -5,6 +5,7 @@
 
 open Hyperbib.Std
 open Result.Syntax
+open Rel
 
 (* Data lookups *)
 

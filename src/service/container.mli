@@ -75,6 +75,8 @@ val index_letter : t -> char option
 
 (** {1:tables Tables} *)
 
+open Rel
+
 val id' : (t, id) Col.t
 (** [id'] is the column for {!val-id}. *)
 
@@ -113,10 +115,10 @@ val match' :
   (t, Bag.unordered) Rel_query.Bag.t
 
 val match_stmt :
-  title:string -> isbn:string -> issn:string -> t Sql.Stmt.t
+  title:string -> isbn:string -> issn:string -> t Rel_sql.Stmt.t
 
 val select : string Rel_query.value -> (t, Bag.unordered) Rel_query.Bag.t
-val select_stmt : string -> t Sql.Stmt.t
+val select_stmt : string -> t Rel_sql.Stmt.t
 
 (** {1:urls URLs} *)
 

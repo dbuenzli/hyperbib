@@ -84,8 +84,7 @@ end
 
 type editable = [ `No | `With_login | `Unsafe ]
 type t =
-  { backup_every_s : int option;
-    caps : User.Caps.t;
+  { caps : User.Caps.t;
     conf : Hyperbib.Conf.t;
     data_conf : Hyperbib.Data_conf.t;
     db_pool : Db.pool;
@@ -98,7 +97,6 @@ type t =
 
 (* Properties *)
 
-let backup_every_s a = a.backup_every_s
 let caps a = a.caps
 let conf a = a.conf
 let data_conf a = a.data_conf
@@ -146,34 +144,14 @@ type immutable_session_service =
 let immutable_session_service service app sess req =
   Webs_kit.Session.for_result sess (service app sess req)
 
-let setup_db a =
-  Db.string_error @@
-  if a.editable = `No then Ok () (* FIXME check schema version *) else
-  let* () =
-    Result.join @@ Rel_pool.with' a.db_pool @@ fun db ->
-    let* () = Db.setup ~schema:Schema.v db in
-    Ok ()
-  in
-  match a.backup_every_s with
-  | None -> Ok ()
-  | Some every_s ->
-      let backup = Hyperbib.Data_conf.db_backup_file a.data_conf in
-      (* FIXME would be nice to stop that in finish *)
-      ignore (Db.backup_thread a.db_pool ~every_s backup);
-      Ok ()
-
-let setup
-    ~backup_every_s ~conf ~data_conf ~editable ~max_connections
-    ~secure_cookie ?service_path ~testing ()
+let v
+    ~conf ~data_conf ~db_pool ~editable ~secure_cookie ?service_path ~testing ()
   =
   let* () = Hyperbib.Data_conf.ensure_data_dir data_conf in
   let pk_file = Hyperbib.Data_conf.authentication_private_key data_conf in
   let* private_key = setup_private_key ~file:pk_file in
   let* bib = Bibliography.get () in
   let service_path = Option.value ~default:[""] service_path in
-  let size = max_connections in
-  let db_file = Hyperbib.Data_conf.db_file data_conf in
-  let db_pool = Db.pool ~read_only:(editable = `No) db_file ~size in
   let static_dir = Hyperbib.Data_conf.static_dir data_conf in
   let page_gen = (* FIXME maybe we shouldn't have that here. *)
     let url_fmt = Kurl.Fmt.empty ~root:service_path () in
@@ -182,11 +160,9 @@ let setup
     Page.Gen.v ~now bib url_fmt ~auth_ui ~user_view ~private_data ~testing
   in
   let caps = User.Caps.none in
-  let a =
-    { backup_every_s; caps; conf; data_conf; db_pool; editable;
+  Result.ok
+    { caps; conf; data_conf; db_pool; editable;
       page_gen; private_key; secure_cookie; service_path; static_dir; }
-  in
-  let* () = setup_db a in Ok a
 
 let serve a ~url_fmt service =
   let handle_session_error = function

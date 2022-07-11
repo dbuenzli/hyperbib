@@ -36,7 +36,7 @@ type ('name, 'id) page_ref = 'name option * 'id
 val entity_for_page_ref :
   page_url:('name option -> 'id -> Kurl.t) ->
   page_404:(Page.Gen.t -> self:Kurl.t -> Page.t) ->
-  entity_find_id_stmt:('id -> 'entity Sql.Stmt.t) ->
+  entity_find_id_stmt:('id -> 'entity Rel_sql.Stmt.t) ->
   entity_public:('entity -> bool) ->
   entity_res_name:('entity -> 'name) ->
   (Db.t -> Page.Gen.t -> only_public:bool ->

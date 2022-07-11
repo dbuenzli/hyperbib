@@ -9,6 +9,8 @@ open Hyperbib.Std
 
 (* FIXME a less ad-hoc set of functions can be designed here. *)
 
+open Rel
+
 val find_cols :
   cols:'r Col.v list -> Http.query -> ('r Col.value list, Http.resp) result
 

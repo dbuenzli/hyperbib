@@ -6,6 +6,7 @@
 (** Labels. *)
 
 open Hyperbib.Std
+open Rel
 
 (** {1:labels Labels} *)
 
@@ -124,14 +125,14 @@ module type APPLICATION = sig
   val table : t Table.t
   (** [table] is the table for label applications. *)
 
-  val create : t -> unit Sql.Stmt.t
+  val create : t -> unit Rel_sql.Stmt.t
   val applications : (entity_id, 'a) Bag.t -> (t, Bag.unordered) Bag.t
   val of_applications :
     only_public:bool Rel_query.value ->
     (t, 'a) Bag.t -> (label, Bag.unordered) Bag.t
 
   val copy_applications_stmt :
-    src:entity_id -> dst:entity_id -> unit Sql.Stmt.t
+    src:entity_id -> dst:entity_id -> unit Rel_sql.Stmt.t
 end
 
 (** [For_entity (E)] is a relation to apply labels to entity [E]. *)

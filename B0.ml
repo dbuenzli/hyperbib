@@ -139,13 +139,14 @@ let hyperbib =
 
 (* Cmdlets *)
 
-let philo_remote = "philo:"
+let deploy_remote = "philo:"
 let pull_data =
-  B0_cmdlet.v "pull-tables" ~doc:"Pull table data" @@ fun env args ->
+  let open Result.Syntax in
+  B0_cmdlet.v "pull-data" ~doc:"Pull live data" @@ fun env args ->
   B0_cmdlet.exit_of_result @@
-  let src = Fpath.v "hyperbib/data/tables/" in
-  let dst = B0_cmdlet.in_scope_dir env (Fpath.v "app/tables") in
-  B00_rsync.copy ~delete:true ~src_host:philo_remote ~src dst
+  let src = Fpath.v "hyperbib/app/data/bib.sqlite3.backup" in
+  let dst = B0_cmdlet.in_scope_dir env Fpath.(v "app/data/bib.sqlite3") in
+  B00_rsync.copy ~delete:true ~src_host:deploy_remote ~src dst
 
 (* Packs *)
 

@@ -4,6 +4,7 @@
   ---------------------------------------------------------------------------*)
 
 open Hyperbib.Std
+open Rel
 
 (* Labels *)
 
@@ -73,13 +74,13 @@ module type APPLICATION = sig
   val entity' : (t, entity_id) Col.t
   val label' : (t, id) Col.t
   val table : t Table.t
-  val create : t -> unit Sql.Stmt.t
+  val create : t -> unit Rel_sql.Stmt.t
   val applications : (entity_id, 'a) Bag.t -> (t, Bag.unordered) Bag.t
   val of_applications :
     only_public:
       bool Rel_query.value -> (t, 'a) Bag.t -> (label, Bag.unordered) Bag.t
   val copy_applications_stmt :
-    src:entity_id -> dst:entity_id -> unit Sql.Stmt.t
+    src:entity_id -> dst:entity_id -> unit Rel_sql.Stmt.t
 end
 
 module For_entity (E : Entity.IDENTIFIABLE) = struct
@@ -109,7 +110,7 @@ module For_entity (E : Entity.IDENTIFIABLE) = struct
 
   open Rel_query.Syntax
 
-  let create r = Sql.insert_into Db.dialect table r
+  let create r = Rel_sql.insert_into Db.dialect table r
 
   let applications eids =
     let* eid = eids in
@@ -136,7 +137,7 @@ module For_entity (E : Entity.IDENTIFIABLE) = struct
          FROM %s as a
          WHERE a.entity = ?2" (Table.name table) (Table.name table)
     in
-    let stmt = Sql.Stmt.(func sql @@ int @-> int @-> unit) in
+    let stmt = Rel_sql.Stmt.(func sql @@ int @-> int @-> unit) in
     fun ~src ~dst -> stmt dst src
 
 end

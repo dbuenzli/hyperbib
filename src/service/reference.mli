@@ -106,6 +106,8 @@ type render_data =
 
 (** {1:tables Tables and queries} *)
 
+open Rel
+
 val id' : (t, id) Col.t
 val abstract' : (t, string) Col.t
 val container' : (t, Container.id option) Col.t
@@ -179,7 +181,7 @@ module Contributor : sig
 
   (** {1:queries Queries} *)
 
-  val create : ?or_action:Sql.insert_or_action -> t -> unit Sql.Stmt.t
+  val create : ?or_action:Rel_sql.insert_or_action -> t -> unit Rel_sql.Stmt.t
   (** [create c] creates a contribution. *)
 
   val of_ref_ids : (id, 'a) Bag.t -> (t, Bag.unordered) Bag.t
@@ -191,7 +193,7 @@ module Contributor : sig
       No duplicates. *)
 
   val copy_contributions_stmt :
-    src:Person.id -> dst:Person.id -> unit Sql.Stmt.t
+    src:Person.id -> dst:Person.id -> unit Rel_sql.Stmt.t
 
   val set_list :
     reference:id -> authors:Person.id list -> editors:Person.id list ->
@@ -229,7 +231,7 @@ module Subject : sig
 
   (** {1:queries Queries} *)
 
-  val create : ?or_action:Sql.insert_or_action -> t -> unit Sql.Stmt.t
+  val create : ?or_action:Rel_sql.insert_or_action -> t -> unit Rel_sql.Stmt.t
   (** [create sa] creates an author relationship. *)
 
   val of_ref_ids : (id, 'a) Bag.t -> (t, Bag.unordered) Bag.t
@@ -248,10 +250,10 @@ module Subject : sig
     Subject.id Rel_query.value -> (reference, 'a) Bag.t ->
     (reference, Bag.unordered) Bag.t
 
-  val ref_count_stmt : Subject.id -> int Sql.Stmt.t
+  val ref_count_stmt : Subject.id -> int Rel_sql.Stmt.t
 
   val copy_applications_stmt :
-    src:Subject.id -> dst:Subject.id -> unit Sql.Stmt.t
+    src:Subject.id -> dst:Subject.id -> unit Rel_sql.Stmt.t
 
   val set_list : reference:id -> Subject.id list ->
     (Db.t -> (unit, Db.error) result)
@@ -288,7 +290,7 @@ module Cites : sig
 
   (** {1:queries Queries} *)
 
-  val create : t -> unit Sql.Stmt.t
+  val create : t -> unit Rel_sql.Stmt.t
   (** [create sa] creates a cites relationship. *)
 
   val of_ref_ids : (id, Bag.unordered) Bag.t -> (t, Bag.unordered) Bag.t
@@ -323,16 +325,16 @@ val filter_person_id :
 val filter_container_id :
   Container.id Rel_query.value -> (t, 'a) Bag.t -> (t, Bag.unordered) Bag.t
 
-val persons_public_ref_count_stmt : (Person.id * int) Sql.Stmt.t
-val person_ref_count_stmt : Person.id -> int Sql.Stmt.t
+val persons_public_ref_count_stmt : (Person.id * int) Rel_sql.Stmt.t
+val person_ref_count_stmt : Person.id -> int Rel_sql.Stmt.t
 
-val container_public_ref_count_stmt : (Container.id * int) Sql.Stmt.t
-val container_ref_count_stmt : Container.id -> int Sql.Stmt.t
+val container_public_ref_count_stmt : (Container.id * int) Rel_sql.Stmt.t
+val container_ref_count_stmt : Container.id -> int Rel_sql.Stmt.t
 
-val subject_public_ref_count_stmt : (int * int) Sql.Stmt.t
+val subject_public_ref_count_stmt : (int * int) Rel_sql.Stmt.t
 
 val replace_container_stmt :
-  this:Container.id -> by:Container.id -> unit Sql.Stmt.t
+  this:Container.id -> by:Container.id -> unit Rel_sql.Stmt.t
 
 val ids_citing_doi : Doi.t Rel_query.value -> (id, Bag.unordered) Bag.t
 val citing_doi : Doi.t Rel_query.value -> (t, Bag.unordered) Bag.t

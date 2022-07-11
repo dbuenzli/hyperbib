@@ -4,6 +4,7 @@
   ---------------------------------------------------------------------------*)
 
 open Hyperbib.Std
+open Rel
 
 (* A much much much better model for partial would be a range
    of two unix timestamps, but I couldn't find a way to mark it work

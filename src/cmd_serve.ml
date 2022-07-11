@@ -24,20 +24,39 @@ let log_startup c app =
 let log_shutdown () =
   Log.app (fun m -> m "Everyone has been served! Goodbye.")
 
+let setup_db ~read_only ~db_pool =
+  Result.join @@ Db.string_error @@ Rel_pool.with' db_pool @@ fun db ->
+  Db.ensure_schema ~read_only Schema.v db
+
+let start_backup_thread ~data_conf ~db_pool ~backup_every_s =
+  match backup_every_s with
+  | None -> ()
+  | Some every_s ->
+      let backup = Hyperbib.Data_conf.db_backup_file data_conf in
+      (* FIXME would be nice to stop that in finish *)
+      ignore (Db.backup_thread db_pool ~every_s backup)
+
+
 let serve
     conf data_conf listener service_path max_connections backup_every_s
     editable insecure_cookie testing
   =
   let secure_cookie = not insecure_cookie in
   Log.if_error ~use:Hyperbib.Exit.some_error @@
+  let read_only = editable = `No in
+  let pool_size = max_connections + 1 (* backup thread *) in
+  let db_file = Hyperbib.Data_conf.db_file data_conf in
+  let db_pool = Db.pool ~read_only db_file ~size:pool_size in
+  let* () = setup_db ~read_only ~db_pool in
   let* app =
-    Webapp.setup
-      ~conf ~data_conf ?service_path ~max_connections ~backup_every_s
-      ~editable ~secure_cookie ~testing ()
+    Webapp.v
+      ~conf ~data_conf ?service_path ~db_pool ~editable ~secure_cookie
+      ~testing ()
   in
   let log = Webs_connector.default_log ~trace:true () in
   let c = Webs_httpc.create ~log ~listener ?service_path ~max_connections () in
   log_startup c app;
+  start_backup_thread ~data_conf ~db_pool ~backup_every_s;
   let serve = Webapp.serve app ~url_fmt:Service.url_fmt Service.v in
   let* () = Webs_httpc.serve c serve in
   let* () = Webapp.finish app in

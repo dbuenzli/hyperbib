@@ -44,17 +44,11 @@ module Std : sig
       of_dir:Fpath.t -> inside_dir:Fpath.t -> unit -> (unit, string) result
   end
 
-
   (** {1:rel Rel open}
 
       {b FIXME try to get rid of most of these}.  *)
 
-  module Type = Rel.Type
-  module Col = Rel.Col
-  module Row = Rel.Row
-  module Table = Rel.Table
   module Bag = Rel_query.Bag
-  module Sql = Rel_sql
 
   (** {1:webs Webs_* opens} *)
 

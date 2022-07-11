@@ -6,51 +6,58 @@
 open Hyperbib.Std
 open Result.Syntax
 
+(* Database *)
+
 let dialect = Rel_sqlite3.dialect
 
-type t = Rel_sqlite3.t
 type error = Rel_sqlite3.error
-type pool = (t, error) Rel_pool.t
-
 let error_message = Rel_sqlite3.Error.message
 let string_error = Rel_sqlite3.string_error
 
+type t = Rel_sqlite3.t
+
 let open' ?foreign_keys ?(read_only = false) file =
+  let set_wal_mode db = Rel_sqlite3.exec_sql db "PRAGMA journal_mode=WAL;" in
   let mode = Rel_sqlite3.(if read_only then Read else Read_write_create) in
   let stmt_cache_size = 40 in
   let mutex = Rel_sqlite3.No and f = Fpath.to_string file in
   let* db = Rel_sqlite3.open' ?foreign_keys ~stmt_cache_size ~mutex ~mode f in
   let* () = Rel_sqlite3.busy_timeout_ms db 5000 in
+  let* () = if read_only then Ok () else set_wal_mode db in
   Ok db
 
 let close = Rel_sqlite3.close
 
-let with_open db_file f =
-  let* db = open' db_file in
+let with_open ?foreign_keys ?read_only db_file f =
+  let* db = open' ?foreign_keys ?read_only db_file in
   let finally () = Log.if_error ~use:() (close db |> string_error) in
   let v = Fun.protect ~finally @@ fun () -> f db in
   Ok v
 
-let setup db ~schema:s =
-  let* () = Rel_sqlite3.exec_sql db "PRAGMA journal_mode=WAL" in
-  Result.join @@ Rel_sqlite3.with_transaction `Immediate db @@ fun db ->
-  let stmts = Sql.create_schema dialect s in
-  Bazaar.list_iter_stop_on_error (Rel_sqlite3.exec db) stmts
+(* Pool *)
 
-let reset db ~schema:s =
-  Result.join @@ Rel_sqlite3.with_transaction `Immediate db @@ fun db ->
-  let stmts = Sql.drop_schema dialect ~if_exists:() s in
-  Bazaar.list_iter_stop_on_error (Rel_sqlite3.exec db) stmts
+type pool = (t, error) Rel_pool.t
 
 let pool ?read_only file ~size =
   let create () = open' ?read_only file in
   let dispose = Rel_sqlite3.close in
   Rel_pool.create ~create ~dispose size
 
+(* Backup *)
+
+let stamped_backup_file file =
+  let stamp =
+    let (t : Unix.tm) = Unix.localtime (Unix.gettimeofday ()) in
+    Fmt.str "-%04d-%02d-%02d--%02d-%02d-%02d"
+      (t.tm_year + 1900) (t.tm_mon + 1) t.tm_mday t.tm_hour t.tm_min t.tm_sec
+  in
+  let p, ext = Fpath.cut_ext ~multi:true file in
+  Fpath.add_ext (stamp ^ ext) p
+
 let vaccum_into file db =
   let err e = Fmt.str "Vacuum into %a: %s" Fpath.pp_unquoted file e in
   Result.map_error err @@ Rel_sqlite3.string_error @@
-  let vacuum = Sql.Stmt.(func "VACUUM INTO ?1" (text @-> unit)) in
+  let vacuum = Rel_sql.Stmt.(func "VACUUM INTO ?1;" (text @-> unit)) in
   let vacuum = vacuum (Fpath.to_string file) in
   Rel_sqlite3.exec db vacuum
 
@@ -76,31 +83,52 @@ let backup_thread pool ~every_s file =
   in
   Thread.create loop ()
 
-(* Debug convience *)
+(* Transactions *)
 
-let show_sql ?(name = "") st =
-  let name = if name = "" then "" else name ^ " " in
-  Log.app (fun m -> m "@[<v>%sSQL:@,%a@]" name Sql.Stmt.pp_src st);
-  st
+type transaction_kind = [ `Deferred | `Immediate | `Exclusive ]
+let with_transaction k db f = Rel_sqlite3.with_transaction k db f
 
-let show_plan ?(name = "") db st =
-  match Rel_sqlite3.explain ~query_plan:true db st with
-  | Error e ->
-      let e = Rel_sqlite3.Error.message e in
-      Log.err (fun m -> m "@[explain query plan: %s@]" e); st
-  | Ok s ->
-      let name = if name = "" then "" else name ^ " " in
-      Log.app (fun m -> m "@[<v>%squery plan:@,%a@]" name Fmt.lines s); st
+(* Schema handling *)
 
-(* Queries and convenience *)
+let setup db ~schema:s =
+  Result.join @@ Rel_sqlite3.with_transaction `Immediate db @@ fun db ->
+  let stmts = Rel_sql.create_schema dialect s in
+  Bazaar.list_iter_stop_on_error (Rel_sqlite3.exec db) stmts
+
+let clear db =
+  Result.join @@ Rel_sqlite3.with_transaction `Immediate db @@ fun db ->
+  let* (live, _) = Rel_sqlite3.schema_of_db db in
+  let stmts = Rel_sql.drop_schema ~if_exists:() dialect live in
+  Bazaar.list_iter_stop_on_error (Rel_sqlite3.exec db) stmts
+
+let create_schema db s =
+  Result.join @@ Rel_sqlite3.with_transaction `Immediate db @@ fun db ->
+  let stmts = Rel_sql.create_schema dialect s in
+  Bazaar.list_iter_stop_on_error (Rel_sqlite3.exec db) stmts
+
+let ensure_schema ?(read_only = false) s db =
+  let* live, _ = Rel_sqlite3.schema_of_db db |> string_error in
+  let is_empty = Rel.Schema.tables live = [] in
+  match is_empty with
+  | true ->
+      if not read_only then create_schema db s |> string_error else
+      Fmt.error "Empty read-only database. Cannot setup schema."
+  | false ->
+      let* cs = Rel.Schema.changes ~src:live ~dst:s () in
+      if cs = [] then Ok () else
+      Fmt.error
+        "@[<v>Live database and application schema do not match.@,\
+         Use %a to inspect changes and upgrade the live schema.@]"
+        Fmt.(code string) "hyperbib db changes"
+
+let schema = Rel_sqlite3.schema_of_db
+
+(* Queries *)
 
 let exec db st = Rel_sqlite3.exec db st
 let first = Rel_sqlite3.first
 let fold = Rel_sqlite3.fold
 let list db st = Rel_sqlite3.fold db st List.cons []
-
-type transaction_kind = [ `Deferred | `Immediate | `Exclusive ]
-let with_transaction k db f = Rel_sqlite3.with_transaction k db f
 
 let insert db st =
   let* () = Rel_sqlite3.exec db st in
@@ -121,7 +149,21 @@ let id_map_related_list ?order db rel_stmt ~id ~related ~related_by_id =
   | None -> Ok m
   | Some order -> Ok (Id.Map.map (List.sort order) m)
 
-let schema = Rel_sqlite3.schema_of_db
+(* Statement debug *)
+
+let show_sql ?(name = "") st =
+  let name = if name = "" then "" else name ^ " " in
+  Log.app (fun m -> m "@[<v>%sSQL:@,%a@]" name Rel_sql.Stmt.pp_src st);
+  st
+
+let show_plan ?(name = "") db st =
+  match Rel_sqlite3.explain ~query_plan:true db st with
+  | Error e ->
+      let e = Rel_sqlite3.Error.message e in
+      Log.err (fun m -> m "@[explain query plan: %s@]" e); st
+  | Ok s ->
+      let name = if name = "" then "" else name ^ " " in
+      Log.app (fun m -> m "@[<v>%squery plan:@,%a@]" name Fmt.lines s); st
 
 (* Webs convenience *)
 

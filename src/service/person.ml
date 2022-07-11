@@ -4,6 +4,7 @@
   ---------------------------------------------------------------------------*)
 
 open Hyperbib.Std
+open Rel
 
 type role = Author | Editor
 let role_to_string = function Author -> "author" | Editor -> "editor"

@@ -4,6 +4,7 @@
   ---------------------------------------------------------------------------*)
 
 open Hyperbib.Std
+open Rel
 
 module Subject = struct
   type id = Id.t
@@ -99,7 +100,7 @@ module See_also = struct
     Table.v "subject_see_also" Row.(unit row * given' * that')
       ~primary_key ~foreign_keys
 
-  let create r = Sql.insert_into Db.dialect table r
+  let create r = Rel_sql.insert_into Db.dialect table r
 end
 
 module Label = Label.For_entity (Subject)

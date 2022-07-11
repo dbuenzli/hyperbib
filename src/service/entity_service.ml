@@ -5,6 +5,7 @@
 
 open Hyperbib.Std
 open Result.Syntax
+open Rel
 
 let check_edit_authorized app =
   (* FIXME if the webapp is editable we should ask for login

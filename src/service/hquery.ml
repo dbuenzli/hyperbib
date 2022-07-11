@@ -22,41 +22,41 @@ let parse_kind ~kind kind_of_string col acc k v = match kind_of_string v with
     Http.Resp.bad_request_400 ~reason ()
 
 let unhandled key t =
-  let explain = Fmt.str "key %s: unhandled column type %a" key Type.pp t in
+  let explain = Fmt.str "key %s: unhandled column type %a" key Rel.Type.pp t in
   Http.Resp.server_error_500 ~explain ()
 
-let add_col_value (type c) ~col:(col : ('a, c) Col.t) q acc =
+let add_col_value (type c) ~col:(col : ('a, c) Rel.Col.t) q acc =
   let key = Rel.Col.name col in
   match Http.Query.find key q with
   | None ->
-      begin match Col.type' col with
-      | Type.Bool ->
+      begin match (Rel.Col.type' col) with
+      | Rel.Type.Bool ->
           (* That's the way HTML checkboxes work :-( *)
           Ok (Rel.Col.Value (col, false) :: acc)
       | _ ->  Ok acc
       end
   | Some v ->
-      match Col.type' col with
-      | Type.Bool ->
+      match Rel.Col.type' col with
+      | Rel.Type.Bool ->
           parse_kind ~kind:"bool" bool_of_string_opt col acc key v
-      | Type.Int ->
+      | Rel.Type.Int ->
           parse_kind ~kind:"int" int_of_string_opt col acc key v
-      | Type.Int64 ->
+      | Rel.Type.Int64 ->
           parse_kind ~kind:"int64" Int64.of_string_opt col acc key v
-      | Type.Float ->
+      | Rel.Type.Float ->
           parse_kind ~kind:"float" float_of_string_opt col acc key v
-      | Type.Text -> Ok (Rel.Col.Value (col, v) :: acc)
-      | Type.Option Type.Int ->
+      | Rel.Type.Text -> Ok (Rel.Col.Value (col, v) :: acc)
+      | Rel.Type.Option Rel.Type.Int ->
           parse_kind ~kind:"int option"
             int_option_of_string col acc key v
-      | Type.Option _ as t -> unhandled key t
-      | Type.Blob as t -> unhandled key t
+      | Rel.Type.Option _ as t -> unhandled key t
+      | Rel.Type.Blob as t -> unhandled key t
       | t -> unhandled key t
 
 let find_cols ~cols q =
   let rec loop q acc = function
   | [] -> Ok acc
-  | Col.V col :: cs ->
+  | Rel.Col.V col :: cs ->
       match add_col_value ~col q acc with
       | Ok acc -> loop q acc cs
       | Error _ as e -> e
@@ -65,12 +65,12 @@ let find_cols ~cols q =
 
 let find_table_cols _t ~cols q = find_cols ~cols q
 let careless_find_table_cols ?ignore t q =
-  let cols = Table.cols ?ignore t in
+  let cols = Rel.Table.cols ?ignore t in
   find_cols ~cols q
 
 let key_for_rel ?suff t c =
   let l = match suff with None -> [] | Some suff -> [suff] in
-  String.concat "." (Table.name t :: Col.name c :: l)
+  String.concat "." (Rel.Table.name t :: Rel.Col.name c :: l)
 
 module Intset = Set.Make (Int)
 

@@ -6,6 +6,7 @@
 (** Database entities model commonalities. *)
 
 open Hyperbib.Std
+open Rel
 
 (** {1:sigs Entity signatures} *)
 
@@ -96,25 +97,25 @@ module type IDENTIFIABLE_QUERIES = sig
   type t
   (** The type for entities. *)
 
-  val create : ignore_id:bool -> t -> unit Sql.Stmt.t
+  val create : ignore_id:bool -> t -> unit Rel_sql.Stmt.t
   (** [create ~ignore_id:bool v] creates a row for [v]. If
       [ignore_id] is [true] the identifier of [v] is ignored
       and one is allocated by the dbms. *)
 
-  val create_cols : ignore_id:bool -> t Col.value list -> unit Sql.Stmt.t
+  val create_cols : ignore_id:bool -> t Col.value list -> unit Rel_sql.Stmt.t
   (** [create_cols] is like {!create} but uses the given column
       values instead. *)
 
-  val delete : id -> unit Sql.Stmt.t
+  val delete : id -> unit Rel_sql.Stmt.t
   (** [delete id] delete the row identified by [id]. *)
 
-  val update : id -> t Col.value list -> unit Sql.Stmt.t
+  val update : id -> t Col.value list -> unit Rel_sql.Stmt.t
   (** [update id cols] updates the columsn [cols] of row [id]. *)
 
   val find_id : id Rel_query.value -> (t, Bag.unordered) Bag.t
   (** [find_id id] is the row identified by [id]. *)
 
-  val find_id_stmt : id -> t Sql.Stmt.t
+  val find_id_stmt : id -> t Rel_sql.Stmt.t
   (** [find_id_stmt id] is a statment for {!find_id}. *)
 
   val find_ids : (id, 'a) Bag.t -> (t, Bag.unordered) Bag.t
@@ -142,7 +143,7 @@ module type PUBLICABLE_QUERIES = sig
   (** [list ~only_public] are the rows of the table or only the public
       ones if [only_public] is [true]. *)
 
-  val list_stmt : only_public:bool -> t Sql.Stmt.t
+  val list_stmt : only_public:bool -> t Rel_sql.Stmt.t
   (** [list_stmt] is a statement for {!list}. *)
 end
 

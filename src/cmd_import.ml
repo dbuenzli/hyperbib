@@ -7,6 +7,7 @@ open Hyperbib.Std
 open Result.Syntax
 
 let import_legacy data_conf reset =
+  (* FIXME remove that *)
   Log.if_error ~use:Hyperbib.Exit.some_error @@
   match reset with
   | false ->
@@ -15,13 +16,12 @@ let import_legacy data_conf reset =
   | true ->
       let db_file = Hyperbib.Data_conf.db_file data_conf in
       let file_error e = Fmt.str "%a: %s" Fpath.pp_unquoted db_file e in
-      Result.join @@ Result.map_error file_error @@ Db.string_error @@
-      let foreign_keys = false in
-      let* db = Db.open' ~foreign_keys (Hyperbib.Data_conf.db_file data_conf) in
-      let* () = Db.reset db ~schema:Schema.v in
-      let* () = Db.setup ~schema:Schema.v db in
-      let* ret = Import.legacy db data_conf in
-      Ok (Result.map (Fun.const Hyperbib.Exit.ok) ret)
+      Result.map_error file_error @@ Result.join @@ Db.string_error @@
+      Db.with_open ~foreign_keys:false db_file @@ fun db ->
+      let* () = Db.clear db |> Db.string_error in
+      let* () = Db.ensure_schema Schema.v db in
+      let* () = Import.legacy db data_conf |> Db.string_error |> Result.join in
+      Ok Hyperbib.Exit.ok
 
 let db conf action data_conf reset = match action with
 | `Legacy -> import_legacy data_conf reset
@@ -53,7 +53,6 @@ let cmd =
   Cmd.v (Cmd.info "import" ~doc ~exits ~man)
     Term.(const db $ Hyperbib.Cli.conf $ action $
           Hyperbib.Cli.data_conf $ reset)
-
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2021 University of Bern

@@ -12,7 +12,7 @@ val filter :
   (Reference.t, Bag.unordered) Bag.t
 (** [filter ~year refs] are the reference of [refs] which have [year]. *)
 
-val public_domain_stmt : (Date.year * int) Sql.Stmt.t
+val public_domain_stmt : (Date.year * int) Rel_sql.Stmt.t
 
 
 module Url : sig

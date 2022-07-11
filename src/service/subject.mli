@@ -77,6 +77,8 @@ val hierarchy : t list -> t list * t list Id.Map.t
 
 (** {1:tables Tables} *)
 
+open Rel
+
 val id' : (t, id) Col.t
 (** [id s] is the unique identifier of [s].  *)
 
@@ -129,7 +131,7 @@ module See_also : sig
 
   (** {1:queries Queries} *)
 
-  val create : t -> unit Sql.Stmt.t
+  val create : t -> unit Rel_sql.Stmt.t
   (** [create sa] creates a see also relationship. *)
 end
 
@@ -144,16 +146,16 @@ include Entity.PUBLICABLE_QUERIES with type t := t and type id := id
 val visible : t Rel_query.value -> bool Rel_query.value
 val visible_list : (t, Bag.unordered) Bag.t
 val list_visibility : (t * bool, Bag.unordered) Bag.t
-val list_visibility_stmt : (t * bool) Sql.Stmt.t
+val list_visibility_stmt : (t * bool) Rel_sql.Stmt.t
 
 val parents : (t, Bag.unordered) Bag.t
-val parents_stmt : t Sql.Stmt.t
+val parents_stmt : t Rel_sql.Stmt.t
 
 val children : id Rel_query.value -> (t, Bag.unordered) Bag.t
-val children_stmt : id -> t Sql.Stmt.t
+val children_stmt : id -> t Rel_sql.Stmt.t
 
 val select : string Rel_query.value -> (t, Bag.unordered) Bag.t
-val select_stmt : string -> t Sql.Stmt.t
+val select_stmt : string -> t Rel_sql.Stmt.t
 
 (** {1:url Urls} *)
 

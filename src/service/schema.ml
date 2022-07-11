@@ -4,7 +4,7 @@
   ---------------------------------------------------------------------------*)
 
 open Hyperbib.Std
-open Result.Syntax
+open Rel
 
 type conf = string * string
 let conf =

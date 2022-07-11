@@ -56,17 +56,13 @@ val for_serve : t ->
   user_view:Page.Gen.user_view option -> private_data:bool -> t
 (** FIXME ugly. *)
 
-val setup :
-  backup_every_s:int option -> conf:Hyperbib.Conf.t ->
-  data_conf:Hyperbib.Data_conf.t -> editable:editable -> max_connections:int ->
-  secure_cookie:bool -> ?service_path:Http.path -> testing:bool ->
-  unit -> (t, string) result
+val v :
+  conf:Hyperbib.Conf.t -> data_conf:Hyperbib.Data_conf.t -> db_pool:Db.pool ->
+  editable:editable -> secure_cookie:bool -> ?service_path:Http.path ->
+  testing:bool -> unit -> (t, string) result
 (** [setup ~conf ~data_conf ?service_path ~max_connections ~private_key
     ~backup_every_s ()] setups the web application with given attributes,
-    see accessors for semantics.
-
-    This makes sure the database exists and starts the stable backup
-    thread (if any). *)
+    see accessors for semantics. *)
 
 val serve : t ->
   url_fmt:(init:Kurl.fmt -> Kurl.fmt) ->
@@ -86,10 +82,6 @@ val finish : t -> (unit, string) result
     connection pool. *)
 
 (** {1:props Properties} *)
-
-val backup_every_s : t -> int option
-(** [backup_every_s a] is period (if any) at which stable backup of
-    the database to {!Data_conf.db_file_backup} are peformed. *)
 
 val conf : t -> Hyperbib.Conf.t
 (** [conf a] is the hyperbib configuration of [a]. *)

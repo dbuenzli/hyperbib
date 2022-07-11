@@ -4,6 +4,7 @@
   ---------------------------------------------------------------------------*)
 
 open Hyperbib.Std
+open Rel
 
 (* XXX Date modelling. Nothing really fits to get easy and efficient
    per year queries and year domain. I still think the most elegant
@@ -201,7 +202,7 @@ module Contributor = struct
 
   open Rel_query.Syntax
 
-  let create ?or_action c = Sql.insert_into Db.dialect ?or_action table c
+  let create ?or_action c = Rel_sql.insert_into Db.dialect ?or_action table c
   let of_ref_ids rids =
     let* rid = rids in
     let* c = Bag.table table in
@@ -227,14 +228,14 @@ module Contributor = struct
        FROM reference_contributor as c
        WHERE c.person = ?2"
     in
-    let stmt = Sql.Stmt.(func sql @@ int @-> int @-> unit) in
+    let stmt = Rel_sql.Stmt.(func sql @@ int @-> int @-> unit) in
     fun ~src ~dst -> stmt dst src
 
   let set_list ~reference:id ~authors ~editors = fun db ->
     (* We could diff to devise delete and insert ops, for now it seems
        easier this way. *)
     let ref_col = Col.Value (reference', id) in
-    let delete_all id = Sql.delete_from Db.dialect table ~where:[ref_col] in
+    let delete_all id = Rel_sql.delete_from Db.dialect table ~where:[ref_col] in
     let contributor role i pid =
       v ~reference:id ~person:pid ~role ~position:i
     in
@@ -279,7 +280,7 @@ module Subject = struct
 
   open Rel_query.Syntax
 
-  let create ?or_action a = Sql.insert_into Db.dialect ?or_action table a
+  let create ?or_action a = Rel_sql.insert_into Db.dialect ?or_action table a
   let of_ref_ids rids =
     let* rid = rids in
     let* rel = Bag.table table in
@@ -323,7 +324,7 @@ module Subject = struct
        FROM reference_subject as s
        WHERE s.subject = ?1"
     in
-    Sql.Stmt.(func sql @@ int @-> ret Row.(t1 @@ int "ref_count"))
+    Rel_sql.Stmt.(func sql @@ int @-> ret Row.(t1 @@ int "ref_count"))
 
   let copy_applications_stmt =
     (* FIXME ask this is insert 'r table with 'r Bag.t *)
@@ -333,7 +334,7 @@ module Subject = struct
        FROM reference_subject as s
        WHERE s.subject = ?2"
     in
-    let stmt = Sql.Stmt.(func sql @@ int @-> int @-> unit) in
+    let stmt = Rel_sql.Stmt.(func sql @@ int @-> int @-> unit) in
     fun ~src ~dst -> stmt dst src
 
   let of_ref_id id =
@@ -347,10 +348,10 @@ module Subject = struct
     (* We could diff to devise delete and insert ops, for now it seems
        easier this way. *)
     let ref_col = Col.Value (reference', id) in
-    let delete_all id = Sql.delete_from Db.dialect table ~where:[ref_col] in
+    let delete_all id = Rel_sql.delete_from Db.dialect table ~where:[ref_col] in
     let insert sid =
       Db.exec db @@
-      Sql.insert_into_cols Db.dialect table [ref_col; Col.Value (subject', sid)]
+      Rel_sql.insert_into_cols Db.dialect table [ref_col; Col.Value (subject', sid)]
     in
     let open Result.Syntax in
     let* () = Db.exec db (delete_all id) in
@@ -383,7 +384,7 @@ module Cites = struct
 
   open Rel_query.Syntax
 
-  let create c = Sql.insert_into Db.dialect table c
+  let create c = Rel_sql.insert_into Db.dialect table c
   let of_ref_ids rids =
     let* rid = rids in
     let* rel = Bag.table table in
@@ -407,7 +408,7 @@ module Cites = struct
     (* We could diff to devise delete and insert ops, for now it seems
        easier this way. *)
     let ref_col = Col.Value (reference', id) in
-    let delete_all id = Sql.delete_from Db.dialect table ~where:[ref_col] in
+    let delete_all id = Rel_sql.delete_from Db.dialect table ~where:[ref_col] in
     let cite doi = v ~reference:id ~doi in
     let cites = List.map cite dois in
     let insert c = Db.exec db @@ create c in
@@ -468,7 +469,7 @@ let persons_public_ref_count_stmt =
      WHERE r.id = c.reference AND r.public
      GROUP BY c.person"
   in
-  Sql.Stmt.(func sql @@ ret ref_count_row)
+  Rel_sql.Stmt.(func sql @@ ret ref_count_row)
 
 let person_ref_count_stmt =
   (* FIXME ask aggregations. FIXME this is wrong if multiple contrib *)
@@ -477,7 +478,7 @@ let person_ref_count_stmt =
      FROM reference_contributor as c
      WHERE c.person = ?1"
   in
-  Sql.Stmt.(func sql @@ int @-> ret Row.(t1 @@ int "ref_count"))
+  Rel_sql.Stmt.(func sql @@ int @-> ret Row.(t1 @@ int "ref_count"))
 
 let container_public_ref_count_stmt =
   let sql =
@@ -486,7 +487,7 @@ let container_public_ref_count_stmt =
      WHERE r.public AND r.container IS NOT NULL
      GROUP BY r.container"
   in
-  Sql.Stmt.(func sql @@ ret ref_count_row)
+  Rel_sql.Stmt.(func sql @@ ret ref_count_row)
 
 let container_ref_count_stmt =
   let sql =
@@ -494,7 +495,7 @@ let container_ref_count_stmt =
      FROM reference as r
      WHERE r.container = ?1"
   in
-  Sql.Stmt.(func sql @@ int @-> ret Row.(t1 @@ int "ref_count"))
+  Rel_sql.Stmt.(func sql @@ int @-> ret Row.(t1 @@ int "ref_count"))
 
 let subject_public_ref_count_stmt =
   let sql =
@@ -503,12 +504,12 @@ let subject_public_ref_count_stmt =
      WHERE r.public AND r.id = s.reference
      GROUP BY s.subject"
   in
-  Sql.Stmt.(func sql @@ ret ref_count_row)
+  Rel_sql.Stmt.(func sql @@ ret ref_count_row)
 
 let replace_container_stmt ~this ~by =
   let this = Col.Value (container', (Some this)) in
   let by = Col.Value (container', (Some by)) in
-  Sql.update Db.dialect table ~set:[by] ~where:[this]
+  Rel_sql.update Db.dialect table ~set:[by] ~where:[this]
 
 let ids_citing_doi doi =
   let* c = Bag.table Cites.table in
