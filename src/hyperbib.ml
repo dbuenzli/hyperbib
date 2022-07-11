@@ -87,24 +87,14 @@ module Exit = struct
 end
 
 module Conf = struct
-  type t = { log_level : Log.level; tty_cap : B00_std.Tty.cap; }
+  type t =
+    { log_level : Log.level;
+      tty_cap : B00_std.Tty.cap;
+      app_dir : Fpath.t }
 
-  let v ~log_level ~tty_cap () = { log_level; tty_cap; }
+  let v ~log_level ~tty_cap ~app_dir () = { log_level; tty_cap; app_dir  }
   let log_level c = c.log_level
   let tty_cap c = c.tty_cap
-
-  let with_cli log_level tty_cap =
-    Result.map_error (fun e -> `Msg e) @@
-    let log_level = B00_cli.B00_std.get_log_level log_level in
-    let tty_cap = B00_cli.B00_std.get_tty_cap tty_cap in
-    B00_cli.B00_std.setup tty_cap log_level ~log_spawns:Log.Debug;
-    Ok (v ~log_level ~tty_cap ())
-end
-
-module Data_conf = struct
-  type t = { app_dir : Fpath.t; }
-
-  let v ~app_dir () = { app_dir; }
   let app_dir c = c.app_dir
   let users_file c = Fpath.(c.app_dir / "users.json")
   let authentication_private_key c = Fpath.(c.app_dir / "auth.private")
@@ -118,13 +108,16 @@ module Data_conf = struct
   let ensure_data_dir c =
     Result.map ignore (Os.Dir.create ~make_path:true (data_dir c))
 
-  let with_cli app_dir =
+  let with_cli log_level tty_cap app_dir =
     Result.map_error (fun e -> `Msg e) @@
+    let log_level = B00_cli.B00_std.get_log_level log_level in
+    let tty_cap = B00_cli.B00_std.get_tty_cap tty_cap in
+    B00_cli.B00_std.setup tty_cap log_level ~log_spawns:Log.Debug;
     let* app_dir = match app_dir with
     | Some app_dir -> Ok app_dir
     | None ->
         let* dir = Os.Dir.cwd () in
-        let db_file = db_file (v ~app_dir:dir ()) in
+        let db_file = db_file (v ~log_level ~tty_cap ~app_dir:dir ()) in
         let* exists = Os.Path.exists db_file in
         if exists then Ok dir else
         Fmt.error
@@ -135,7 +128,7 @@ module Data_conf = struct
                   Fmt.(code string) "-a" Fmt.(code string) "-a ."
     in
     let* app_dir = Os.Path.realpath app_dir in
-    Ok (v ~app_dir ())
+    Ok (v ~log_level ~tty_cap ~app_dir ())
 end
 
 module Cli = struct
@@ -151,9 +144,6 @@ module Cli = struct
       let env = Cmd.Env.info "HYPERBIB_COLOR" in
       B00_cli.B00_std.tty_cap ~docs ~env ()
     in
-    Term.term_result Term.(const Conf.with_cli $ log_level $ tty_cap)
-
-  let data_conf =
     let app_dir =
       let doc = "Application directory. If unspecified defaults to the \
                  current working directory."
@@ -162,7 +152,7 @@ module Cli = struct
       Arg.(value & opt (some ~none:"." B00_cli.fpath) None &
            info ["a"; "app-dir"] ~doc ~docv ~env)
     in
-    Term.term_result Term.(const Data_conf.with_cli $ app_dir)
+    Term.term_result Term.(const Conf.with_cli $ log_level $ tty_cap $ app_dir)
 end
 
 (*---------------------------------------------------------------------------

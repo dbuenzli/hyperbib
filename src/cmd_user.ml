@@ -6,9 +6,9 @@
 open Hyperbib.Std
 open Result.Syntax
 
-let add conf data_conf name password force =
+let add conf name password force =
   Log.if_error ~use:Hyperbib.Exit.some_error @@
-  let users_file = Hyperbib.Data_conf.users_file data_conf in
+  let users_file = Hyperbib.Conf.users_file conf in
   let* users = User.load users_file in
   match User.mem ~name users with
   | true when not force ->
@@ -22,9 +22,9 @@ let add conf data_conf name password force =
       let* () = User.save users_file users in
       Ok Hyperbib.Exit.ok
 
-let list conf data_conf =
+let list conf =
   Log.if_error ~use:Hyperbib.Exit.some_error @@
-  let users_file = Hyperbib.Data_conf.users_file data_conf in
+  let users_file = Hyperbib.Conf.users_file conf in
   let* users = User.load users_file in
   User.fold (fun u () -> Log.app (fun m -> m "%s" (User.name u))) users ();
   Ok Hyperbib.Exit.ok
@@ -53,8 +53,7 @@ let add_cmd =
       `P "The $(tname) command adds an application user."; ]
   in
   Cmd.v (Cmd.info "add" ~doc ~exits ~man)
-    Term.(const add $ Hyperbib.Cli.conf $ Hyperbib.Cli.data_conf $
-          username $ pass $ force)
+    Term.(const add $ Hyperbib.Cli.conf $ username $ pass $ force)
 
 let list_cmd =
   let doc = "Lists application users" in
@@ -64,7 +63,7 @@ let list_cmd =
       `P "The $(tname) command lists application users."; ]
   in
   Cmd.v (Cmd.info "list" ~doc ~exits ~man)
-    Term.(const list $ Hyperbib.Cli.conf $ Hyperbib.Cli.data_conf)
+    Term.(const list $ Hyperbib.Cli.conf)
 
 let cmd =
   let doc = "Manage application users" in

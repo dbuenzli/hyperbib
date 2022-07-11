@@ -89,8 +89,10 @@ module Conf : sig
   type t
   (** The type for configurations. *)
 
-  val v : log_level:Log.level -> tty_cap:B00_std.Tty.cap -> unit -> t
-  (** [v ~app_dir ~log_level ~tty_cap ()] is a coniguration with given
+  val v :
+    log_level:Log.level -> tty_cap:B00_std.Tty.cap -> app_dir:Fpath.t ->
+    unit -> t
+  (** [v ~log_level ~tty_cap ~app_dir ()] is a configuration with given
       atributes. See the acessors for semantics. *)
 
   val log_level : t -> Log.level
@@ -98,17 +100,6 @@ module Conf : sig
 
   val tty_cap : t -> B00_std.Tty.cap
   (** [tty_cap c] is the terminal capability to assume for output. *)
-end
-
-(** Application data specific configuration. *)
-module Data_conf : sig
-
-  type t
-  (** The type for data configurations. *)
-
-  val v : app_dir:Fpath.t -> unit -> t
-  (** [v ~app_dir ()] is a configuration with given
-      atributes. See the acessors for semantics. *)
 
   val app_dir : t -> Fpath.t
   (** [app_dir c] is the absolute path to the application directory. *)
@@ -144,6 +135,7 @@ module Data_conf : sig
 
   val ensure_data_dir : t -> (unit, string) result
   (** [ensure_data_dir c] makes sure {!data_dir} exists. *)
+
 end
 
 (** Cli interaction. *)
@@ -156,10 +148,6 @@ module Cli : sig
 
       Term evaluation sets up logging level and color output
       by side effect. *)
-
-  val data_conf : Data_conf.t Cmdliner.Term.t
-  (** [app_conf] is a cmdliner term for application
-      configuration. *)
 end
 
 (*---------------------------------------------------------------------------

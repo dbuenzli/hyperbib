@@ -23,11 +23,9 @@ let do_changes (col_renames, table_renames) db =
   let stmts = Rel_sql.schema_changes Rel_sqlite3.dialect cs in
   Bazaar.list_iter_stop_on_error (Db.exec db) stmts |> Db.string_error
 
-let changes
-    conf data_conf (col_renames, table_renames as r) format exec no_backup
-  =
+let changes conf (col_renames, table_renames as r) format exec no_backup =
   Log.if_error ~use:Hyperbib.Exit.some_error @@
-  let db_file = Hyperbib.Data_conf.db_file data_conf in
+  let db_file = Hyperbib.Conf.db_file conf in
   Result.join @@ Db.string_error @@ Db.with_open db_file @@ fun db ->
   let* (live, issues) = Db.schema db |> Db.string_error in
   List.iter (fun i -> Log.warn (fun m -> m "%s" i)) issues;
@@ -55,9 +53,9 @@ let changes
 
 (* Reset *)
 
-let reset conf data_conf no_backup (* populate *) =
+let reset conf no_backup (* populate *) =
   Log.if_error ~use:Hyperbib.Exit.some_error @@ Result.join @@
-  let db_file = Hyperbib.Data_conf.db_file data_conf in
+  let db_file = Hyperbib.Conf.db_file conf in
   let* exists = Os.File.exists db_file in
   Db.string_error @@ Db.with_open db_file @@ fun db ->
   let* () = if no_backup || not exists then Ok () else make_backup db_file db in
@@ -77,13 +75,13 @@ let output_schema ~format s = match format with
 | `Ocaml kind ->
     Log.app (fun m -> m "@[%a@]" (Rel.Schema.pp_ocaml kind) s)
 
-let schema conf data_conf which format =
+let schema conf which format =
   Log.if_error ~use:Hyperbib.Exit.some_error @@
   let* () = match which with
   | `App -> output_schema ~format Schema.v; Ok ()
   | `Live ->
       Db.string_error @@ Result.join @@
-      Db.with_open (Hyperbib.Data_conf.db_file data_conf) @@ fun db ->
+      Db.with_open (Hyperbib.Conf.db_file conf) @@ fun db ->
       let* live, issues = Db.schema db in
       output_schema ~format live;
       List.iter (fun i -> Log.warn (fun m -> m "%a" Fmt.lines i)) issues;
@@ -93,9 +91,9 @@ let schema conf data_conf which format =
 
 (* SQL prompt *)
 
-let sql conf data_conf args =
+let sql conf args =
   Log.if_error ~use:Hyperbib.Exit.some_error @@
-  let db_file = Hyperbib.Data_conf.db_file data_conf in
+  let db_file = Hyperbib.Conf.db_file conf in
   let args = match List.rev args with
   | [] -> Cmd.path db_file
   | a :: _ when String.length a > 1 && a.[0] = '-' (* is an option *) ->
@@ -143,8 +141,8 @@ let changes_cmd =
     Arg.(value & flag & info ["no-backup"] ~doc)
   in
   Cmd.v (Cmd.info "changes" ~doc ~man)
-    Term.(const changes $ Hyperbib.Cli.conf $ Hyperbib.Cli.data_conf $
-          Rel_cli.renames () $ format $ exec $ no_backup)
+    Term.(const changes $ Hyperbib.Cli.conf $ Rel_cli.renames () $ format $
+          exec $ no_backup)
 
 let reset_cmd =
   let doc = "Reset the database" in
@@ -163,8 +161,7 @@ let reset_cmd =
     Arg.(value & flag & info ["p"; "populate"] ~doc)
   in *)
   Cmd.v (Cmd.info "reset" ~doc ~exits ~man)
-    Term.(const reset $ Hyperbib.Cli.conf $ Hyperbib.Cli.data_conf $
-          no_backup (* $ populate *))
+    Term.(const reset $ Hyperbib.Cli.conf $ no_backup (* $ populate *))
 
 let schema_cmd =
   let doc = "Output the app or live database schema" in
@@ -183,8 +180,8 @@ let schema_cmd =
     Arg.(required & pos 0 (Arg.enum e) None & info [] ~doc ~docv)
   in
   Cmd.v (Cmd.info "schema" ~doc ~exits ~man)
-    Term.(const schema $ Hyperbib.Cli.conf $ Hyperbib.Cli.data_conf $
-          which $ Rel_cli.schema_format ~default:`Sqlite3 ())
+    Term.(const schema $ Hyperbib.Cli.conf $ which $
+          Rel_cli.schema_format ~default:`Sqlite3 ())
 
 let sql_cmd =
   let doc = "Get an SQL prompt on the database" in
@@ -200,7 +197,7 @@ let sql_cmd =
     Arg.(value & pos_all string [] & info [] ~doc ~docv)
   in
   Cmd.v (Cmd.info "sql" ~doc ~exits ~man)
-    Term.(const sql $ Hyperbib.Cli.conf $ Hyperbib.Cli.data_conf $ args)
+    Term.(const sql $ Hyperbib.Cli.conf $ args)
 
 let cmd =
   let doc = "Manage the application database" in

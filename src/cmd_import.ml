@@ -6,7 +6,7 @@
 open Hyperbib.Std
 open Result.Syntax
 
-let import_legacy data_conf reset =
+let import_legacy conf reset =
   (* FIXME remove that *)
   Log.if_error ~use:Hyperbib.Exit.some_error @@
   match reset with
@@ -14,17 +14,17 @@ let import_legacy data_conf reset =
       Fmt.error "Cannot import without clearing the database use %a option"
         Fmt.(code string) "--reset"
   | true ->
-      let db_file = Hyperbib.Data_conf.db_file data_conf in
+      let db_file = Hyperbib.Conf.db_file conf in
       let file_error e = Fmt.str "%a: %s" Fpath.pp_unquoted db_file e in
       Result.map_error file_error @@ Result.join @@ Db.string_error @@
       Db.with_open ~foreign_keys:false db_file @@ fun db ->
       let* () = Db.clear db |> Db.string_error in
       let* () = Db.ensure_schema Schema.v db in
-      let* () = Import.legacy db data_conf |> Db.string_error |> Result.join in
+      let* () = Import.legacy db conf |> Db.string_error |> Result.join in
       Ok Hyperbib.Exit.ok
 
-let db conf action data_conf reset = match action with
-| `Legacy -> import_legacy data_conf reset
+let db conf action reset = match action with
+| `Legacy -> import_legacy conf reset
 
 (* Command line interface *)
 
@@ -51,8 +51,7 @@ let action =
 
 let cmd =
   Cmd.v (Cmd.info "import" ~doc ~exits ~man)
-    Term.(const db $ Hyperbib.Cli.conf $ action $
-          Hyperbib.Cli.data_conf $ reset)
+    Term.(const db $ Hyperbib.Cli.conf $ action $ reset)
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2021 University of Bern

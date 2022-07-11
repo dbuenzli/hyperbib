@@ -36,7 +36,7 @@ module Doi : sig
 end
 
 val legacy :
-  Db.t -> Hyperbib.Data_conf.t -> ((unit, string) result, Db.error) result
+  Db.t -> Hyperbib.Conf.t -> ((unit, string) result, Db.error) result
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2020 University of Bern

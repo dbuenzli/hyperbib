@@ -31,7 +31,7 @@ let authenticate app sess req ~goto = match Webapp.editable app with
     Session.for_error None @@
     let* q = Http.Req.to_query req in
     let err e = Http.Resp.v ~explain:e Http.server_error_500 in
-    let users_file = Hyperbib.Data_conf.users_file (Webapp.data_conf app) in
+    let users_file = Hyperbib.Conf.users_file (Webapp.conf app) in
     let* users = Result.map_error err (User.load users_file) in
     let username = Http.Query.find User.Url.username_key q in
     let password = Http.Query.find User.Url.password_key q in

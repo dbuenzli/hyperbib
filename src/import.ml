@@ -406,9 +406,9 @@ module Legacy = struct
     in
     Jsonq.query Jsonq.(mem "value" (fold_array List.cons ref [])) json
 
-  let import db data_conf =
+  let import db conf =
     Db.with_transaction `Immediate db @@ fun db ->
-    let app_dir = Hyperbib.Data_conf.app_dir data_conf in
+    let app_dir = Hyperbib.Conf.app_dir conf in
     let tables_dir = Fpath.(app_dir / "tables") in
     let* nmap, imap = subjects ~file:Fpath.(tables_dir / "subjects.json") in
     let ss = make_subjects nmap imap in
@@ -416,7 +416,7 @@ module Legacy = struct
     let* refs = refs ~file:Fpath.(tables_dir / "refs.json") in
     let refs = List.filter_map Fun.id refs in
     let* httpr = Result.map Option.some (B00_http.Httpr.get_curl ()) in
-    let cache = Hyperbib.Data_conf.doi_cache_dir data_conf in
+    let cache = Hyperbib.Conf.doi_cache_dir conf in
     let get_doi_ref = Doi.get_ref httpr ~cache in
     Ok (make_refs get_doi_ref db nmap refs)
 end

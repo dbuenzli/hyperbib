@@ -126,7 +126,7 @@ let warn_doi_exists g ~self doi r =
 let fill_in_form app req doi =
   let* () = Entity_service.check_edit_authorized app in
   Webapp.with_db_transaction' `Deferred app @@ fun db ->
-  let doi_cache = Hyperbib.Data_conf.doi_cache_dir (Webapp.data_conf app) in
+  let doi_cache = Hyperbib.Conf.doi_cache_dir (Webapp.conf app) in
   Result.map_error
     (* Bof *)
     (fun e -> Result.get_error (Http.Resp.server_error_500 ~explain:e ())) @@

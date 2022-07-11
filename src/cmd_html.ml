@@ -16,10 +16,10 @@ let page_gen ~file_browsable bibliography =
   let testing = false in
   Page.Gen.v ~now bibliography uf ~auth_ui ~user_view ~private_data ~testing
 
-let html conf data_conf inside_dir file_browsable =
+let html conf inside_dir file_browsable =
   Log.if_error ~use:Hyperbib.Exit.some_error @@
-  let* () = Hyperbib.Data_conf.ensure_data_dir data_conf in
-  let db_file = Hyperbib.Data_conf.db_file data_conf in
+  let* () = Hyperbib.Conf.ensure_data_dir conf in
+  let db_file = Hyperbib.Conf.db_file conf in
   Result.map_error (fun e -> Fmt.str "%a: %s" Fpath.pp_unquoted db_file e) @@
   Result.join @@ Db.string_error @@ Result.join @@
   Db.with_open db_file @@ fun db ->
@@ -27,7 +27,7 @@ let html conf data_conf inside_dir file_browsable =
   let* () = Db.ensure_schema Schema.v db in
   let* b = Bibliography.get () in
   let page_gen = page_gen ~file_browsable b in
-  let* () = Export.static_html ~inside_dir data_conf db page_gen in
+  let* () = Export.static_html ~inside_dir conf db page_gen in
   Ok Hyperbib.Exit.ok
 
 (* Command line interface *)
@@ -56,8 +56,7 @@ let file_browsable =
 
 let cmd =
   Cmd.v (Cmd.info "html" ~doc ~exits ~man)
-    Term.(const html $ Hyperbib.Cli.conf $ Hyperbib.Cli.data_conf $
-          dest $ file_browsable)
+    Term.(const html $ Hyperbib.Cli.conf $ dest $ file_browsable)
 
 
 (*---------------------------------------------------------------------------

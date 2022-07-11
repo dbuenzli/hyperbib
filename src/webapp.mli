@@ -57,9 +57,9 @@ val for_serve : t ->
 (** FIXME ugly. *)
 
 val v :
-  conf:Hyperbib.Conf.t -> data_conf:Hyperbib.Data_conf.t -> db_pool:Db.pool ->
-  editable:editable -> secure_cookie:bool -> ?service_path:Http.path ->
-  testing:bool -> unit -> (t, string) result
+  conf:Hyperbib.Conf.t -> db_pool:Db.pool -> editable:editable ->
+  secure_cookie:bool -> ?service_path:Http.path -> testing:bool -> unit ->
+  (t, string) result
 (** [setup ~conf ~data_conf ?service_path ~max_connections ~private_key
     ~backup_every_s ()] setups the web application with given attributes,
     see accessors for semantics. *)
@@ -88,9 +88,6 @@ val conf : t -> Hyperbib.Conf.t
 
 val caps : t -> User.Caps.t
 (** [caps a] are the capabilities for the session. *)
-
-val data_conf : t -> Hyperbib.Data_conf.t
-(** [data_conf a] is the hyperbib data configuration of [a]. *)
 
 val editable : t -> editable
 (** [editable a] is the edition policy of [a]. *)

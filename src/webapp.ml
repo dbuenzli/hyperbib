@@ -86,7 +86,6 @@ type editable = [ `No | `With_login | `Unsafe ]
 type t =
   { caps : User.Caps.t;
     conf : Hyperbib.Conf.t;
-    data_conf : Hyperbib.Data_conf.t;
     db_pool : Db.pool;
     editable : editable;
     page_gen : Page.Gen.t;
@@ -99,7 +98,6 @@ type t =
 
 let caps a = a.caps
 let conf a = a.conf
-let data_conf a = a.data_conf
 let editable a = a.editable
 let page_gen a = a.page_gen
 let private_key a = a.private_key
@@ -144,15 +142,13 @@ type immutable_session_service =
 let immutable_session_service service app sess req =
   Webs_kit.Session.for_result sess (service app sess req)
 
-let v
-    ~conf ~data_conf ~db_pool ~editable ~secure_cookie ?service_path ~testing ()
-  =
-  let* () = Hyperbib.Data_conf.ensure_data_dir data_conf in
-  let pk_file = Hyperbib.Data_conf.authentication_private_key data_conf in
+let v ~conf ~db_pool ~editable ~secure_cookie ?service_path ~testing () =
+  let* () = Hyperbib.Conf.ensure_data_dir conf in
+  let pk_file = Hyperbib.Conf.authentication_private_key conf in
   let* private_key = setup_private_key ~file:pk_file in
   let* bib = Bibliography.get () in
   let service_path = Option.value ~default:[""] service_path in
-  let static_dir = Hyperbib.Data_conf.static_dir data_conf in
+  let static_dir = Hyperbib.Conf.static_dir conf in
   let page_gen = (* FIXME maybe we shouldn't have that here. *)
     let url_fmt = Kurl.Fmt.empty ~root:service_path () in
     let auth_ui = None and user_view = None and private_data = false in
@@ -161,8 +157,8 @@ let v
   in
   let caps = User.Caps.none in
   Result.ok
-    { caps; conf; data_conf; db_pool; editable;
-      page_gen; private_key; secure_cookie; service_path; static_dir; }
+    { caps; conf; db_pool; editable; page_gen; private_key; secure_cookie;
+      service_path; static_dir; }
 
 let serve a ~url_fmt service =
   let handle_session_error = function
