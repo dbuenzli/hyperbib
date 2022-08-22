@@ -5,21 +5,99 @@
 
 open Hyperbib.Std
 
-(* Request parsing *)
+
+let bad_val_400 ~kind k v =
+  let trunc = String.sub v 0 (Int.min (String.length v) 10) in
+  let dots = if String.length trunc <> String.length v then "…" else "" in
+  let reason = Fmt.str "key %s: not a %s: %s%s" k kind trunc dots in
+  Http.Resp.bad_request_400 ~reason ()
+
+let no_key_400 ~kind k =
+  let reason = Fmt.str "%s key %s not found" kind k in
+  Http.Resp.bad_request_400 ~reason ()
+
+(* Generic *)
+
+type 'a kind = { kind : string; dec : string -> 'a option }
+let kind kind dec = { kind; dec }
+let bool = { kind = "bool"; dec = bool_of_string_opt }
+let int = { kind = "int"; dec = int_of_string_opt }
+
+type 'a key = { name : string; kind : 'a kind }
+let key name kind = { name; kind }
+
+let[@inline] dec k s = match k.kind.dec s with
+| None -> bad_val_400 ~kind:k.kind.kind k.name s | Some v -> Ok v
+
+let find k ~none q = match Http.Query.find k.name q with
+| None -> Ok none | Some s -> dec k s
+
+let find' k q = match Http.Query.find k.name q with
+| None -> Ok None | Some s ->
+    match k.kind.dec s with
+    | None -> bad_val_400 ~kind:k.kind.kind k.name s
+    | Some _ as r -> Ok r
+
+let find_all k q =
+  let rec loop acc = function
+  | [] -> Ok (List.rev acc)
+  | s :: ss ->
+      match k.kind.dec s with
+      | None -> bad_val_400 ~kind:k.kind.kind k.name s
+      | Some v -> loop (v :: acc) ss
+  in
+  loop [] (Http.Query.find_all k.name q)
+
+
+let get k q = match Http.Query.find k.name q with
+| None -> no_key_400 ~kind:k.kind.kind k.name
+| Some v -> dec k v
+
+let get_all k q =
+  if not (Http.Query.mem k.name q) then no_key_400 ~kind:k.kind.kind k.name else
+  find_all k q
+
+module Intset = Set.Make (Int)
+
+
+let uniquify_ids l =
+  let rec loop seen acc = function
+  | [] -> List.rev acc
+  | i :: is ->
+      if Intset.mem i seen then loop seen acc is else
+      loop (Intset.add i seen) (i :: acc) is
+  in
+  loop Intset.empty [] l
+
+let find_ids ~uniquify key q = match Http.Query.find_all key q with
+| [] -> Ok []
+| ids ->
+    let rec loop seen acc = function
+    | [] -> Ok (List.rev acc)
+    | "" :: ids -> loop seen acc ids
+    | i :: ids ->
+        match int_of_string_opt i (* FIXME *)  with
+        | None ->
+            let reason = Fmt.str "key %s: %S is not an identifier" key i in
+            Http.Resp.bad_request_400 ~reason ()
+        | Some i when uniquify && Intset.mem i seen -> loop seen acc ids
+        | Some i ->  loop (Intset.add i seen) (i :: acc) ids
+    in
+    loop Intset.empty [] ids
+
+
+(* Generic rel *)
 
 (* FIXME the following uses int_of_string et al. This is really
    NOT GOOD, e.g. for ids we should use custom types for IDs
    in the database fields. Also we need a generic encoding of options.  *)
-
 let int_option_of_string = function
 | "" -> Some None
 | s -> Option.map Option.some (int_of_string_opt s)
 
 let parse_kind ~kind kind_of_string col acc k v = match kind_of_string v with
 | Some v -> Ok (Rel.Col.Value (col, v) :: acc)
-| None ->
-    let reason = Fmt.str "key %s: not a %s" k kind in
-    Http.Resp.bad_request_400 ~reason ()
+| None -> bad_val_400 ~kind k v
 
 let unhandled key t =
   let explain = Fmt.str "key %s: unhandled column type %a" key Rel.Type.pp t in
@@ -71,24 +149,6 @@ let careless_find_table_cols ?ignore t q =
 let key_for_rel ?suff t c =
   let l = match suff with None -> [] | Some suff -> [suff] in
   String.concat "." (Rel.Table.name t :: Rel.Col.name c :: l)
-
-module Intset = Set.Make (Int)
-
-let find_ids ~uniquify key q = match Http.Query.find_all key q with
-| [] -> Ok []
-| ids ->
-    let rec loop seen acc = function
-    | [] -> Ok (List.rev acc)
-    | "" :: ids -> loop seen acc ids
-    | i :: ids ->
-        match int_of_string_opt i (* FIXME *)  with
-        | None ->
-            let reason = Fmt.str "key %s: %S is not an identifier" key i in
-            Http.Resp.bad_request_400 ~reason ()
-        | Some i when uniquify && Intset.mem i seen -> loop seen acc ids
-        | Some i ->  loop (Intset.add i seen) (i :: acc) ids
-    in
-    loop Intset.empty [] ids
 
 let date_key = "x-date"
 let find_date q = match Http.Query.find date_key q with
@@ -192,15 +252,6 @@ let find_create_contributors q =
     (find_contributor_kind ~public Person.Author q,
      find_contributor_kind ~public Person.Editor q)
   with Failure e -> Http.Resp.bad_request_400 ~explain:e ()
-
-let uniquify_ids l =
-  let rec loop seen acc = function
-  | [] -> List.rev acc
-  | i :: is ->
-      if Intset.mem i seen then loop seen acc is else
-      loop (Intset.add i seen) (i :: acc) is
-  in
-  loop Intset.empty [] l
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2021 University of Bern

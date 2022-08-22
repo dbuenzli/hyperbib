@@ -6,10 +6,34 @@
 (** HTTP request query helpers *)
 
 open Hyperbib.Std
+open Rel
+
 
 (* FIXME a less ad-hoc set of functions can be designed here. *)
 
-open Rel
+(** {1:gen Generic} *)
+
+type 'a kind
+val kind : string -> (string -> 'a option) -> 'a kind
+val bool : bool kind
+val int : int kind
+
+type 'a key
+val key : string -> 'a kind -> 'a key
+val find : 'a key -> none:'a -> Http.query -> ('a, Http.resp) result
+val find' : 'a key -> Http.query -> ('a option, Http.resp) result
+val find_all : 'a key -> Http.query -> ('a list, Http.resp) result
+val get : 'a key -> Http.query -> ('a, Http.resp) result
+val get_all : 'a key -> Http.query -> ('a list, Http.resp) result
+
+
+(* Get rid of that. *)
+
+val uniquify_ids : int list -> int list
+
+
+(** {1:rel Rel generic} *)
+
 
 val find_cols :
   cols:'r Col.v list -> Http.query -> ('r Col.value list, Http.resp) result
@@ -32,6 +56,9 @@ val careless_find_table_cols :
 
 
 val key_for_rel : ?suff:string -> 'r Table.t -> ('r, 'a) Col.t -> string
+
+
+(** {1:hyperbib Hyperbib specific} *)
 
 val find_ids :
   uniquify:bool -> string -> Http.query -> (int list, Http.resp) result
@@ -71,9 +98,6 @@ val find_create_contributors :
    ([`Id of Person.id | `To_create of Person.t] list *
     [`Id of Person.id | `To_create of Person.t] list, Http.resp) result
 
-
-
-val uniquify_ids : int list -> int list
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2021 University of Bern
