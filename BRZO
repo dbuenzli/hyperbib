@@ -1,1 +1,1 @@
-(srcs-x app test)
+(srcs-x app test src/attic)

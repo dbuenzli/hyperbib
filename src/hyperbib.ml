@@ -18,7 +18,6 @@ module Std = struct
   module Os = B00_std.Os
 
   module Bazaar = struct
-
     let rec list_fold_stop_on_error f l acc = match l with
     | [] -> Ok acc
     | v :: vs ->
@@ -50,12 +49,7 @@ module Std = struct
 
   (* Rel needs. *)
 
-  module Type = Rel.Type
-  module Col = Rel.Col
-  module Row = Rel.Row
-  module Table = Rel.Table
   module Bag = Rel_query.Bag
-  module Sql = Rel_sql
 
   (* Webs needs *)
 
@@ -63,7 +57,6 @@ module Std = struct
   module Session = Webs_kit.Session
   module Res = Webs_kit.Res
   module Kurl = Webs_kit.Kurl
-
   module At = Webs_html.At
   module El = Webs_html.El
 

@@ -8,7 +8,7 @@
 open Hyperbib.Std
 open B00_serialk_json
 
-(** 1:user User} *)
+(** {1:user User} *)
 
 type t
 

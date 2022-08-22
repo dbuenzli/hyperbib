@@ -36,7 +36,6 @@ let start_backup_thread ~conf ~db_pool ~backup_every_s =
       (* FIXME would be nice to stop that in finish *)
       ignore (Db.backup_thread db_pool ~every_s backup)
 
-
 let serve
     conf listener service_path max_connections backup_every_s editable
     insecure_cookie testing
