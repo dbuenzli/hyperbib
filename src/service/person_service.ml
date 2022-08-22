@@ -136,7 +136,11 @@ let input_create app ~for_list ~input_name ~role p =
   Webapp.with_db_transaction' `Deferred app @@ fun db ->
   let uf = Page.Gen.url_fmt (Webapp.page_gen app) in
   let p = Entity_html.person_input_create uf ~for_list ~input_name ~role p in
-  Ok (Page.resp_part p)
+  let finder = match for_list with
+  | true -> Entity_html.person_input_finder uf ~for_list ~input_name ~role
+  | false -> El.void
+  in
+  Ok (Page.resp_part (El.splice [p; finder]))
 
 let input_finder app ~for_list ~input_name ~role =
   let* () = Entity_service.check_edit_authorized app in
