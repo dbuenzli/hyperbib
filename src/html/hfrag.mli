@@ -30,7 +30,7 @@ val hc_request : Kurl.fmt -> Kurl.t -> At.t
 
 val hc_button :
   ?at:At.t list -> ?x_align:Hui.align -> ?align:Hui.align -> ?dir:Hui.dir ->
-  ?tip:string -> Kurl.fmt -> Kurl.t -> ?query:string -> target:string ->
+  ?tip:string -> Kurl.fmt -> Kurl.t -> ?query:string -> ?target:string ->
   El.html -> El.html
 
 val hc_delete :

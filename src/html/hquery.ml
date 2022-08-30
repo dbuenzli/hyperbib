@@ -22,12 +22,15 @@ type 'a kind = { kind : string; dec : string -> 'a option }
 let kind kind dec = { kind; dec }
 let bool = { kind = "bool"; dec = bool_of_string_opt }
 let int = { kind = "int"; dec = int_of_string_opt }
+let int64 = { kind = "int64"; dec = Int64.of_string_opt }
+let float = { kind = "float"; dec = Float.of_string_opt }
+
+let[@inline] kind_dec key kind s = match kind.dec s with
+| None -> bad_val_400 ~kind:kind.kind key s | Some v -> Ok v
 
 type 'a key = { name : string; kind : 'a kind }
 let key name kind = { name; kind }
-
-let[@inline] dec k s = match k.kind.dec s with
-| None -> bad_val_400 ~kind:k.kind.kind k.name s | Some v -> Ok v
+let[@inline] dec k s = kind_dec k.name k.kind s
 
 let find k ~none q = match Http.Query.find k.name q with
 | None -> Ok none | Some s -> dec k s
@@ -58,7 +61,6 @@ let get_all k q =
   find_all k q
 
 module Intset = Set.Make (Int)
-
 
 let uniquify_ids l =
   let rec loop seen acc = function
@@ -95,6 +97,9 @@ let int_option_of_string = function
 | "" -> Some None
 | s -> Option.map Option.some (int_of_string_opt s)
 
+let parse_kind' ~kind kind_of_string k v = match kind_of_string v with
+| Some v -> Ok v | None -> bad_val_400 ~kind k v
+
 let parse_kind ~kind kind_of_string col acc k v = match kind_of_string v with
 | Some v -> Ok (Rel.Col.Value (col, v) :: acc)
 | None -> bad_val_400 ~kind k v
@@ -102,6 +107,30 @@ let parse_kind ~kind kind_of_string col acc k v = match kind_of_string v with
 let unhandled key t =
   let explain = Fmt.str "key %s: unhandled column type %a" key Rel.Type.pp t in
   Http.Resp.server_error_500 ~explain ()
+
+let find_col :
+  type a. ('r, a) Rel.Col.t -> none:a -> Http.query -> (a, Http.resp) result =
+  fun col ~none q ->
+  let key = Rel.Col.name col in
+  match Http.Query.find key q with
+  | None ->
+      begin match (Rel.Col.type' col) with
+      | Rel.Type.Bool -> (* HTML checkboxes work that way… *)
+          Ok false
+      | _ -> Ok none
+      end
+  | Some s ->
+      match Rel.Col.type' col with
+      | Rel.Type.Bool -> Ok true
+      | Rel.Type.Int -> kind_dec key int s
+      | Rel.Type.Int64 -> kind_dec key int64 s
+      | Rel.Type.Float -> kind_dec key float s
+      | Rel.Type.Text -> Ok s
+      (* TODO *)
+      | Rel.Type.Option _ as t -> unhandled key t
+      | Rel.Type.Blob as t -> unhandled key t
+      | t -> unhandled key t
+
 
 let add_col_value (type c) ~col:(col : ('a, c) Rel.Col.t) q acc =
   let key = Rel.Col.name col in
@@ -149,6 +178,13 @@ let careless_find_table_cols ?ignore t q =
 let key_for_rel ?suff t c =
   let l = match suff with None -> [] | Some suff -> [suff] in
   String.concat "." (Rel.Table.name t :: Rel.Col.name c :: l)
+
+(* Hyperbib stuff *)
+
+
+let is_undo = "is-undo"
+let key_is_undo = key is_undo bool
+
 
 let date_key = "x-date"
 let find_date q = match Http.Query.find date_key q with

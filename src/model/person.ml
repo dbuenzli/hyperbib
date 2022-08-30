@@ -200,6 +200,7 @@ module Url = struct
   | Input_finder_find of
       Entity.Url.for_list * Entity.Url.input_name * role option * string
   | Update of id
+  | Update_public
   | View_fields of id
 
   let dec u = match Kurl.Bare.path u with
@@ -258,6 +259,9 @@ module Url = struct
   | ["action"; "replace"; id] ->
       let* `POST, id = Entity.Url.meth_id u Http.Meth.[post] id in
       Kurl.ok (Replace id)
+  | ["action"; "update-public"] ->
+      let* `POST = Kurl.allow Http.Meth.[post] u in
+      Kurl.ok Update_public
   | [name; id] ->
       let* `GET, id = Entity.Url.get_id u id in
       Kurl.ok (Page (Some name, id))
@@ -322,6 +326,8 @@ module Url = struct
       let query = Entity.Url.for_list_to_query ~init:query for_list in
       let query = role_to_query ~init:query role in
       Kurl.bare `GET ["part"; "input-finder-find"] ~query
+  | Update_public ->
+      Kurl.bare `POST ["action"; "update-public"]
   | Update id ->
       Kurl.bare `PUT [Res.Id.to_string id]
   | View_fields id ->

@@ -120,6 +120,9 @@ module type IDENTIFIABLE_QUERIES = sig
 
   val find_ids : (id, 'a) Bag.t -> (t, Bag.unordered) Bag.t
   (** [find_ids ids] are the rows identified by [ids]. *)
+
+  val find_id_list : id list -> (t, Bag.unordered) Bag.t
+  (** [find_id_list ids] are the rows identified by [ids]. *)
 end
 
 (** The type for identifiable entities and their queries. *)

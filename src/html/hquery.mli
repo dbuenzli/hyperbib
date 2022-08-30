@@ -13,9 +13,14 @@ open Rel
 
 (** {1:gen Generic} *)
 
+(* FIXME not convient for form building *)
+
 type 'a kind
 val kind : string -> (string -> 'a option) -> 'a kind
 val bool : bool kind
+(* FIXME HTML checkboxes don't work that way [find_col]
+   does the right thing *)
+
 val int : int kind
 
 type 'a key
@@ -34,6 +39,11 @@ val uniquify_ids : int list -> int list
 
 (** {1:rel Rel generic} *)
 
+val find_col :
+  ('r, 'a) Col.t -> none:'a -> Http.query -> ('a, Http.resp) result
+(** [find_col col ~none q] looks up [col] in [q]. For [Type.Bool] columns
+    [none] is never considered. Absence of the value is [false] with
+    HTML checkboxes. *)
 
 val find_cols :
   cols:'r Col.v list -> Http.query -> ('r Col.value list, Http.resp) result
@@ -57,8 +67,10 @@ val careless_find_table_cols :
 
 val key_for_rel : ?suff:string -> 'r Table.t -> ('r, 'a) Col.t -> string
 
-
 (** {1:hyperbib Hyperbib specific} *)
+
+val is_undo : string
+val key_is_undo : bool key
 
 val find_ids :
   uniquify:bool -> string -> Http.query -> (int list, Http.resp) result

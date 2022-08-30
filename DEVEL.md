@@ -13,23 +13,24 @@ b0 -a hyperbib -- serve --edit=unsafe --insecure-cookie
 
 All the source is in [`src`](src). This directory has a few generic
 modules independent from the project, the commands of the tool, and it
-ties up the web service definition from the components in
-[src/service](src/service).
+ties up the web service definition from the datastructure definitions
+in 
+[src/model](src/model), their HTML rendering in [src/html](src/html)
+and their service in [src/service](src/service) which are 
+evenetually aggregated in the final URL request tree by
+[`src/service.ml`](src/service.ml). 
 
-The [src/service](src/service) directory has the datastructure
-definitions, their HTML rendering and their services which are
-eventually aggregated in the final URL request tree by
-[`src/service.ml`](src/service.ml). It also has the page generation
-mecanism and a few more generic helper modules which could eventually
-be a bit generalized and maybe librarificated. 
+[src/html](src/html) also has the page generation mecanism and a few
+more generic helper modules which could eventually be a bit
+generalized and maybe librarificated.
 
 In general given a data model entity, for example a `Person.t`. The following
 modules are defined:
 
-* `src/service/person.ml[i]`. Defines the OCaml datatype, it's representation
+* `src/model/person.ml[i]`. Defines the OCaml datatype, it's representation
   as a table, related database queries and operations and the definition of 
   a `Kurl` URL request kind for it in `Person.Url`.
-* `src/service/person_html.ml[i]`. This has HTML rendering fragments for 
+* `src/html/person_html.ml[i]`. This has HTML rendering fragments for 
   handling the datatype. In general this should be pure function from 
   data, no database or network access here.
 * `src/service/person_service.ml[i]`. Service implementation for the 
@@ -45,7 +46,9 @@ This layered structure has a few advantages for module dependencies:
 Since we have highly hyperlinked data we still occasionaly run by
 accident into the annoying circular dependency.
 
-**FIXME** Right now we have a bit of data gather logic duplication `src/service/*_service.ml` files and in [`src/export.ml`](src/export.ml).  This should be fixed.
+**FIXME** Right now we have a bit of data gather logic duplication
+`src/service/*_service.ml` files and in
+[`src/export.ml`](src/export.ml).  This should be fixed.
 
 ## Front end
 

@@ -43,6 +43,13 @@ module Class : sig
   val submit : At.t
   val text : At.t
 
+  (** {1:sizes Size control} *)
+
+  (* We should do something like this based
+     on CSS absolute font sizes. *)
+
+  val tiny : At.t
+
   (** {1:layout Layout control} *)
 
   val group : At.t

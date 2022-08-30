@@ -27,9 +27,10 @@ let hc_request uf u =
 let target_entity = "." ^ (snd (At.to_pair Hclass.entity)) ^ ":up"
 let target_entity_up = target_entity ^ " :up"
 
-let hc_button ?(at = []) ?x_align ?align ?dir ?tip uf url ?query ~target label =
+let hc_button ?(at = []) ?x_align ?align ?dir ?tip uf url ?query ?target label =
   let r = hc_request uf url in
-  let t = Hc.target target_entity and e = Hc.effect `Element in
+  let t = At.if_some (Option.map Hc.target target) in
+  let e = Hc.effect `Element in
   let q = match query with None -> At.void | Some q -> Hc.query q in
   Hui.button ~at:(r :: t :: e :: q :: at) ?x_align ?align ?dir ?tip label
 

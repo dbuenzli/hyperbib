@@ -34,6 +34,9 @@ val new_form :
 
 val deleted : Page.Gen.t -> Reference.t -> El.html
 
+val view_authors :
+  ?ui:El.html -> Kurl.fmt -> self:Kurl.t -> Person.t list -> El.html
+
 val view_fields :
   Page.Gen.t -> self:Kurl.t -> Reference.t ->
   render_data:Reference.render_data ->

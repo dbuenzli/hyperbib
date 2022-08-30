@@ -170,6 +170,7 @@ module Url : sig
   | Input_finder_find of
       Entity.Url.for_list * Entity.Url.input_name * role option * string
   | Update of id
+  | Update_public
   | View_fields of id (** *)
   (** The type for person URL requests. *)
 

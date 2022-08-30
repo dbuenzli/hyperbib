@@ -54,6 +54,7 @@ module type IDENTIFIABLE_QUERIES = sig
   val find_id : id Rel_query.value -> (t, Bag.unordered) Bag.t
   val find_id_stmt : id -> t Rel_sql.Stmt.t
   val find_ids : (id, 'a) Bag.t -> (t, Bag.unordered) Bag.t
+  val find_id_list : id list -> (t, Bag.unordered) Bag.t
 end
 
 module type IDENTIFIABLE_WITH_QUERIES = sig
@@ -89,6 +90,10 @@ module Identifiable_queries (E : IDENTIFIABLE) :
     Rel_query.Sql.(func @@ int @-> ret (Table.row E.table) find_id)
 
   let find_ids ids = let* id = ids in find_id id
+
+  let find_id_list ids =
+    let add acc id = Bag.union (find_id (Int.v id)) acc in
+    List.fold_left add Bag.empty ids
 
   let update id cols =
     Rel_sql.update Db.dialect E.table ~set:cols ~where:[Col.Value (E.id', id)]

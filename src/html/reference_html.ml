@@ -110,6 +110,12 @@ let edit_publisher r =
 let edit_note = Entity_html.edit_note (module Reference)
 let edit_private_note = Entity_html.edit_private_note (module Reference)
 let edit_public = Entity_html.edit_public (module Reference)
+let edit_make
+    (type t) (module E : Entity.PUBLICABLE with type t = t) ?(at = [])  e
+  =
+  let label = El.txt Uimsg.public in
+  Hui.field_bool ~label ~col:E.public' e
+
 let edit_type r =
   let label = El.txt Uimsg.type' in
   let options = List.map fst Crossref.types in
@@ -212,7 +218,7 @@ let edit_reference
   let public = edit_public r in
   let buttons = edit_buttons uf ~submit r in
   Hfrag.form_no_submit
-    [ title; details; El.hr (); subjects; note; private_note; public; buttons]
+    [ title; details; El.hr (); subjects; note; private_note; public; buttons ]
 
 let fill_ui g ~doi =
   let label =
@@ -284,15 +290,15 @@ let view_title ~linkify uf ~self r =
   let href = Kurl.Fmt.rel_url uf ~src:self ~dst:(Reference.Url.page r) in
   Hfrag.link ~at ~href title
 
-let view_persons ~class' uf ~self ps r = match ps with
+let view_persons ?(ui = El.void) ~class' uf ~self = function
 | [] -> El.void
 | ps ->
     let persons = List.map (Hfrag.link_person uf ~self) ps in
     let persons = El.splice ~sep:(El.txt ", ") persons in
-    El.splice [ El.span ~at:[class'] [persons]; El.sp ]
+    El.splice [ El.span ~at:[class'] [persons; ui]]
 
-let view_authors = view_persons ~class':Hclass.authors
-let view_editors = view_persons ~class':Hclass.editors
+let view_authors ?ui = view_persons ~class':Hclass.authors ?ui
+let view_editors ?ui = view_persons ~class':Hclass.editors ?ui
 
 let view_container_loc r =
   let vi = match Reference.(volume r, issue r) with
@@ -315,7 +321,7 @@ let view_container ~details uf ~self r rd c =
       | true ->
           let in' = El.txt (Fmt.str "%s " Uimsg.in') in
           let editors = find_editors r rd in
-          let eds = view_editors uf ~self editors r in
+          let eds = view_editors uf ~self editors in
           let at = [Hclass.person; Hclass.value] (* Humpf… *) in
           match editors with
           | [] -> in'
@@ -407,7 +413,7 @@ let list_item g ~self r rs =
   let container = view_container ~details:false uf ~self r rs container in
   let year = view_year uf ~self r in
   let authors = find_authors r rs in
-  let authors = view_authors uf ~self authors r in
+  let authors = view_authors uf ~self authors in
   let ref = El.p ~at:[Hclass.ref] [ title; El.sp; container; year; authors] in
   let subjects = find_subjects r rs in
   let subjects = view_subjects uf ~self r subjects in
@@ -452,12 +458,20 @@ let view_fields g ~self r ~render_data:rd =
   let title = view_title ~linkify:false uf ~self r in
   let container = find_container r rd in
   let container = view_container ~details:false uf ~self r rd container in
-(*  let pub = view_publisher r in *)
-  let authors = find_authors r rd in
-  let authors = view_authors uf ~self authors r in
+  let author_list = find_authors r rd in
+  let authors = view_authors uf ~self author_list in
+  let make_authors_public =
+    if not (Page.Gen.editable g) then El.void else
+    let not_public p = if Person.public p then None else Some (Person.id p) in
+    let nps = List.filter_map not_public author_list in
+    El.splice [El.sp; El.sp; Entity_html.persons_update_public_button uf
+      ~as_undo:false ~value:true ~ids:nps ]
+  in
   let year = view_year uf ~self r in
   let ref =
-    El.p ~at:[Hclass.ref] [ title; El.sp; container; (* pub; *) year; authors]
+    El.p ~at:[Hclass.ref]
+      [ title; El.sp; container; (* pub; *) year; authors;
+        make_authors_public]
   in
   let subjects = find_subjects r rd in
   let subjects = view_subjects uf ~self r subjects in

@@ -342,6 +342,12 @@ footer { font-size: var(--size-font-tiny); color: var(--color-fg-light); }
   cursor: pointer;
   -webkit-user-select:none; user-select: none; }
 
+.button.tiny
+{ font-size: var(--size-font-micro);
+  line-height:calc(var(--size-line-ratio) * var(--size-font-micro));
+  min-height: calc(2.0 * var(--size-font-micro));
+  padding: 0 0.3rem; }
+
 .button * { pointer-events: none; }
 
 .button:active:hover
