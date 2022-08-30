@@ -41,7 +41,7 @@ let get_container_for_page_ref =
 let view_fields_resp app db req id =
   let* c = get_container db id in
   let g = Webapp.page_gen app in
-  let self = Container.Url.page c in (* assume comes from that page *)
+  let* self = Hfrag.url_of_req_referer req in
   Ok (Page.resp_part (Container_html.view_fields g c ~self))
 
 (* Responses *)
@@ -209,7 +209,7 @@ let update app req id =
   let g = Webapp.page_gen app in
   let uf = Page.Gen.url_fmt g in
   let* refs = get_page_data db g c in
-  let self = Container.Url.page c in (* assume comes from that page *)
+  let* self = Hfrag.url_of_req_referer req in
   let html = Container_html.view_full g c ~self refs in
   let title = Container_html.page_full_title g c in
   let headers = Hfrag.hc_page_location_update uf self ~title () in

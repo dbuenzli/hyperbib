@@ -99,12 +99,6 @@ val doc_to_string : t -> string
 
 (** {1:errors Errors} *)
 
-val error_url_kind : Kurl.bare Kurl.kind
-(** A bare URL kind for URL requests erroring in the service URL space. *)
-
-val error_url : Kurl.bare -> Kurl.t
-(** [error_url b] is [Kurl.v error_url_kind b]. *)
-
 val error : Gen.t -> Http.req -> Http.resp -> t
 (** [error g req resp] is a generic HTML error page when [req] errors
     with [resp]. *)

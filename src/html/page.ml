@@ -230,19 +230,19 @@ let html_404 ?ui_ext g ~kind ~self ~consult =
   in
   html ?ui_ext g ~self ~title ~content
 
-let error_url_kind = Kurl.Kind.bare ~name:"error" ()
-let error_url b = Kurl.v error_url_kind b
 let error g req resp =
   let uf = Gen.url_fmt g in
-  let bare = match Http.Headers.mem Hc.hc (Http.Req.headers req) with
-  | false -> Kurl.Bare.of_req req
-  | true ->
-      (* Make links relative to the requesting page, not to the request *)
-      match Kurl.Bare.of_req_referer req with
-      | Ok b -> b
-      | Error e -> Log.err (fun m -> m "%s" e); Kurl.Bare.of_req req
+  let self =
+    let bare = match Http.Headers.mem Hc.hc (Http.Req.headers req) with
+    | false -> Kurl.Bare.of_req req
+    | true ->
+        (* Make links relative to the requesting page, not to the request *)
+        match Kurl.Bare.of_req_referer req with
+        | Ok b -> b
+        | Error e -> Log.err (fun m -> m "%s" e); Kurl.Bare.of_req req
+    in
+    Kurl.v Kurl.any bare
   in
-  let self = error_url bare in
   let with_code title status = Fmt.str "%s (%d)" title status in
   let title, descr = match Http.Resp.status resp with
   | 401 -> Uimsg.unauthorized_401, Uimsg.unauthorized_401_descr

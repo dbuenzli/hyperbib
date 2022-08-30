@@ -38,7 +38,6 @@
 * If we keep db id mononontic we could do redirects on replace operations.
 * Comparison with doi data interface xs
 * Cites cited-by ui is confusing.
-* Use referer for ~self on fragments.
 * Cleanups & bulk actions
 * Public visiblity. This should likely be thought out more thoroughly. 
   E.g. should we should likely hide the references of a private container.

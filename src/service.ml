@@ -19,15 +19,10 @@ let tree =
   |> Kurl.bind ["years"] (immutable_session Year_service.v)
   |> Kurl.bind ["users"] User_service.v
 
-let url_fmt ~init:uf =
-  let uf = Kurl.Fmt.bind_tree tree uf in
-  let uf = Kurl.Fmt.bind [""] Static_file.Url.kind uf in
-  (* FIXME add to Fmt a bare formatter at the root by default.
-     This allows for untyped formatting which we use in services
-     to derive a self from referer rather than assume like is now in many
-     cases for fragments that the request comes from a specific page. *)
-  let uf = Kurl.Fmt.bind [""] Page.error_url_kind uf in
-  uf
+let url_fmt ~init =
+  init
+  |> Kurl.Fmt.bind_tree tree
+  |> Kurl.Fmt.bind [""] Static_file.Url.kind
 
 (* FIXME still quite unhappy what goes where betwen
    Webapp/Webapp.Session/Page.Gen. The following is quite ugly

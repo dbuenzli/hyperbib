@@ -42,7 +42,7 @@ let select_persons db ~only_public sel =
 let view_fields_resp app db req id =
   let* p = get_person db id in
   let g = Webapp.page_gen app in
-  let self = Person.Url.page p in (* assume comes from that page *)
+  let* self = Hfrag.url_of_req_referer req in
   Ok (Page.resp_part (Person_html.view_fields g p ~self))
 
 (* Responses *)
@@ -234,7 +234,7 @@ let update app req id =
   let g = Webapp.page_gen app in
   let uf = Page.Gen.url_fmt g in
   let* refs = get_page_data db g p in
-  let self = Person.Url.page p in (* assume comes from that page *)
+  let* self = Hfrag.url_of_req_referer req in
   let html = Person_html.view_full g p ~self refs in
   let title = Person_html.page_full_title g p in
   let headers = Hfrag.hc_page_location_update uf self ~title () in

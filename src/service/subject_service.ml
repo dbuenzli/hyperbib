@@ -49,7 +49,7 @@ let view_fields_resp app db req id =
   let* s = get_subject db id in
   let* parent = get_subject_parent db s in
   let g = Webapp.page_gen app in
-  let self = Subject.Url.page s in (* assume comes from that page *)
+  let* self = Hfrag.url_of_req_referer req in
   Ok (Page.resp_part (Subject_html.view_fields g s ~self ~parent))
 
 (* Responses *)
@@ -196,7 +196,7 @@ let update app req id =
   let g = Webapp.page_gen app in
   let uf = Page.Gen.url_fmt g in
   let* parent, refs = get_page_data db g s in
-  let self = Subject.Url.page s in (* assume comes from that page FIXME *)
+  let* self = Hfrag.url_of_req_referer req in
   let title = Subject_html.page_full_title g s in
   let html = Subject_html.view_full g s ~self ~parent refs in
   let headers = Hfrag.hc_page_location_update uf self ~title () in

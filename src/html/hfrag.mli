@@ -61,6 +61,8 @@ val hc_page_location_update :
 
 val hc_redirect : ?init:Http.headers -> Kurl.fmt -> Kurl.t -> Http.headers
 
+val url_of_req_referer : Http.req -> (Kurl.t, Http.resp) result
+
 (** {1:links Links and anchors} *)
 
 val anchor_href : string -> At.t
