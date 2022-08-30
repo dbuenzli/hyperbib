@@ -141,7 +141,7 @@ let new_form g s ~parents ~cancel =
     let at = At.[Hclass.entity; Hclass.editing] in
     El.section ~at [ edit_subject g ~self ~submit:(`New cancel) s ~parents ]
   in
-  Page.html ?ui_ext:None g ~self ~title ~content
+  Page.with_content ?ui_ext:None g ~self ~title ~content
 
 let replace_form g s ~ref_count =
   let self = Subject.Url.page s in
@@ -227,11 +227,11 @@ let page g s ~parent refs =
   let self = Subject.Url.page s in
   let title = page_title s in
   let content = view_full g ~self s ~parent refs in
-  Page.html ~ui_ext g ~self ~title ~content
+  Page.with_content ~ui_ext g ~self ~title ~content
 
 let page_404 g ~self =
   let consult = Subject.Url.v Subject.Url.Index in
-  Page.html_404 ~ui_ext g ~kind:Uimsg.subject ~self ~consult
+  Page.for_404 ~ui_ext g ~kind:Uimsg.subject ~self ~consult
 
 let index_html g ~self ss ~ref_count =
   let uf = Page.Gen.url_fmt g in
@@ -275,7 +275,7 @@ let index_html g ~self ss ~ref_count =
 let index g ss ~ref_count =
   let self = Subject.Url.v Index in
   let content = index_html g ~self ss ~ref_count in
-  Page.html ~ui_ext g ~self ~title:Uimsg.subjects ~content
+  Page.with_content ~ui_ext g ~self ~title:Uimsg.subjects ~content
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2021 University of Bern

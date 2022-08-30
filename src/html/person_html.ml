@@ -141,7 +141,7 @@ let new_form g p ~cancel =
     let at = At.[Hclass.entity; Hclass.editing] in
     El.section ~at [ edit_person g ~self ~submit:(`New cancel) p ]
   in
-  Page.html ?ui_ext:None g ~self ~title ~content
+  Page.with_content ?ui_ext:None g ~self ~title ~content
 
 let duplicate_form g p ~ref_count =
   let self = Person.Url.page p in
@@ -223,7 +223,7 @@ let view_full g ~self s refs =
 
 let page_404 g ~self =
   let consult = Person.Url.v Index in
-  Page.html_404 ~ui_ext g ~kind:Uimsg.person ~self ~consult
+  Page.for_404 ~ui_ext g ~kind:Uimsg.person ~self ~consult
 
 let page_title s = Hfrag.title ~sub:(Person.names_fl s) ~sup:Uimsg.person
 let page_full_title g s = Page.full_title g ~title:(page_title s)
@@ -231,7 +231,7 @@ let page g p refs =
   let self = Person.Url.page p in
   let title = page_title p in
   let content = view_full g ~self p refs in
-  Page.html ~ui_ext g ~self ~title ~content
+  Page.with_content ~ui_ext g ~self ~title ~content
 
 let index_html g ~self ps ~ref_count =
   let uf = Page.Gen.url_fmt g in
@@ -268,7 +268,7 @@ let index_html g ~self ps ~ref_count =
 let index g ps ~ref_count =
   let self = Person.Url.v Index in
   let content = index_html g ~self ps ~ref_count in
-  Page.html ~ui_ext g ~self ~title:Uimsg.persons ~content
+  Page.with_content ~ui_ext g ~self ~title:Uimsg.persons ~content
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2021 University of Bern

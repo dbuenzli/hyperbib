@@ -65,7 +65,7 @@ let login_html uf ~self ~msg ~goto =
 let login g ~msg ~goto =
   let self = Kurl.V (User.Url.kind, Login { goto }) in
   let content = login_html g ~self ~msg ~goto in
-  Page.html g ~self ~title:Uimsg.login ~content
+  Page.with_content g ~self ~title:Uimsg.login ~content
 
 let page_html g ~self username =
   El.section [ El.p [El.txt "Logged in as "; El.txt username ]]
@@ -74,7 +74,7 @@ let page g ~username =
   let self = Kurl.V (User.Url.kind, Login { goto = None }) in
   let title = Hfrag.title ~sub:username ~sup:Uimsg.user in
   let content = page_html g ~self username in
-  Page.html g ~self ~title ~content
+  Page.with_content g ~self ~title ~content
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2021 University of Bern

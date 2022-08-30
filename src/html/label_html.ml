@@ -90,7 +90,7 @@ let index_html g ~self ls =
 let index g ls =
   let self = Kurl.v Label.Url.kind Index in
   let content = index_html g ~self ls in
-  Page.html ~ui_ext g ~self ~title:Uimsg.labels ~content
+  Page.with_content ~ui_ext g ~self ~title:Uimsg.labels ~content
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2021 University of Bern

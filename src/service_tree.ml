@@ -70,17 +70,6 @@ let adjust_app_and_session app sess =
           let app = app' caps ~auth_ui ~user_view ~private_data in
           app, sess
 
-let error_pages app req resp =
-  (* FIXME webs body and content length business this shows we do it wrong. *)
-  let t = Page.error (Webapp.page_gen app) req resp in
-  let explain = Http.Resp.explain resp in
-  let headers =
-    Http.Headers.undef Http.content_length (Http.Resp.headers resp)
-  in
-  let status = Http.Resp.status resp in
-  let reason = Http.Resp.reason resp in
-  Page.resp ~reason ~explain ~headers ~status t
-
 let service app sess req =
   let app, sess = adjust_app_and_session app sess in
   let sess, resp =
@@ -92,7 +81,9 @@ let service app sess req =
     | Some service -> service app sess req
     | None -> Static_file_service.v app sess req
   in
-  sess, Http.Resp.map_errors ~only_empty:true (error_pages app req) resp
+  let error = Page.error (Webapp.page_gen app) req in
+  sess,
+  Http.Resp.map_errors ~only_empty:true error resp
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2021 University of Bern

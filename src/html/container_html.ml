@@ -135,7 +135,7 @@ let new_form g c ~cancel =
     let at = At.[Hclass.entity; Hclass.editing] in
     El.section ~at [edit_container g ~self ~submit:(`New cancel) c]
   in
-  Page.html ?ui_ext:None g ~self ~title ~content
+  Page.with_content ?ui_ext:None g ~self ~title ~content
 
 let duplicate_form g c =
   let self = Container.Url.page c in
@@ -208,7 +208,7 @@ let view_full g ~self c refs =
 
 let page_404 g ~self =
   let consult = Container.Url.v Index in
-  Page.html_404 ~ui_ext g ~kind:Uimsg.container ~self ~consult
+  Page.for_404 ~ui_ext g ~kind:Uimsg.container ~self ~consult
 
 let page_title c = Hfrag.title ~sub:(Container.title c) ~sup:Uimsg.container
 let page_full_title g s = Page.full_title g ~title:(page_title s)
@@ -216,7 +216,7 @@ let page g c refs =
   let self = Container.Url.page c in
   let title = page_title c in
   let content = view_full g ~self c refs in
-  Page.html ~ui_ext g ~self ~title ~content
+  Page.with_content ~ui_ext g ~self ~title ~content
 
 let index_html g ~self cs ~ref_count =
   let uf = Page.Gen.url_fmt g in
@@ -254,7 +254,7 @@ let index_html g ~self cs ~ref_count =
 let index g cs ~ref_count =
   let self = Container.Url.v Index in
   let content = index_html g ~self cs ~ref_count in
-  Page.html ~ui_ext g ~self ~title:Uimsg.containers ~content
+  Page.with_content ~ui_ext g ~self ~title:Uimsg.containers ~content
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2021 University of Bern

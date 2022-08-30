@@ -18,7 +18,7 @@ let page g ~year refs =
   let self = Year.Url.page year in
   let title = Hfrag.title ~sub:(fmt_year year) ~sup:Uimsg.year in
   let content = page_html g ~self ~year refs in
-  Page.html g ~self ~title ~content
+  Page.with_content g ~self ~title ~content
 
 let year_index g ~self years =
   let year (y, c) =
@@ -37,7 +37,7 @@ let index_html g ~self years =
 let index g years =
   let self = Year.Url.v Index in
   let content = index_html g ~self years in
-  Page.html g ~self ~title:Uimsg.years ~content
+  Page.with_content g ~self ~title:Uimsg.years ~content
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2021 University of Bern

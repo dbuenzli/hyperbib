@@ -28,9 +28,10 @@ module Static_html = struct
 
   let write_page ~dir g p =
     let url = Page.url p in
+    let html = El.to_string ~doc_type:true (Page.html p) in
     let* file = filepath_of_url (Page.Gen.url_fmt g) url in
     let file = Fpath.(dir // file) in
-    Os.File.write ~force:true ~make_path:true file (Page.doc_to_string p)
+    Os.File.write ~force:true ~make_path:true file html
 
   let write_reference ~dir db g r =
     let only_public = Rel_query.Bool.true' in

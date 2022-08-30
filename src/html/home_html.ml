@@ -55,7 +55,7 @@ let page_html g =
 
 let page g =
   let self = Kurl.V (Bibliography.Url.kind, Home) in
-  Page.html g ~self ~title:"About" ~content:(page_html g)
+  Page.with_content g ~self ~title:"About" ~content:(page_html g)
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2021 University of Bern

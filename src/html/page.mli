@@ -52,72 +52,60 @@ module Gen : sig
   (** [testing g] is [true] if the testing install banner should be rendered *)
 end
 
-(** {1:struct Page structure} *)
-
-val full_title : Gen.t -> title:string -> string
-(** [full_title] is used by {!html} to generate a title. *)
-
-val frame : Gen.t -> self:Kurl.t -> title:string -> body:El.html -> El.html
-(** [html ~title ~body] has the HTML framing for pages. *)
-
-val body : Gen.t -> ui:El.html -> content:El.html -> El.html
-(** [body g ~ui ~content] has the basic HTML page structure of
-    hyperbib pages. *)
-
 (** {1:pages Pages} *)
 
 type t
-(** The type for a page or a page part it's request and its HTML. *)
+(** The type for a page. This is a page's HTML and its url. This structure
+    only exists because of the static export mecanism. *)
 
-val v : url:Kurl.t -> doc:El.html -> part:bool -> t
-(** [v ~url ~doc ~part] is a page for [url] with contents [doc].
-    A partial page if [part] is [true]. *)
+val v : url:Kurl.t -> html:El.html -> t
+(** [v ~url ~doc ~part] is a page for [url] with contents [doc]. *)
 
 val url : t -> Kurl.t
-(** [url p] is the url of page [p]. *)
+(** [url p] is the url of [p]. *)
 
-val doc : t -> El.html
-(** [doc p] is the page document. *)
+val html : t -> El.html
+(** [html p] is HTML of [p]. *)
 
-val part : t -> bool
-(** [part p] is [true] if this is a page part. *)
-
-val html :
+val with_content :
   ?ui_ext:(Gen.t -> self:Kurl.t -> El.html) ->
   Gen.t -> self:Kurl.t -> title:string -> content:El.html -> t
-(** [html g ~self ~title ~content ~ui_ext] is a base full hyperbib page.
-    [ui_ext] allows for page specific user interface extensions. *)
+(** [with_content g ~self ~title ~content ~ui_ext] is a base hyperbib
+    page.  [ui_ext] allows for page specific user interface
+    extensions. *)
 
-val html_404 :
+val for_404 :
   ?ui_ext:(Gen.t -> self:Kurl.t -> El.html) ->
   Gen.t -> kind:string -> self:Kurl.t -> consult:Kurl.t -> t
-(** [html_404 g ~kind ~self ~consult] is a 404 page for URL [self] identifing
-    a resource of kind [kind] enticing to look at [consult] instead. *)
+(** [for_404 g ~kind ~self ~consult] is a 404 page for URL [self]
+    identifing a resource of kind [kind] enticing to look at [consult]
+    instead. *)
 
-val doc_to_string : t -> string
-(** [doc_to_string] is [doc] serialized to a string. *)
+val full_title : Gen.t -> title:string -> string
+(** [full_title] is used by {!with_content} to generate a title. *)
 
-(** {1:errors Errors} *)
+(** {1:resp Respones} *)
 
-val error : Gen.t -> Http.req -> Http.resp -> t
-(** [error g req resp] is a generic HTML error page when [req] errors
-    with [resp]. *)
-
-(** {1:resp Responding} *)
+val resp :
+  ?explain:string -> ?reason:string -> ?headers:Http.headers -> ?status:int ->
+  t -> Http.resp
+(** [resp p] is an HTML page response for [p]. *)
 
 val resp_part :
   ?explain:string -> ?reason:string -> ?headers:Http.headers -> ?status:int ->
   El.html -> Http.resp
 (** [resp_part html] an HTML part response for [html] *)
 
-val resp :
-  ?explain:string -> ?reason:string -> ?headers:Http.headers -> ?status:int ->
-  t -> Http.resp
-(** [resp page] is an HTML page response for [html]. *)
-
 val resp_404 :
   ?explain:string -> ?reason:string -> ?headers:Http.headers -> t -> Http.resp
 (** [resp_404] is [resp ~status:Http.not_found_404]. *)
+
+(** {1:errors Errors} *)
+
+val error : Gen.t -> Http.req -> Http.resp -> Http.resp
+(** [error g req resp] is a generic HTML error page when [req] errors
+    with [resp]. *)
+
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2021 University of Bern

@@ -281,7 +281,7 @@ let new_form g r ~cancel =
           ~authors ~editors ~subjects ~container:None ~cites:[] ]
   in
   let content = El.section [fill_ui; form] in
-  Page.html ?ui_ext:None g ~self ~title ~content
+  Page.with_content ?ui_ext:None g ~self ~title ~content
 
 let view_title ~linkify uf ~self r =
   let title = El.txt_of Hfrag.sentencify (Reference.non_empty_title r) in
@@ -517,11 +517,11 @@ let page g r ~render_data ~cites ~cited_by =
   let self = Reference.Url.page r in
   let title = page_title r in
   let content = view_full g ~self r ~render_data ~cites ~cited_by in
-  Page.html ~ui_ext g ~self ~title ~content
+  Page.with_content ~ui_ext g ~self ~title ~content
 
 let page_404 g ~self =
   let consult = Reference.Url.v Index in
-  Page.html_404 ~ui_ext g ~kind:Uimsg.reference ~self ~consult
+  Page.for_404 ~ui_ext g ~kind:Uimsg.reference ~self ~consult
 
 let index_html g ~self rs =
   let h1 =
@@ -535,7 +535,7 @@ let index_html g ~self rs =
 let index g rs =
   let self = Kurl.v Reference.Url.kind Index in
   let content = index_html g ~self rs in
-  Page.html ~ui_ext g ~self ~title:Uimsg.references ~content
+  Page.with_content ~ui_ext g ~self ~title:Uimsg.references ~content
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2021 University of Bern
