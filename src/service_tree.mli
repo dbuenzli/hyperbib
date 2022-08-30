@@ -7,7 +7,7 @@ open Hyperbib.Std
 
 val url_fmt : init:Kurl.fmt -> Kurl.fmt
 
-val v :
+val service :
   Webapp.t -> Webapp.Session.t option ->
   Http.req -> Webapp.Session.t Webs_kit.Session.resp
 

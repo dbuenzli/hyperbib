@@ -81,7 +81,7 @@ let error_pages app req resp =
   let reason = Http.Resp.reason resp in
   Page.resp ~reason ~explain ~headers ~status t
 
-let v app sess req =
+let service app sess req =
   let app, sess = adjust_app_and_session app sess in
   let sess, resp =
     Http.Resp.result @@

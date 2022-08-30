@@ -54,7 +54,8 @@ let serve
   let c = Webs_httpc.create ~log ~listener ?service_path ~max_connections () in
   log_startup c app;
   start_backup_thread ~conf ~db_pool ~backup_every_s;
-  let serve = Webapp.serve app ~url_fmt:Service.url_fmt Service.v in
+  let url_fmt = Service_tree.url_fmt in
+  let serve = Webapp.serve app ~url_fmt Service_tree.service in
   let* () = Webs_httpc.serve c serve in
   let* () = Webapp.finish app in
   log_shutdown ();

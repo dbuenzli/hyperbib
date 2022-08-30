@@ -10,7 +10,7 @@ let page_gen ~file_browsable bibliography =
   let now = Ptime_clock.now () in
   let uf =
     let init = Kurl.Fmt.empty ~use_exts:file_browsable ~root:[""] () in
-    Service.url_fmt ~init
+    Service_tree.url_fmt ~init
   in
   let auth_ui = None and user_view = None and private_data = false in
   let testing = false in
