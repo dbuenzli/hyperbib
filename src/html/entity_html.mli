@@ -83,13 +83,6 @@ val person_input_finder_results :
     to input a person in a hidden input element named [input_name].
     If [creatable] is provided the given person can be created. *)
 
-val persons_update_public_button :
-  Kurl.fmt -> as_undo:bool -> value:bool -> ids:Person.id list ->
-  El.html
-(** [persons_public_date] is a button to bulk update the public status
-    of [ids] to [value]. If [as_undo] is [true] this is labelled as
-    undo. *)
-
 (** {1:subject_inputs Subject inputs} *)
 
 val subject_input :

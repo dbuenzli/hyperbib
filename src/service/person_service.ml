@@ -241,29 +241,6 @@ let update env req id =
   let headers = Hfrag.hc_page_location_update uf self ~title () in
   Ok (Page.resp_part ~headers html)
 
-let update_public env req =
-  let* () = Entity_service.check_edit_authorized env in
-  Service_env.with_db_transaction' `Immediate env @@ fun db ->
-  let* q = Http.Req.to_query req in
-  let* ids = Hquery.find_ids ~uniquify:true "id" q in
-  let* public = Hquery.find_col Person.public' ~none:false q in
-(*  let cs = [Col.Value (Person.public', public)] in
-  let* () =
-    Bazaar.list_iter_stop_on_error
-      (fun id -> Db.exec' db (Person.update id cs)) ids
-  in *)
-  let* req_is_undo = Hquery.find Hquery.key_is_undo ~none:false q in
-  let g = Service_env.page_gen env in
-  let uf = Page.Gen.url_fmt g in
-  let _ui =
-    Entity_html.persons_update_public_button uf
-      ~as_undo:(not req_is_undo) ~value:(not public) ~ids
-  in
-  let ps = Rel_query.Sql.of_bag' Person.table (Person.find_id_list ids) in
-  let* ps = Db.list' db ps in
-  let ps = El.void (*  Reference_html.view_authors ~ui uf ~self ps *) in
-  Ok (Page.resp_part ps)
-
 let view_fields env req id =
   Service_env.with_db_transaction' `Deferred env @@ fun db ->
   view_fields_resp env db req id
@@ -289,7 +266,6 @@ let resp r env sess req = match (r : Person.Url.t) with
 | Replace id -> replace env req id
 | Replace_form id -> replace_form env req id
 | Update id -> update env req id
-| Update_public -> update_public env req
 | View_fields id  -> view_fields env req id
 
 let v = Kurl.service Person.Url.kind resp

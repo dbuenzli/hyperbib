@@ -245,26 +245,6 @@ let person_input_finder uf ~for_list ~input_name ~role =
   let at = [Hclass.entity; Hclass.subject] in
   El.div ~at [input_subject_id; finder]
 
-let persons_update_public_button uf ~as_undo ~value ~ids =
-  match ids with
-  | [] -> El.void
-  | ids ->
-      let label = match as_undo, value with
-      | false, true -> Uimsg.make_all_authors_public
-      | false, false -> Uimsg.make_all_authors_private
-      | true, false -> Uimsg.undo_make_all_authors_public
-      | true, true -> Uimsg.undo_make_all_authors_private
-      in
-      let id i = El.input ~at:At.[hidden; id "id"; value (string_of_int i)] ()in
-      let ids = List.map id ids in
-      let undo =
-        if as_undo
-        then El.input ~at:At.[hidden; id Hquery.is_undo; value ""] ()
-        else El.void
-      in
-      Hfrag.hc_button ~query:":scope > * " uf (Person.Url.v Update_public)
-        ~at:Hui.Class.[tiny] (El.splice (El.txt label :: undo :: ids))
-
 (* Subjects *)
 
 let subject_remove_button uf ~for_list ~input_name =

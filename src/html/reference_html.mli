@@ -34,10 +34,14 @@ val new_form :
 
 val deleted : Page.Gen.t -> Reference.t -> El.html
 
+val undo_make_all_authors_public_button :
+  Kurl.fmt -> Reference.id -> ids:Person.id list -> El.html
+
 val view_authors :
   ?ui:El.html -> Kurl.fmt -> self:Kurl.t -> Person.t list -> El.html
 
 val view_fields :
+  ?authors_ui:El.html ->
   Page.Gen.t -> self:Kurl.t -> Reference.t ->
   render_data:Reference.render_data ->
   El.html

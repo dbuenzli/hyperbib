@@ -342,6 +342,8 @@ val dois_cited : id Rel_query.value -> (Doi.t, Bag.unordered) Bag.t
 val find_dois : (Doi.t, 'a) Bag.t -> (t, Bag.unordered) Bag.t
 val find_doi : Doi.t Rel_query.value -> (t, Bag.unordered) Bag.t
 
+val author_ids_stmt : id -> Person.id Rel_sql.Stmt.t
+
 (** {2:renderdata Render data} *)
 
 val render_data :
@@ -361,6 +363,7 @@ module Url : sig
   type named_id = string option * id
 
   type t =
+  | Change_authors_publicity of id
   | Confirm_delete of id
   | Create
   | Delete of id

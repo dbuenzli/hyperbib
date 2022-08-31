@@ -82,7 +82,6 @@ val login_descr : string
 val login_error : string
 val logout : string
 val make_all_authors_public : string
-val make_all_authors_private : string
 val name : string
 val new_container : string
 val new_label : string
@@ -167,7 +166,6 @@ val unnamed : string
 val untitled : string
 val user : string
 val undo_make_all_authors_public : string
-val undo_make_all_authors_private : string
 val volume : string
 val warning : string
 val year : string

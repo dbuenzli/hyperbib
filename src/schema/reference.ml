@@ -196,7 +196,9 @@ module Contributor = struct
           ~cols:[Col.V person'] ~parent:(Person.table, [Col.V Person.id'])
           ~on_delete:`Cascade () ]
     in
-    let indices = [ Table.index [Col.V person']; Table.index [Col.V reference']] in
+    let indices =
+      [ Table.index [Col.V person']; Table.index [Col.V reference']]
+    in
     let row = Row.(unit row * reference' * person' * role' * position') in
     Table.v "reference_contributor" row ~primary_key ~foreign_keys ~indices
 
@@ -453,6 +455,19 @@ let filter_container_id cid refs =
   let has_cid = Option.(has_value ~eq:Int.( = ) cid (r #. container')) in
   Bag.where has_cid (Bag.yield r)
 
+let author_ids_stmt =
+  (* FIXME query language support for coded column!
+let authors refs =
+  let* r = refs in
+  let* c = Bag.table Contributor.table in
+  let of_ref = Int.(c #. Contributor.reference' = r #. id') in
+  let is_author = c #. Contributor.role' = Bag.inj Person.Author in
+  Bag.where (of_ref && is_author) (Bag.yield ( c #. Contributor.person')) *)
+  let sql =
+    "SELECT c.person FROM reference as r, reference_contributor as c  \
+     WHERE r.id = ?1 AND r.id = c.reference AND c.role = 0"
+  in
+  Rel_sql.Stmt.(func sql @@ int @-> ret (Row.(t1 (int "id"))))
 
 (* FIXME were is my nice query language ? *)
 (* FIXME also if we move to the query language we can't make a single
@@ -596,6 +611,7 @@ module Url = struct
 
   type named_id = string option * id
   type t =
+  | Change_authors_publicity of id
   | Confirm_delete of id
   | Create
   | Delete of id
@@ -656,6 +672,9 @@ module Url = struct
       let* `POST, id = Entity.Url.meth_id u Kurl.Allow.[post] id in
       Kurl.ok (Replace id)
 *)
+  | ["action"; "change-authors-publicity"; id] ->
+      let* `POST, id = Entity.Url.meth_id u Http.Meth.[post] id in
+      Kurl.ok (Change_authors_publicity id)
   | [name; id] ->
       let* `GET, id = Entity.Url.get_id u id in
       Kurl.ok (Page (Some name, id))
@@ -670,6 +689,9 @@ module Url = struct
 
   let html = ".html"
   let enc = function
+  | Change_authors_publicity id ->
+      Kurl.bare `POST
+        ["action"; "change-authors-publicity"; Res.Id.to_string id]
   | Confirm_delete id ->
       Kurl.bare `GET ["part"; "confirm-delete"; Res.Id.to_string id]
   | Create ->

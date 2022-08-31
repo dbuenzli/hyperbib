@@ -290,6 +290,23 @@ let view_title ~linkify uf ~self r =
   let href = Kurl.Fmt.rel_url uf ~src:self ~dst:(Reference.Url.page r) in
   Hfrag.link ~at ~href title
 
+let undo_make_all_authors_public_button uf rid ~ids =
+  let id i =
+    El.input ~at:At.[hidden; name "undo"; value (string_of_int i)] ()
+  in
+  let ids = List.map id ids in
+  let is_undo = El.input ~at:At.[hidden; name Hquery.is_undo; value "true"]() in
+  let url = Reference.Url.v (Change_authors_publicity rid) in
+  let label = Uimsg.undo_make_all_authors_public in
+  Hfrag.hc_button ~query:":scope > *" ~target:Hfrag.target_entity uf url
+    ~at:Hui.Class.[tiny] (El.splice (El.txt label :: is_undo :: ids))
+
+let make_all_authors_public_button uf rid =
+  let label = Uimsg.make_all_authors_public in
+  let url = Reference.Url.v (Change_authors_publicity rid) in
+  Hfrag.hc_button ~target:Hfrag.target_entity uf url
+    ~at:Hui.Class.[tiny] (El.txt label)
+
 let view_persons ?(ui = El.void) ~class' uf ~self = function
 | [] -> El.void
 | ps ->
@@ -452,7 +469,7 @@ let edit_ui g uf r =
   let left = Hui.group ~dir:`H [edit] in
   Hui.group ~at:[Hclass.entity_ui] ~align:`Justify ~dir:`H [left; del]
 
-let view_fields g ~self r ~render_data:rd =
+let view_fields ?authors_ui g ~self r ~render_data:rd =
   let uf = Page.Gen.url_fmt g in
   let h1 = h1_reference uf ~self r in
   let title = view_title ~linkify:false uf ~self r in
@@ -460,18 +477,19 @@ let view_fields g ~self r ~render_data:rd =
   let container = view_container ~details:false uf ~self r rd container in
   let author_list = find_authors r rd in
   let authors = view_authors uf ~self author_list in
-  let make_authors_public =
+  let authors_ui =
     if not (Page.Gen.editable g) then El.void else
-    let not_public p = if Person.public p then None else Some (Person.id p) in
-    let nps = List.filter_map not_public author_list in
-    El.splice [El.sp; El.sp; Entity_html.persons_update_public_button uf
-      ~as_undo:false ~value:true ~ids:nps ]
+    let ui = match authors_ui with
+    | Some ui -> ui
+    | None when List.for_all Person.public author_list -> El.void
+    | None -> make_all_authors_public_button uf (Reference.id r)
+    in
+    El.splice [El.sp; El.nbsp; ui]
   in
   let year = view_year uf ~self r in
   let ref =
     El.p ~at:[Hclass.ref]
-      [ title; El.sp; container; (* pub; *) year; authors;
-        make_authors_public]
+      [ title; El.sp; container; (* pub; *) year; authors; authors_ui]
   in
   let subjects = find_subjects r rd in
   let subjects = view_subjects uf ~self r subjects in

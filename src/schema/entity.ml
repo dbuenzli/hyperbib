@@ -93,7 +93,11 @@ module Identifiable_queries (E : IDENTIFIABLE) :
 
   let find_id_list ids =
     let add acc id = Bag.union (find_id (Int.v id)) acc in
-    List.fold_left add Bag.empty ids
+    match ids with
+    | [] -> Bag.empty
+    | id :: ids ->
+        (* FIXME rel bug: we want to fold starting with Bag.empty *)
+        List.fold_left add (find_id (Int.v id)) ids
 
   let update id cols =
     Rel_sql.update Db.dialect E.table ~set:cols ~where:[Col.Value (E.id', id)]

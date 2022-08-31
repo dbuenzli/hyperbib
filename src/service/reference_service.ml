@@ -49,9 +49,9 @@ let get_page_data db g r =
   let* cited_by = Reference.render_data ~only_public cited_by db in
   Ok (render_data, cites, cited_by)
 
-let view_fields_resp app db req id =
+let view_fields_resp ?authors_ui env db req id =
   let* r = get_reference db id in
-  let g = Service_env.page_gen app in
+  let g = Service_env.page_gen env in
   let* self = Hfrag.url_of_req_referer req in
   let rid = Rel_query.Int.v (Reference.id r) in
   let ref = Reference.find_id rid in
@@ -60,7 +60,8 @@ let view_fields_resp app db req id =
   let* render_data =
     Reference.render_data ~only_public ref db |> Db.error_resp
   in
-  Ok (Page.resp_part (Reference_html.view_fields g ~self r ~render_data))
+  let part = Reference_html.view_fields ?authors_ui g ~self r ~render_data in
+  Ok (Page.resp_part part)
 
 (* Reponses *)
 
@@ -168,6 +169,33 @@ let fill_in_form app req doi =
           ~self ~msg ~authors ~editors ~container ~cites
       in
       Ok (Page.resp_part html)
+
+let change_authors_publicity env req id =
+  let* () = Entity_service.check_edit_authorized env in
+  Service_env.with_db_transaction' `Immediate env @@ fun db ->
+  let* q = Http.Req.to_query req in
+  let* is_undo = Hquery.find Hquery.key_is_undo ~none:false q in
+  let* authors_ui = match is_undo with
+  | true ->
+      let* ids = Hquery.find_ids ~uniquify:true "undo" q in
+      let cs = [Col.Value (Person.public', false)] in
+      let upd id = Db.exec' db (Person.update id cs) in
+      let* () = Bazaar.list_iter_stop_on_error upd ids in
+      Ok None
+  | false ->
+      (* FIXME we need to work on rel to streamline this *)
+      let* ids = Db.list' db (Reference.author_ids_stmt id) in
+      let ps = Rel_query.Sql.of_bag' Person.table (Person.find_id_list ids) in
+      let* ps = Db.list' db ps in
+      let ps = List.filter (Fun.negate Person.public) ps in
+      let cs = [Col.Value (Person.public', true)] in
+      let upd p = Db.exec' db (Person.update (Person.id p) cs) in
+      let* () = Bazaar.list_iter_stop_on_error upd ps in
+      let ids = List.map Person.id ps in
+      let uf = Service_env.url_fmt env in
+      Ok (Some (Reference_html.undo_make_all_authors_public_button uf id ~ids))
+  in
+  view_fields_resp ?authors_ui env db req id
 
 let page app ref =
   Service_env.with_db_transaction' `Deferred app @@ fun db ->
@@ -287,6 +315,7 @@ let view_fields app req id =
   view_fields_resp app db req id
 
 let resp r env sess req = match (r : Reference.Url.t) with
+| Change_authors_publicity id -> change_authors_publicity env req id
 | Confirm_delete id -> confirm_delete env id
 | Create -> create env req
 | Delete id -> delete env id
