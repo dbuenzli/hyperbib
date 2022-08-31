@@ -18,24 +18,6 @@ module Std = struct
   module Os = B00_std.Os
 
   module Bazaar = struct
-    let rec list_fold_stop_on_error f l acc = match l with
-    | [] -> Ok acc
-    | v :: vs ->
-        match f v acc with
-        | Ok acc -> list_fold_stop_on_error f vs acc
-        | Error _ as e -> e
-
-    let rec list_iter_stop_on_error f = function
-    | [] -> Ok ()
-    | v :: vs ->
-        match f v with Error _ as e -> e | Ok v -> list_iter_stop_on_error f vs
-
-    let rec list_iter_log_on_error f = function
-    | [] -> ()
-    | v :: vs ->
-        (match f v with Error _ as e -> Log.if_error ~use:() e | Ok _ -> ());
-        list_iter_log_on_error f vs
-
     let cp_dir_content
         ?dotfiles ?follow_symlinks ~recurse ~of_dir:src ~inside_dir:dst ()
       =

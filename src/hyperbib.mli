@@ -30,15 +30,6 @@ module Std : sig
     (* FIXME it these kinds of things should likely be added to
        B00_std *)
 
-    val list_fold_stop_on_error :
-      ('a -> 'b -> ('b, 'err) result) -> 'a list -> 'b -> ('b, 'err) result
-
-    val list_iter_stop_on_error :
-      ('a -> ('b, 'err) result) -> 'a list -> (unit, 'err) result
-
-    val list_iter_log_on_error :
-      ('a -> ('b, string) result) -> 'a list -> unit
-
     val cp_dir_content :
       ?dotfiles:bool -> ?follow_symlinks:bool -> recurse:bool ->
       of_dir:Fpath.t -> inside_dir:Fpath.t -> unit -> (unit, string) result

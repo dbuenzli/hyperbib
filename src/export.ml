@@ -55,8 +55,7 @@ module Static_html = struct
     let index = Reference_html.index g rs in
     let* () = write_page ~dir g index in
     let write_reference = write_reference ~dir db g in
-    let* () =
-      Bazaar.list_iter_stop_on_error write_reference rs.Reference.list in
+    let* () = List.iter_stop_on_error write_reference rs.Reference.list in
     Ok ()
 
   let write_container ~dir db g c =
@@ -75,7 +74,7 @@ module Static_html = struct
     let index = Container_html.index g cs ~ref_count in
     let* () = write_page ~dir g index in
     let write_container = write_container ~dir db g in
-    let* () = Bazaar.list_iter_stop_on_error write_container cs in
+    let* () = List.iter_stop_on_error write_container cs in
     Ok ()
 
   let write_person ~dir db g p =
@@ -94,7 +93,7 @@ module Static_html = struct
     let index = Person_html.index g ps ~ref_count in
     let* () = write_page ~dir g index in
     let write_person = write_person ~dir db g in
-    let* () = Bazaar.list_iter_stop_on_error write_person ps in
+    let* () = List.iter_stop_on_error write_person ps in
     Ok ()
 
   let write_subject ~dir db g s =
@@ -117,7 +116,7 @@ module Static_html = struct
     let index = Subject_html.index g ss ~ref_count in
     let* () = write_page ~dir g index in
     let write_subject = write_subject ~dir db g in
-    let* () = Bazaar.list_iter_stop_on_error write_subject ss in
+    let* () = List.iter_stop_on_error write_subject ss in
     Ok ()
 
   let write_year ~dir db g (year, _) =
@@ -133,7 +132,7 @@ module Static_html = struct
     let index = Year_html.index g years in
     let* () = write_page ~dir g index in
     let write_year = write_year ~dir db g in
-    let* () = Bazaar.list_iter_stop_on_error write_year years in
+    let* () = List.iter_stop_on_error write_year years in
     Ok ()
 
   let write_bib_pages ~dir _db g =

@@ -169,8 +169,8 @@ module Doi = struct
 
   let authors_editors_of_ref ~create_public db r =
     let add p acc = let* p = get_person ~create_public db p in Ok (p :: acc) in
-    let* authors = Bazaar.list_fold_stop_on_error add r.authors [] in
-    let* editors = Bazaar.list_fold_stop_on_error add r.editors [] in
+    let* authors = List.fold_stop_on_error add r.authors [] in
+    let* editors = List.fold_stop_on_error add r.editors [] in
     (* Order is important, for some people *)
     Ok (List.rev authors, List.rev editors)
 end
@@ -274,7 +274,7 @@ module Legacy = struct
   let insert_subject db (s, see_also) =
     Db.string_error @@
     let* () = Db.exec db (Subject.create ~ignore_id:false s) in
-    Bazaar.list_iter_stop_on_error
+    List.iter_stop_on_error
       (Db.exec db) (List.map Subject.See_also.create see_also)
 
   type ref =
@@ -385,15 +385,16 @@ module Legacy = struct
         let r = Doi.reference_of_ref ~container_id doi_ref ~note ~public in
         let* rid = Db.insert db (Reference.create ~ignore_id:true r) in
         let subjs = reference_subjects_stmts nmap ref rid in
-        let* () = Bazaar.list_iter_stop_on_error (Db.exec db) subjs in
+        let* () = List.iter_stop_on_error (Db.exec db) subjs in
         let cites = reference_cites_stmts doi_ref rid in
-        let* () = Bazaar.list_iter_stop_on_error (Db.exec db) cites in
+        let* () = List.iter_stop_on_error (Db.exec db) cites in
         let* contributors = contributors db doi_ref rid in
-        let* () = Bazaar.list_iter_stop_on_error (Db.exec db) contributors in
+        let* () = List.iter_stop_on_error (Db.exec db) contributors in
         Ok ()
 
   let make_refs db httpr nmap refs =
-    Bazaar.list_iter_log_on_error (make_ref db httpr nmap) refs
+    let error = Log.if_error ~use:() in
+    List.iter_iter_on_error ~error (make_ref db httpr nmap) refs
 
   let refs ~file =
     let* s = Os.File.read file in
@@ -412,7 +413,7 @@ module Legacy = struct
     let tables_dir = Fpath.(app_dir / "tables") in
     let* nmap, imap = subjects ~file:Fpath.(tables_dir / "subjects.json") in
     let ss = make_subjects nmap imap in
-    let* () = Bazaar.list_iter_stop_on_error (insert_subject db) ss in
+    let* () = List.iter_stop_on_error (insert_subject db) ss in
     let* refs = refs ~file:Fpath.(tables_dir / "refs.json") in
     let refs = List.filter_map Fun.id refs in
     let* httpr = Result.map Option.some (B00_http.Httpr.get_curl ()) in

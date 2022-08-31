@@ -21,7 +21,7 @@ let do_changes (col_renames, table_renames) db =
   let src = live and dst = Schema.v in
   let* cs = Rel.Schema.changes ~col_renames ~table_renames ~src ~dst () in
   let stmts = Rel_sql.schema_changes Rel_sqlite3.dialect cs in
-  Bazaar.list_iter_stop_on_error (Db.exec db) stmts |> Db.string_error
+  List.iter_stop_on_error (Db.exec db) stmts |> Db.string_error
 
 let changes conf (col_renames, table_renames as r) format exec no_backup =
   Log.if_error ~use:Hyperbib.Exit.some_error @@

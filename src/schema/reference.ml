@@ -246,8 +246,8 @@ module Contributor = struct
     let insert c = Db.exec db @@ create c in
     let open Result.Syntax in
     let* () = Db.exec db (delete_all id) in
-    let* () = Bazaar.list_iter_stop_on_error insert authors in
-    let* () = Bazaar.list_iter_stop_on_error insert editors in
+    let* () = List.iter_stop_on_error insert authors in
+    let* () = List.iter_stop_on_error insert editors in
     Ok ()
 end
 
@@ -357,7 +357,7 @@ module Subject = struct
     in
     let open Result.Syntax in
     let* () = Db.exec db (delete_all id) in
-    let* () = Bazaar.list_iter_stop_on_error insert ss in
+    let* () = List.iter_stop_on_error insert ss in
     Ok ()
 
 end
@@ -416,7 +416,7 @@ module Cites = struct
     let insert c = Db.exec db @@ create c in
     let open Result.Syntax in
     let* () = Db.exec db (delete_all id) in
-    let* () = Bazaar.list_iter_stop_on_error insert cites in
+    let* () = List.iter_stop_on_error insert cites in
     Ok ()
 end
 

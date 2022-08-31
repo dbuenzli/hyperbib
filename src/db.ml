@@ -93,18 +93,18 @@ let with_transaction k db f = Rel_sqlite3.with_transaction k db f
 let setup db ~schema:s =
   Result.join @@ Rel_sqlite3.with_transaction `Immediate db @@ fun db ->
   let stmts = Rel_sql.create_schema dialect s in
-  Bazaar.list_iter_stop_on_error (Rel_sqlite3.exec db) stmts
+  List.iter_stop_on_error (Rel_sqlite3.exec db) stmts
 
 let clear db =
   Result.join @@ Rel_sqlite3.with_transaction `Immediate db @@ fun db ->
   let* (live, _) = Rel_sqlite3.schema_of_db db in
   let stmts = Rel_sql.drop_schema ~if_exists:() dialect live in
-  Bazaar.list_iter_stop_on_error (Rel_sqlite3.exec db) stmts
+  List.iter_stop_on_error (Rel_sqlite3.exec db) stmts
 
 let create_schema db s =
   Result.join @@ Rel_sqlite3.with_transaction `Immediate db @@ fun db ->
   let stmts = Rel_sql.create_schema dialect s in
-  Bazaar.list_iter_stop_on_error (Rel_sqlite3.exec db) stmts
+  List.iter_stop_on_error (Rel_sqlite3.exec db) stmts
 
 let ensure_schema ?(read_only = false) s db =
   let* live, _ = Rel_sqlite3.schema_of_db db |> string_error in

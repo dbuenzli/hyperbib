@@ -180,7 +180,7 @@ let change_authors_publicity env req id =
       let* ids = Hquery.find_ids ~uniquify:true "undo" q in
       let cs = [Col.Value (Person.public', false)] in
       let upd id = Db.exec' db (Person.update id cs) in
-      let* () = Bazaar.list_iter_stop_on_error upd ids in
+      let* () = List.iter_stop_on_error upd ids in
       Ok None
   | false ->
       (* FIXME we need to work on rel to streamline this *)
@@ -190,7 +190,7 @@ let change_authors_publicity env req id =
       let ps = List.filter (Fun.negate Person.public) ps in
       let cs = [Col.Value (Person.public', true)] in
       let upd p = Db.exec' db (Person.update (Person.id p) cs) in
-      let* () = Bazaar.list_iter_stop_on_error upd ps in
+      let* () = List.iter_stop_on_error upd ps in
       let ids = List.map Person.id ps in
       let uf = Service_env.url_fmt env in
       Ok (Some (Reference_html.undo_make_all_authors_public_button uf id ~ids))
