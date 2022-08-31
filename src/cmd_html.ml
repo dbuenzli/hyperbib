@@ -21,10 +21,9 @@ let html conf inside_dir file_browsable =
   let* () = Hyperbib.Conf.ensure_data_dir conf in
   let db_file = Hyperbib.Conf.db_file conf in
   Result.map_error (fun e -> Fmt.str "%a: %s" Fpath.pp_unquoted db_file e) @@
-  Result.join @@ Db.string_error @@ Result.join @@
-  Db.with_open db_file @@ fun db ->
+  Result.join @@ Result.join @@ Result.map Db.string_error @@
+  Db.with_open_schema Schema.v db_file @@ fun db ->
   Db.with_transaction `Deferred db @@ fun db ->
-  let* () = Db.ensure_schema Schema.v db in
   let* b = Bibliography.get () in
   let page_gen = page_gen ~file_browsable b in
   let* () = Export.static_html ~inside_dir conf db page_gen in

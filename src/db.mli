@@ -22,20 +22,15 @@ val string_error : ('a, error) result -> ('a, string) result
 (** [string_error] is [Result.map_error error_message]. *)
 
 type t
-(** The type fr database connections. *)
-
-val open' :
-  ?foreign_keys:bool -> ?read_only:bool -> Fpath.t -> (t, error) result
-(** [open' file] opens the database [file]. If [read_only] is [true]
-    (defaults to [false]), no writes are allowed. *)
-
-val close : t -> (unit, error) result
-(** [close db] closes the database. *)
+(** The type for database connections. *)
 
 val with_open :
   ?foreign_keys:bool -> ?read_only:bool -> Fpath.t -> (t -> 'a) ->
   ('a, error) result
-(** [with_open file f] calls [f] with a database open on [file]. *)
+(** [with_open file yf] calls [f] with a database open on [file].  If
+    [read_only] is [true] (defaults to [false]), no writes are
+    allowed. This sets the database in WAL mode. See also
+    {!with_open_schema}. *)
 
 (** {1:pool Connection pool} *)
 
@@ -67,8 +62,8 @@ val backup_thread : pool -> every_s:int -> Fpath.t -> Thread.t
 type transaction_kind = [ `Deferred | `Immediate | `Exclusive ]
 
 val with_transaction :
-  transaction_kind ->  t -> (t -> ('a, 'b) result) ->
-  (('a, 'b) result, error) result
+  transaction_kind ->  t ->
+  (t -> ('a, 'b) result) -> (('a, 'b) result, error) result
 
 (** {1:schema Schema handling} *)
 
@@ -84,6 +79,11 @@ val ensure_schema :
 val schema :
   ?schema:Rel.Schema.name -> t -> (Rel.Schema.t * string list, error) result
 (** [schema db] is the schema of [db]. *)
+
+val with_open_schema :
+  ?foreign_keys:bool -> ?read_only:bool -> Rel.Schema.t ->
+  Fpath.t -> (t -> 'a) -> ('a, string) result
+(** [with_open_schema] is {!with_open} followed by {!ensure_schema}. *)
 
 (** {1:queries Queries} *)
 
@@ -120,7 +120,7 @@ val show_plan : ?name:string -> t -> 'a Rel_sql.Stmt.t -> 'a Rel_sql.Stmt.t
 (** [explain_plan ~name db st] dumps a query plan explanation of [st]
     on the program log and returns [st]. *)
 
-(** {1:webs Webs responding convenience} *)
+(** {1:webs Webs responses} *)
 
 val error_resp :
   ?retry_after_s:int -> ('a, error) result -> ('a, Http.resp) result

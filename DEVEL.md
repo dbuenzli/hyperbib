@@ -15,7 +15,7 @@ All the source is in [`src`](src). This directory has a few generic
 modules independent from the project, the commands of the tool, and it
 ties up the web service definition from the datastructure definitions
 in 
-[src/model](src/model), their HTML rendering in [src/html](src/html)
+[src/schema](src/schema), their HTML rendering in [src/html](src/html)
 and their service in [src/service](src/service) which are 
 evenetually aggregated in the final URL request tree by
 [`src/service.ml`](src/service.ml). 
@@ -98,7 +98,7 @@ b0 -a hyperbib -- db schema app
 
 To visualize the schema diagram use 
 ```
-b0 -a hyperbib -- db schema app --dot | dot -Tsvg > /tmp/hyperbib.svg \
+b0 -a hyperbib -- db schema app  --format=dot | dot -Tsvg > /tmp/hyperbib.svg \
   && show-uri /tmp/hyperbib.svg
 ```
 

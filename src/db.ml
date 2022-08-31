@@ -123,6 +123,12 @@ let ensure_schema ?(read_only = false) s db =
 
 let schema = Rel_sqlite3.schema_of_db
 
+let with_open_schema ?foreign_keys ?read_only schema db_file f =
+  Result.join @@ string_error @@
+  with_open ?foreign_keys ?read_only db_file @@ fun db ->
+  let* () = ensure_schema schema db in
+  Ok (f db)
+
 (* Queries *)
 
 let exec db st = Rel_sqlite3.exec db st

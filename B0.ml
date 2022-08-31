@@ -120,7 +120,7 @@ let hyperbib =
     in
     Fpath.[`Dir (v "src");
            `Dir (v "src/service");
-           `Dir (v "src/model");
+           `Dir (v "src/schema");
            `Dir (v "src/html");
            `X stamp_mli_src;
            `Fut stamp]
