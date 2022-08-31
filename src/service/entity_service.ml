@@ -7,10 +7,10 @@ open Hyperbib.Std
 open Result.Syntax
 open Rel
 
-let check_edit_authorized app =
+let check_edit_authorized env =
   (* FIXME if the webapp is editable we should ask for login
      and retry the request, we might need a bit of `hc` support. *)
-  match User.Caps.edit (Webapp.caps app) with
+  match User.Caps.edit (Service_env.caps env) with
   | true -> Ok ()
   | false -> Http.Resp.unauthorized_401 () (* FIXME do something for user *)
 
@@ -30,26 +30,26 @@ let get_entity
 
 let create
     (type t) (module E : Entity.IDENTIFIABLE_WITH_QUERIES with type t = t)
-    ~entity_page_url app req
+    ~entity_page_url env req
   =
-  let* () = check_edit_authorized app in
-  Webapp.with_db_transaction' `Immediate app @@ fun db ->
+  let* () = check_edit_authorized env in
+  Service_env.with_db_transaction' `Immediate env @@ fun db ->
   let* q = Http.Req.to_query req in
   let* vs = Hquery.careless_find_table_cols ~ignore:[Col.V E.id'] E.table q in
   let* id = Db.insert' db (E.create_cols ~ignore_id:true vs) in
-  let uf = Webapp.url_fmt app in
+  let uf = Service_env.url_fmt env in
   let headers = Hfrag.hc_redirect uf (entity_page_url id) in
   Ok (Http.Resp.empty ~headers Http.ok_200)
 
 let delete
     (type t) (module E : Entity.IDENTIFIABLE_WITH_QUERIES with type t = t)
-    ~deleted_html app id
+    ~deleted_html env id
   =
-  let* () = check_edit_authorized app in
-  Webapp.with_db_transaction' `Immediate app @@ fun db ->
+  let* () = check_edit_authorized env in
+  Service_env.with_db_transaction' `Immediate env @@ fun db ->
   let* c = get_entity (module E) db id in
   let* () = Db.exec' db (E.delete id) in
-  let deleted = deleted_html (Webapp.page_gen app) c in
+  let deleted = deleted_html (Service_env.page_gen env) c in
   Ok (Page.resp_part deleted)
 
 

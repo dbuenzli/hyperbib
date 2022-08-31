@@ -51,7 +51,7 @@ let get_page_data db g r =
 
 let view_fields_resp app db req id =
   let* r = get_reference db id in
-  let g = Webapp.page_gen app in
+  let g = Service_env.page_gen app in
   let* self = Hfrag.url_of_req_referer req in
   let rid = Rel_query.Int.v (Reference.id r) in
   let ref = Reference.find_id rid in
@@ -66,9 +66,9 @@ let view_fields_resp app db req id =
 
 let confirm_delete app id =
   let* () = Entity_service.check_edit_authorized app in
-  Webapp.with_db_transaction' `Deferred app @@ fun db ->
+  Service_env.with_db_transaction' `Deferred app @@ fun db ->
   let* r = get_reference db id in
-  let g = Webapp.page_gen app in
+  let g = Service_env.page_gen app in
   let confirm = Reference_html.confirm_delete g r in
   Ok (Page.resp_part confirm)
 
@@ -77,16 +77,16 @@ let delete =
 
 let edit_form app req id =
   let* () = Entity_service.check_edit_authorized app in
-  Webapp.with_db_transaction' `Deferred app @@ fun db ->
+  Service_env.with_db_transaction' `Deferred app @@ fun db ->
   let* r = get_reference db id in
-  let g = Webapp.page_gen app in
+  let g = Service_env.page_gen app in
   let* render_data = get_reference_data db g r in
   let edit_form = Reference_html.edit_form g r ~render_data in
   Ok (Page.resp_part edit_form)
 
 let index app =
-  Webapp.with_db_transaction `Deferred app @@ fun db ->
-  let g = Webapp.page_gen app in
+  Service_env.with_db_transaction `Deferred app @@ fun db ->
+  let g = Service_env.page_gen app in
   let only_public = Rel_query.Bool.v (Page.Gen.only_public g) in
   let refs = Reference.list ~only_public in
   let* render_data = Reference.render_data ~only_public refs db in
@@ -95,8 +95,8 @@ let index app =
 
 let new_form app req ~cancel =
   let* () = Entity_service.check_edit_authorized app in
-  Webapp.with_db_transaction' `Deferred app @@ fun db ->
-  let g = Webapp.page_gen app in
+  Service_env.with_db_transaction' `Deferred app @@ fun db ->
+  let g = Service_env.page_gen app in
   let page = Reference_html.new_form g Reference.new' ~cancel in
   Ok (Page.resp page)
 
@@ -125,12 +125,12 @@ let warn_doi_exists g ~self doi r =
 
 let fill_in_form app req doi =
   let* () = Entity_service.check_edit_authorized app in
-  Webapp.with_db_transaction' `Deferred app @@ fun db ->
-  let doi_cache = Hyperbib.Conf.doi_cache_dir (Webapp.conf app) in
+  Service_env.with_db_transaction' `Deferred app @@ fun db ->
+  let doi_cache = Hyperbib.Conf.doi_cache_dir (Service_env.conf app) in
   Result.map_error
     (* Bof *)
     (fun e -> Result.get_error (Http.Resp.server_error_500 ~explain:e ())) @@
-  let g = Webapp.page_gen app in
+  let g = Service_env.page_gen app in
   let* httpr = Result.map Option.some (B00_http.Httpr.get_curl ()) in
   let* cancel =
     let* bare = Kurl.Bare.of_req_referer req in
@@ -170,8 +170,8 @@ let fill_in_form app req doi =
       Ok (Page.resp_part html)
 
 let page app ref =
-  Webapp.with_db_transaction' `Deferred app @@ fun db ->
-  let g = Webapp.page_gen app in
+  Service_env.with_db_transaction' `Deferred app @@ fun db ->
+  let g = Service_env.page_gen app in
   let only_public = Page.Gen.only_public g in
   let* r = get_reference_of_page_ref db g ~only_public ref in
   let* render_data, cites, cited_by = get_page_data db g r in
@@ -210,7 +210,7 @@ let authors_editors_maybe_create db q =
 let create app req = (* create and update are very similar factor out a bit. *)
   let* () = Entity_service.check_edit_authorized app in
   let entity_page_url id = Reference.Url.v (Page (None, id)) in
-  Webapp.with_db_transaction' `Immediate app @@ fun db ->
+  Service_env.with_db_transaction' `Immediate app @@ fun db ->
   let* q = Http.Req.to_query req in
   let* vs =
     Hquery.careless_find_table_cols ~ignore:[Col.V Reference.id']
@@ -243,13 +243,13 @@ let create app req = (* create and update are very similar factor out a bit. *)
     Reference.Cites.set_list ~reference:id ~dois:cites db
     |> Db.error_resp
   in
-  let uf = Webapp.url_fmt app in
+  let uf = Service_env.url_fmt app in
   let headers = Hfrag.hc_redirect uf (entity_page_url id) in
   Ok (Http.Resp.empty ~headers Http.ok_200)
 
-let update app req id =
-  let* () = Entity_service.check_edit_authorized app in
-  Webapp.with_db_transaction' `Immediate app @@ fun db ->
+let update env req id =
+  let* () = Entity_service.check_edit_authorized env in
+  Service_env.with_db_transaction' `Immediate env @@ fun db ->
   let* q = Http.Req.to_query req in
   let ignore = [Col.V Reference.id'] in
   let* vs = Hquery.careless_find_table_cols ~ignore Reference.table q in
@@ -273,7 +273,7 @@ let update app req id =
     |> Db.error_resp
   in
   let* r = get_reference db id in
-  let g = Webapp.page_gen app in
+  let g = Service_env.page_gen env in
   let* render_data, cites, cited_by = get_page_data db g r in
   let uf = Page.Gen.url_fmt g in
   let* self = Hfrag.url_of_req_referer req in
@@ -283,20 +283,20 @@ let update app req id =
   Ok (Page.resp_part ~headers html)
 
 let view_fields app req id =
-  Webapp.with_db_transaction' `Deferred app @@ fun db ->
+  Service_env.with_db_transaction' `Deferred app @@ fun db ->
   view_fields_resp app db req id
 
-let resp r app sess req = match (r : Reference.Url.t) with
-| Confirm_delete id -> confirm_delete app id
-| Create -> create app req
-| Delete id -> delete app id
-| Edit_form id -> edit_form app req id
-| Fill_in_form doi -> fill_in_form app req doi
-| Index -> index app
-| New_form { cancel } -> new_form app req ~cancel
-| Page ref -> page app ref
-| Update id -> update app req id
-| View_fields id  -> view_fields app req id
+let resp r env sess req = match (r : Reference.Url.t) with
+| Confirm_delete id -> confirm_delete env id
+| Create -> create env req
+| Delete id -> delete env id
+| Edit_form id -> edit_form env req id
+| Fill_in_form doi -> fill_in_form env req doi
+| Index -> index env
+| New_form { cancel } -> new_form env req ~cancel
+| Page ref -> page env ref
+| Update id -> update env req id
+| View_fields id  -> view_fields env req id
 
 let v = Kurl.service Reference.Url.kind resp
 

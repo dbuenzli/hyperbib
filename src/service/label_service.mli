@@ -5,7 +5,7 @@
 
 open Hyperbib.Std
 
-val v : Webapp.immutable_session_service  Kurl.service
+val v : Service.sub_with_immutable_session Kurl.service
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2021 University of Bern

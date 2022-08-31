@@ -9,7 +9,7 @@ open Hyperbib.Std
 
 (** {1:misc Miscellaneous} *)
 
-val check_edit_authorized : Webapp.t -> (unit, Http.resp) result
+val check_edit_authorized : Service_env.t -> (unit, Http.resp) result
 
 (** {1:data Data lookups} *)
 
@@ -22,12 +22,12 @@ val get_entity :
 val create :
   (module Entity.IDENTIFIABLE_WITH_QUERIES with type t = 't) ->
   entity_page_url:(Id.t -> Kurl.t) ->
-  Webapp.t -> Http.req -> (Http.resp, Http.resp) result
+  Service_env.t -> Http.req -> (Http.resp, Http.resp) result
 
 val delete :
   (module Entity.IDENTIFIABLE_WITH_QUERIES with type t = 't) ->
   deleted_html:(Page.Gen.t -> 't -> El.html) ->
-  Webapp.t -> Id.t -> (Http.resp, Http.resp) result
+  Service_env.t -> Id.t -> (Http.resp, Http.resp) result
 
 (** {1:pagerefs Page references} *)
 

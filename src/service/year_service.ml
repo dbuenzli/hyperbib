@@ -6,15 +6,15 @@
 open Hyperbib.Std
 open Result.Syntax
 
-let list app =
-  Webapp.with_db_transaction `Deferred app @@ fun db ->
+let list env =
+  Service_env.with_db_transaction `Deferred env @@ fun db ->
   let* years = Db.list db Year.public_domain_stmt in
-  let page = Year_html.index (Webapp.page_gen app) years in
+  let page = Year_html.index (Service_env.page_gen env) years in
   Ok (Page.resp page)
 
-let page app year =
-  Webapp.with_db_transaction `Deferred app @@ fun db ->
-  let g = Webapp.page_gen app in
+let page env year =
+  Service_env.with_db_transaction `Deferred env @@ fun db ->
+  let g = Service_env.page_gen env in
   let only_public = Rel_query.Bool.v (Page.Gen.only_public g) in
   let refs = Reference.list ~only_public in
   let refs = Year.filter ~year:(Rel_query.Int.v year) refs in
@@ -22,9 +22,9 @@ let page app year =
   let page = Year_html.page g ~year render_data in
   Ok (Page.resp page)
 
-let resp r app user req = match (r : Year.Url.t) with
-| Index -> list app
-| Page year -> page app year
+let resp r env user req = match (r : Year.Url.t) with
+| Index -> list env
+| Page year -> page env year
 
 let v = Kurl.service Year.Url.kind resp
 

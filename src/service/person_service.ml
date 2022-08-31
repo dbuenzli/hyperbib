@@ -41,18 +41,18 @@ let select_persons db ~only_public sel =
 
 let view_fields_resp app db req id =
   let* p = get_person db id in
-  let g = Webapp.page_gen app in
+  let g = Service_env.page_gen app in
   let* self = Hfrag.url_of_req_referer req in
   Ok (Page.resp_part (Person_html.view_fields g p ~self))
 
 (* Responses *)
 
-let confirm_delete app id =
-  let* () = Entity_service.check_edit_authorized app in
-  Webapp.with_db_transaction' `Deferred app @@ fun db ->
+let confirm_delete env id =
+  let* () = Entity_service.check_edit_authorized env in
+  Service_env.with_db_transaction' `Deferred env @@ fun db ->
   let* p = get_person db id in
   let* ref_count = get_person_ref_count db p in
-  let g = Webapp.page_gen app in
+  let g = Service_env.page_gen env in
   let confirm = Person_html.confirm_delete g p ~ref_count in
   Ok (Page.resp_part confirm)
 
@@ -63,9 +63,9 @@ let create =
 let delete =
   Entity_service.delete (module Person) ~deleted_html:Person_html.deleted
 
-let duplicate app req src =
-  let* () = Entity_service.check_edit_authorized app in
-  Webapp.with_db_transaction' `Immediate app @@ fun db ->
+let duplicate env req src =
+  let* () = Entity_service.check_edit_authorized env in
+  Service_env.with_db_transaction' `Immediate env @@ fun db ->
   let* q = Http.Req.to_query req in
   let ignore = [Col.V Person.id'] in
   let* vs = Hquery.careless_find_table_cols ~ignore Person.table q in
@@ -73,30 +73,30 @@ let duplicate app req src =
   let copy_contribs = Reference.Contributor.copy_contributions_stmt ~src ~dst in
   let* () = Db.exec' db copy_contribs in
   let* () = Db.exec' db (Person.Label.copy_applications_stmt ~src ~dst) in
-  let uf = Webapp.url_fmt app in
+  let uf = Service_env.url_fmt env in
   let headers = Hfrag.hc_redirect uf (Person.Url.v (Page (None, dst))) in
   Ok (Http.Resp.empty ~headers Http.ok_200)
 
-let duplicate_form app req id =
-  let* () = Entity_service.check_edit_authorized app in
-  Webapp.with_db_transaction' `Deferred app @@ fun db ->
+let duplicate_form env req id =
+  let* () = Entity_service.check_edit_authorized env in
+  Service_env.with_db_transaction' `Deferred env @@ fun db ->
   let* p = get_person db id in
   let* ref_count = get_person_ref_count db p in
   let p = Person.duplicate_data p in
-  let g = Webapp.page_gen app in
+  let g = Service_env.page_gen env in
   let duplicate_form = Person_html.duplicate_form g p ~ref_count in
   Ok (Page.resp_part duplicate_form)
 
-let edit_form app req id =
-  let* () = Entity_service.check_edit_authorized app in
-  Webapp.with_db_transaction' `Deferred app @@ fun db ->
+let edit_form env req id =
+  let* () = Entity_service.check_edit_authorized env in
+  Service_env.with_db_transaction' `Deferred env @@ fun db ->
   let* p = get_person db id in
-  let edit_form = Person_html.edit_form (Webapp.page_gen app) p in
+  let edit_form = Person_html.edit_form (Service_env.page_gen env) p in
   Ok (Page.resp_part edit_form)
 
-let index app =
-  Webapp.with_db_transaction `Deferred app @@ fun db ->
-  let g = Webapp.page_gen app in
+let index env =
+  Service_env.with_db_transaction `Deferred env @@ fun db ->
+  let g = Service_env.page_gen env in
   let only_public = Page.Gen.only_public g in
   let* ps = Db.list db (Person.list_stmt ~only_public) in
   let ref_count = Reference.persons_public_ref_count_stmt in
@@ -119,10 +119,10 @@ let creatable_person_of_sel sel =
       Person.v ~id:0 ~last_name ~first_names ~orcid:""
         ~note:"" ~private_note:"" ~public:true ()
 
-let input app ~for_list ~input_name ~role id =
-  let* () = Entity_service.check_edit_authorized app in
-  Webapp.with_db_transaction' `Deferred app @@ fun db ->
-  let uf = Page.Gen.url_fmt (Webapp.page_gen app) in
+let input env ~for_list ~input_name ~role id =
+  let* () = Entity_service.check_edit_authorized env in
+  Service_env.with_db_transaction' `Deferred env @@ fun db ->
+  let uf = Page.Gen.url_fmt (Service_env.page_gen env) in
   let* p = get_person db id in
   let finder = match for_list with
   | true -> Entity_html.person_input_finder uf ~for_list ~input_name ~role
@@ -131,10 +131,10 @@ let input app ~for_list ~input_name ~role id =
   let p = Entity_html.person_input uf ~for_list ~input_name ~role p in
   Ok (Page.resp_part (El.splice [p; finder]))
 
-let input_create app ~for_list ~input_name ~role p =
-  let* () = Entity_service.check_edit_authorized app in
-  Webapp.with_db_transaction' `Deferred app @@ fun db ->
-  let uf = Page.Gen.url_fmt (Webapp.page_gen app) in
+let input_create env ~for_list ~input_name ~role p =
+  let* () = Entity_service.check_edit_authorized env in
+  Service_env.with_db_transaction' `Deferred env @@ fun db ->
+  let uf = Page.Gen.url_fmt (Service_env.page_gen env) in
   let p = Entity_html.person_input_create uf ~for_list ~input_name ~role p in
   let finder = match for_list with
   | true -> Entity_html.person_input_finder uf ~for_list ~input_name ~role
@@ -142,17 +142,17 @@ let input_create app ~for_list ~input_name ~role p =
   in
   Ok (Page.resp_part (El.splice [p; finder]))
 
-let input_finder app ~for_list ~input_name ~role =
-  let* () = Entity_service.check_edit_authorized app in
-  Webapp.with_db_transaction' `Deferred app @@ fun db ->
-  let uf = Page.Gen.url_fmt (Webapp.page_gen app) in
+let input_finder env ~for_list ~input_name ~role =
+  let* () = Entity_service.check_edit_authorized env in
+  Service_env.with_db_transaction' `Deferred env @@ fun db ->
+  let uf = Page.Gen.url_fmt (Service_env.page_gen env) in
   let finder = Entity_html.person_input_finder uf ~for_list ~input_name ~role in
   Ok (Page.resp_part finder)
 
-let input_finder_find app ~for_list ~input_name ~role sel =
-  let* () = Entity_service.check_edit_authorized app in
-  Webapp.with_db_transaction `Deferred app @@ fun db ->
-  let g = Webapp.page_gen app in
+let input_finder_find env ~for_list ~input_name ~role sel =
+  let* () = Entity_service.check_edit_authorized env in
+  Service_env.with_db_transaction `Deferred env @@ fun db ->
+  let g = Service_env.page_gen env in
   let uf = Page.Gen.url_fmt g in
   let only_public = Page.Gen.only_public g in
   let* ps = select_persons db ~only_public sel in
@@ -163,30 +163,31 @@ let input_finder_find app ~for_list ~input_name ~role sel =
   in
   Ok (Page.resp_part res)
 
-let new_form app req ~cancel =
-  let* () = Entity_service.check_edit_authorized app in
-  let g = Webapp.page_gen app in
+let new_form env req ~cancel =
+  let* () = Entity_service.check_edit_authorized env in
+  let g = Service_env.page_gen env in
   let page = Person_html.new_form g Person.new' ~cancel in
   Ok (Page.resp page)
 
-let page app ref =
-  Webapp.with_db_transaction' `Deferred app @@ fun db ->
-  let g = Webapp.page_gen app in
+let page env ref =
+  Service_env.with_db_transaction' `Deferred env @@ fun db ->
+  let g = Service_env.page_gen env in
   let only_public = Page.Gen.only_public g in
   let* p = get_person_for_page_ref db g ~only_public ref in
   let* refs = get_page_data db g p in
   let page = Person_html.page g p refs in
   Ok (Page.resp page)
 
-let _replace_form app db this =
+let _replace_form env db this =
   let* p = get_person db this in
   let* ref_count = get_person_ref_count db p in
-  let replace = Person_html.replace_form (Webapp.page_gen app) p ~ref_count in
+  let g = Service_env.page_gen env in
+  let replace = Person_html.replace_form g p ~ref_count in
   Ok (Page.resp_part replace)
 
-let replace app req this =
-  let* () = Entity_service.check_edit_authorized app in
-  Webapp.with_db_transaction' `Immediate app @@ fun db ->
+let replace env req this =
+  let* () = Entity_service.check_edit_authorized env in
+  Service_env.with_db_transaction' `Immediate env @@ fun db ->
   let* q = Http.Req.to_query req in
   let* by =
     let* by = Entity.Url.replace_by_of_query' q in
@@ -207,31 +208,31 @@ let replace app req this =
   | None ->
       (* FIXME solve that front end
          the request should not be done if we don't have the data *)
-      _replace_form app db this
+      _replace_form env db this
   | Some by ->
-      if this = by then view_fields_resp app db req this else
+      if this = by then view_fields_resp env db req this else
       let copy =
         Reference.Contributor.copy_contributions_stmt ~src:this ~dst:by
       in
       let* () = Db.exec' db copy in
       let* () = Db.exec' db (Person.delete this) in
-      let uf = Webapp.url_fmt app in
+      let uf = Service_env.url_fmt env in
       let headers = Hfrag.hc_redirect uf (Person.Url.v (Page (None, by))) in
       Ok (Http.Resp.empty ~headers Http.ok_200)
 
-let replace_form app req this =
-  Webapp.with_db_transaction' `Deferred app @@ fun db ->
-  _replace_form app db this
+let replace_form env req this =
+  Service_env.with_db_transaction' `Deferred env @@ fun db ->
+  _replace_form env db this
 
-let update app req id =
-  let* () = Entity_service.check_edit_authorized app in
-  Webapp.with_db_transaction' `Immediate app @@ fun db ->
+let update env req id =
+  let* () = Entity_service.check_edit_authorized env in
+  Service_env.with_db_transaction' `Immediate env @@ fun db ->
   let* q = Http.Req.to_query req in
   let ignore = [Col.V Person.id'] in
   let* vs = Hquery.careless_find_table_cols ~ignore Person.table q in
   let* () = Db.exec' db (Person.update id vs) in
   let* p = get_person db id in
-  let g = Webapp.page_gen app in
+  let g = Service_env.page_gen env in
   let uf = Page.Gen.url_fmt g in
   let* refs = get_page_data db g p in
   let* self = Hfrag.url_of_req_referer req in
@@ -240,9 +241,9 @@ let update app req id =
   let headers = Hfrag.hc_page_location_update uf self ~title () in
   Ok (Page.resp_part ~headers html)
 
-let update_public app req =
-  let* () = Entity_service.check_edit_authorized app in
-  Webapp.with_db_transaction' `Immediate app @@ fun db ->
+let update_public env req =
+  let* () = Entity_service.check_edit_authorized env in
+  Service_env.with_db_transaction' `Immediate env @@ fun db ->
   let* q = Http.Req.to_query req in
   let* ids = Hquery.find_ids ~uniquify:true "id" q in
   let* public = Hquery.find_col Person.public' ~none:false q in
@@ -252,7 +253,7 @@ let update_public app req =
       (fun id -> Db.exec' db (Person.update id cs)) ids
   in *)
   let* req_is_undo = Hquery.find Hquery.key_is_undo ~none:false q in
-  let g = Webapp.page_gen app in
+  let g = Service_env.page_gen env in
   let uf = Page.Gen.url_fmt g in
   let _ui =
     Entity_html.persons_update_public_button uf
@@ -263,33 +264,33 @@ let update_public app req =
   let ps = El.void (*  Reference_html.view_authors ~ui uf ~self ps *) in
   Ok (Page.resp_part ps)
 
-let view_fields app req id =
-  Webapp.with_db_transaction' `Deferred app @@ fun db ->
-  view_fields_resp app db req id
+let view_fields env req id =
+  Service_env.with_db_transaction' `Deferred env @@ fun db ->
+  view_fields_resp env db req id
 
-let resp r app sess req = match (r : Person.Url.t) with
-| Confirm_delete id -> confirm_delete app id
-| Create -> create app req
-| Delete id -> delete app id
-| Duplicate id -> duplicate app req id
-| Duplicate_form id -> duplicate_form app req id
-| Edit_form id -> edit_form app req id
-| Index -> index app
+let resp r env sess req = match (r : Person.Url.t) with
+| Confirm_delete id -> confirm_delete env id
+| Create -> create env req
+| Delete id -> delete env id
+| Duplicate id -> duplicate env req id
+| Duplicate_form id -> duplicate_form env req id
+| Edit_form id -> edit_form env req id
+| Index -> index env
 | Input (for_list, input_name, role, id) ->
-    input app ~for_list ~input_name ~role id
+    input env ~for_list ~input_name ~role id
 | Input_create (for_list, input_name, role, p) ->
-    input_create app ~for_list ~input_name ~role p
+    input_create env ~for_list ~input_name ~role p
 | Input_finder (for_list, input_name, role) ->
-    input_finder app ~for_list ~input_name ~role
+    input_finder env ~for_list ~input_name ~role
 | Input_finder_find (for_list, input_name, role, sel) ->
-    input_finder_find app ~for_list ~input_name ~role sel
-| New_form { cancel } -> new_form app req ~cancel
-| Page ref -> page app ref
-| Replace id -> replace app req id
-| Replace_form id -> replace_form app req id
-| Update id -> update app req id
-| Update_public -> update_public app req
-| View_fields id  -> view_fields app req id
+    input_finder_find env ~for_list ~input_name ~role sel
+| New_form { cancel } -> new_form env req ~cancel
+| Page ref -> page env ref
+| Replace id -> replace env req id
+| Replace_form id -> replace_form env req id
+| Update id -> update env req id
+| Update_public -> update_public env req
+| View_fields id  -> view_fields env req id
 
 let v = Kurl.service Person.Url.kind resp
 

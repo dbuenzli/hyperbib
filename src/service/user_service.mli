@@ -5,8 +5,7 @@
 
 open Hyperbib.Std
 
-val resp : User.Url.t -> Webapp.service
-val v : Webapp.service Kurl.service
+val v : Service.sub Kurl.service
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2021 University of Bern

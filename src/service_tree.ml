@@ -6,9 +6,9 @@
 open Hyperbib.Std
 open Result.Syntax
 
-let immutable_session s = Kurl.map_service Webapp.immutable_session_service s
+let immutable_session s = Kurl.map_service Service.sub_with_immutable_session s
 
-let tree =
+let v =
   Kurl.empty ()
   |> Kurl.bind [""] (immutable_session Bibliography_service.v)
   |> Kurl.bind ["labels"] (immutable_session Label_service.v)
@@ -21,69 +21,8 @@ let tree =
 
 let url_fmt ~init =
   init
-  |> Kurl.Fmt.bind_tree tree
+  |> Kurl.Fmt.bind_tree v
   |> Kurl.Fmt.bind [""] Static_file.Url.kind
-
-(* FIXME still quite unhappy what goes where betwen
-   Webapp/Webapp.Session/Page.Gen. The following is quite ugly
-   streamline. *)
-
-let adjust_app_and_session app sess =
-  (* This adjusts the session according to the webapp edition mode: we may
-     still receive sessions from when the webapp was in a different mode.
-     The page rendering paramateres are also defined here. *)
-  let app' = Webapp.for_serve app in
-  let user_view' ~private' = Some (if private' then `Private else `Public) in
-  let private_data ~private' = private' in
-  match Webapp.editable app with
-  | `No ->
-      let caps = User.Caps.none in
-      let app = app' caps ~auth_ui:None ~user_view:None ~private_data:false in
-      app, None (* Drop all sessions *)
-  | `Unsafe ->
-      let sess, private' = match sess with
-      | None -> Some (Webapp.Session.Unsafe { private_view = false }), false
-      | Some (Webapp.Session.Unsafe { private_view }) as s -> s, private_view
-      | Some (Webapp.Session.User { private_view; _ }) ->
-          (* We are not showing a logout ui, so it seems better to turn
-             that in an Unsafe_edit session, we retain the edit mode
-             of the previously logged user. *)
-          Some (Webapp.Session.Unsafe { private_view }), private_view
-      in
-      let user_view = user_view' ~private' in
-      let private_data = private_data ~private' in
-      let caps = User.Caps.v ~edit:true in
-      let app = app' caps ~auth_ui:None ~user_view ~private_data in
-      app, sess
-  | `With_login ->
-      match sess with
-      | None | Some (Webapp.Session.Unsafe _) ->
-          let caps = User.Caps.none in
-          let auth_ui = Some `Login and user_view = None in
-          let app = app' caps ~auth_ui ~user_view ~private_data:false in
-          app, None
-      | Some (Webapp.Session.User { private_view; _ }) as sess ->
-          let caps = User.Caps.v ~edit:true in
-          let auth_ui = Some `Logout in
-          let user_view = user_view' ~private':private_view in
-          let private_data = private_data ~private':private_view in
-          let app = app' caps ~auth_ui ~user_view ~private_data in
-          app, sess
-
-let service app sess req =
-  let app, sess = adjust_app_and_session app sess in
-  let sess, resp =
-    Http.Resp.result @@
-    let* req = Session.for_error sess (Http.Req.clean_path req) in
-    let service = Kurl.find_service tree (Kurl.Bare.of_req req) in
-    let* service = Session.for_error sess service in
-    match service with
-    | Some service -> service app sess req
-    | None -> Static_file_service.v app sess req
-  in
-  let error = Page.error (Webapp.page_gen app) req in
-  sess,
-  Http.Resp.map_errors ~only_empty:true error resp
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2021 University of Bern

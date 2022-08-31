@@ -6,10 +6,7 @@
 open Hyperbib.Std
 
 val url_fmt : init:Kurl.fmt -> Kurl.fmt
-
-val service :
-  Webapp.t -> Webapp.Session.t option ->
-  Http.req -> Webapp.Session.t Webs_kit.Session.resp
+val v : Service.sub Kurl.tree
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2021 University of Bern

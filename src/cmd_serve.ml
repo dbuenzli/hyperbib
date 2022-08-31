@@ -6,8 +6,8 @@
 open Hyperbib.Std
 open Result.Syntax
 
-let log_startup c app =
-  let app_dir = Hyperbib.Conf.app_dir (Webapp.conf app) in
+let log_startup c env =
+  let app_dir = Hyperbib.Conf.app_dir (Service_env.conf env) in
   let l = Webs_httpc.listener c and service_path = Webs_httpc.service_path c in
   Log.app (fun m ->
       m  "@[<v>Hyperbib %s database schema v%d@,\
@@ -18,7 +18,7 @@ let log_startup c app =
         (Fmt.code Fpath.pp_unquoted) app_dir
         (Fmt.code Webs_unix.pp_listener) l
         (Fmt.code Http.Path.pp) service_path);
-  if (Webapp.editable app = `Unsafe) then
+  if (Service_env.editable env = `Unsafe) then
     Log.warn (fun m -> m "Anyone can edit the bibliography, no login required.")
 
 let log_shutdown () =
@@ -36,28 +36,49 @@ let start_backup_thread ~conf ~db_pool ~backup_every_s =
       (* FIXME would be nice to stop that in finish *)
       ignore (Db.backup_thread db_pool ~every_s backup)
 
+let finish ~db_pool =
+  let errs es = String.concat "\n" (List.map Db.error_message es) in
+  Result.map_error errs (Rel_pool.dispose db_pool)
+
 let serve
     conf listener service_path max_connections backup_every_s editable
     insecure_cookie testing
   =
-  let secure_cookie = not insecure_cookie in
   Log.if_error ~use:Hyperbib.Exit.some_error @@
+  let* () = Hyperbib.Conf.ensure_data_dir conf in (* XXX *)
+  let secure_cookie = not insecure_cookie in
   let read_only = editable = `No in
   let pool_size = max_connections + 1 (* backup thread *) in
   let db_file = Hyperbib.Conf.db_file conf in
   let db_pool = Db.pool ~read_only db_file ~size:pool_size in
   let* () = setup_db ~read_only ~db_pool in
-  let* app =
-    Webapp.v ~conf ?service_path ~db_pool ~editable ~secure_cookie ~testing ()
+  let service_path = Option.value ~default:[""] service_path in
+  let* env =
+    (* XXX still needs streamlining review when env get
+       mutated. *)
+    let* bib = Bibliography.get () in
+    let url_fmt = Kurl.Fmt.empty ~root:service_path () in
+    let url_fmt = Service_tree.url_fmt ~init:url_fmt in
+    let page_gen =
+      let auth_ui = None and user_view = None and private_data = false in
+      let now = Ptime_clock.now () in
+      Page.Gen.v ~now bib url_fmt ~auth_ui ~user_view ~private_data ~testing
+    in
+    Result.ok @@
+    Service_env.v ~conf ~caps:User.Caps.none ~db_pool ~editable ~page_gen ()
+  in
+  let* service =
+    let pk_file = Hyperbib.Conf.authentication_private_key conf in
+    let* private_key = Service.setup_private_key ~file:pk_file in
+    let tree = Service_tree.v and fallback = Static_file_service.v in
+    Ok (Service.v ~service_path ~private_key ~secure_cookie tree ~fallback env)
   in
   let log = Webs_connector.default_log ~trace:true () in
-  let c = Webs_httpc.create ~log ~listener ?service_path ~max_connections () in
-  log_startup c app;
+  let c = Webs_httpc.create ~log ~listener ~service_path ~max_connections () in
+  log_startup c env;
   start_backup_thread ~conf ~db_pool ~backup_every_s;
-  let url_fmt = Service_tree.url_fmt in
-  let serve = Webapp.serve app ~url_fmt Service_tree.service in
-  let* () = Webs_httpc.serve c serve in
-  let* () = Webapp.finish app in
+  let* () = Webs_httpc.serve c service in
+  let* () = finish ~db_pool in
   log_shutdown ();
   Ok Hyperbib.Exit.ok
 

@@ -6,9 +6,8 @@
 open Hyperbib.Std
 open Result.Syntax
 
-let v app sess r =
-  Session.for_result sess @@
-  let static_dir = Fpath.to_string (Webapp.static_dir app) in
+let v env _sess r =
+  let static_dir = Fpath.to_string (Service_env.static_dir env) in
   let* file = Http.Req.to_absolute_filepath ~root:static_dir r in
   let file = Fpath.v file in
   let file = match Fpath.is_dir_path file with

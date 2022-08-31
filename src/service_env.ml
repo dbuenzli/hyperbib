@@ -3,9 +3,48 @@
    Distributed under the ISC license, see terms at the end of the file.
   ---------------------------------------------------------------------------*)
 
-open Hyperbib.Std
+(** Service environment *)
 
-val v : Service.sub_with_immutable_session
+open Hyperbib.Std
+open Result.Syntax
+open Webs_kit
+
+type editable = [ `No | `With_login | `Unsafe ]
+type t =
+  { conf : Hyperbib.Conf.t;
+    caps : User.Caps.t;
+    db_pool : Db.pool;
+    editable : editable;
+    page_gen : Page.Gen.t;
+    static_dir : Fpath.t; }
+
+(* Properties *)
+
+let conf e = e.conf
+let caps e = e.caps
+let editable e = e.editable
+let page_gen e = e.page_gen
+let static_dir e = e.static_dir
+let url_fmt e = Page.Gen.url_fmt e.page_gen
+
+let v ~conf ~caps ~db_pool ~editable ~page_gen () =
+  let static_dir = Hyperbib.Conf.static_dir conf in
+  { conf; caps; db_pool; editable; page_gen; static_dir; }
+
+let adjust e caps page_gen = { e with caps; page_gen }
+
+(* Convenience database brackets *)
+
+let with_db e f = Db.error_resp @@ Result.join @@ Rel_pool.with' e.db_pool f
+let with_db' e f = Result.join @@ Db.error_resp @@ Rel_pool.with' e.db_pool f
+
+let with_db_transaction k e f =
+  Db.error_resp @@ Result.join @@ Result.join @@
+  Rel_pool.with' e.db_pool (fun db -> Db.with_transaction k db f)
+
+let with_db_transaction' k e f =
+  Result.join @@ Db.error_resp @@ Result.join @@
+  Rel_pool.with' e.db_pool (fun db -> Db.with_transaction k db f)
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2021 University of Bern
