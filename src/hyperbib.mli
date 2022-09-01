@@ -12,23 +12,23 @@ module Std : sig
 
   (** {1:std Standard libray needs}
 
-      For now we piggy back on B00_std but we should not. *)
+      For now we piggy back on B0_std but we should not. *)
 
-  module Char = B00_std.Char
-  module String = B00_std.String
-  module Result = B00_std.Result
-  module Fmt = B00_std.Fmt
-  module List = B00_std.List
-  module Fpath = B00_std.Fpath
-  module Log = B00_std.Log
-  module Cmd = B00_std.Cmd
-  module Os = B00_std.Os
+  module Char = B0_std.Char
+  module String = B0_std.String
+  module Result = B0_std.Result
+  module Fmt = B0_std.Fmt
+  module List = B0_std.List
+  module Fpath = B0_std.Fpath
+  module Log = B0_std.Log
+  module Cmd = B0_std.Cmd
+  module Os = B0_std.Os
 
   (** Other needs *)
   module Bazaar : sig
 
     (* FIXME it these kinds of things should likely be added to
-       B00_std *)
+       B0_std *)
 
     val cp_dir_content :
       ?dotfiles:bool -> ?follow_symlinks:bool -> recurse:bool ->
@@ -81,7 +81,7 @@ module Conf : sig
   (** The type for configurations. *)
 
   val v :
-    log_level:Log.level -> tty_cap:B00_std.Tty.cap -> app_dir:Fpath.t ->
+    log_level:Log.level -> tty_cap:B0_std.Tty.cap -> app_dir:Fpath.t ->
     unit -> t
   (** [v ~log_level ~tty_cap ~app_dir ()] is a configuration with given
       atributes. See the acessors for semantics. *)
@@ -89,7 +89,7 @@ module Conf : sig
   val log_level : t -> Log.level
   (** [log_level c] is the desired log level in [c] *)
 
-  val tty_cap : t -> B00_std.Tty.cap
+  val tty_cap : t -> B0_std.Tty.cap
   (** [tty_cap c] is the terminal capability to assume for output. *)
 
   val app_dir : t -> Fpath.t

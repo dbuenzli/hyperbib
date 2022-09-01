@@ -9,7 +9,7 @@
     and [@comment] are not supported. For values we assume UTF-8 without
     escape sequences. Nested braces are handled though. *)
 
-open B00_std
+open B0_std
 
 val escape : string -> string
 (** [escape s] escapes [s] for BibT{_E}X. *)
@@ -30,7 +30,7 @@ val cite_key : t -> string
 
 val fields : t -> string String.Map.t
 (** [fields e] are the BibTeX fields. Fields are lowercased according
-    to {!B00_std.String.Ascii.lowercase}. *)
+    to {!B0_std.String.Ascii.lowercase}. *)
 
 val loc : t -> B00_serialk_text.Tloc.t
 (** [loc] is a location spanning the entry definition. *)
@@ -63,7 +63,7 @@ type error = error_kind * B00_serialk_text.Tloc.t
 
 val of_string : ?file:Fpath.t -> string -> (t list, error) result
 (** [of_string ~file s] parses entries from [s] assuming it
-    was read from [file] (defaults to {!B00_std.Fpath.dash}). *)
+    was read from [file] (defaults to {!B0_std.Fpath.dash}). *)
 
 val of_string' : ?file:Fpath.t -> string -> (t list, string) result
 (** [of_string'] is like {!of_string} but converts the error to an

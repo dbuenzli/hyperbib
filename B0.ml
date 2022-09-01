@@ -1,5 +1,4 @@
 open B0_kit.V000
-open B00_std
 
 (* OCaml libraries *)
 
@@ -9,7 +8,7 @@ let rel_cli = B0_ocaml.libname "rel.cli"
 let rel_pool = B0_ocaml.libname "rel.pool"
 let rel_sqlite3 = B0_ocaml.libname "rel.sqlite3"
 let b00_kit = B0_ocaml.libname "b0.b00.kit"
-let b00_std = B0_ocaml.libname "b0.b00.std"
+let b0_std = B0_ocaml.libname "b0.std"
 let brr = B0_ocaml.libname "brr"
 let brr_note = B0_ocaml.libname "brr.note"
 let cmdliner = B0_ocaml.libname "cmdliner"
@@ -106,7 +105,7 @@ let write_static_file_stamp b =
 let hyperbib =
   let doc = "hyperbib tool" in
   let requires =
-    [ threads; cmdliner; ptime; ptime_clock; b00_std; b00_kit;
+    [ threads; cmdliner; ptime; ptime_clock; b0_std; b00_kit;
       rel; rel_kit; rel_cli; rel_sqlite3; rel_pool;
       webs; webs_connector; webs_kit; webs_unix; webs_cli; webs_httpc;
       webs_html; hc ]
@@ -149,6 +148,19 @@ let pull_data =
   let src = Fpath.v "hyperbib/app/data/bib.sqlite3.backup" in
   let dst = B0_cmdlet.in_scope_dir env Fpath.(v "app/data/bib.sqlite3") in
   B00_rsync.copy ~delete:true ~src_host:deploy_remote ~src dst
+
+let exec_remote cmd = Cmd.(atom "ssh" % "-t" % "philo" % cmd)
+let deploy_test =
+  let open Result.Syntax in
+  let doc = "Build and deploy on test server" in
+  B0_cmdlet.v "deploy-test" ~doc @@ fun env args ->
+  B0_cmdlet.exit_of_result @@
+  let remote_cmd =
+    "cd hyperbib-next && eval $(opam env) && b0 && \
+     sudo systemctl restart hyperbib-next && echo 'Deployed!'"
+  in
+  Os.Cmd.run (exec_remote remote_cmd)
+
 
 (* Packs *)
 

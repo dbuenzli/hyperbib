@@ -7,15 +7,15 @@ module Std = struct
 
   (* Standard needs. *)
 
-  module Char = B00_std.Char
-  module String = B00_std.String
-  module Result = B00_std.Result
-  module Fmt = B00_std.Fmt
-  module Log = B00_std.Log
-  module List = B00_std.List
-  module Fpath = B00_std.Fpath
-  module Cmd = B00_std.Cmd
-  module Os = B00_std.Os
+  module Char = B0_std.Char
+  module String = B0_std.String
+  module Result = B0_std.Result
+  module Fmt = B0_std.Fmt
+  module Log = B0_std.Log
+  module List = B0_std.List
+  module Fpath = B0_std.Fpath
+  module Cmd = B0_std.Cmd
+  module Os = B0_std.Os
 
   module Bazaar = struct
     let cp_dir_content
@@ -64,7 +64,7 @@ end
 module Conf = struct
   type t =
     { log_level : Log.level;
-      tty_cap : B00_std.Tty.cap;
+      tty_cap : B0_std.Tty.cap;
       app_dir : Fpath.t }
 
   let v ~log_level ~tty_cap ~app_dir () = { log_level; tty_cap; app_dir  }
@@ -85,9 +85,9 @@ module Conf = struct
 
   let with_cli log_level tty_cap app_dir =
     Result.map_error (fun e -> `Msg e) @@
-    let log_level = B00_cli.B00_std.get_log_level log_level in
-    let tty_cap = B00_cli.B00_std.get_tty_cap tty_cap in
-    B00_cli.B00_std.setup tty_cap log_level ~log_spawns:Log.Debug;
+    let log_level = B00_cli.B0_std.get_log_level log_level in
+    let tty_cap = B00_cli.B0_std.get_tty_cap tty_cap in
+    B00_cli.B0_std.setup tty_cap log_level ~log_spawns:Log.Debug;
     let* app_dir = match app_dir with
     | Some app_dir -> Ok app_dir
     | None ->
@@ -113,11 +113,11 @@ module Cli = struct
   let conf =
     let log_level =
       let env = Cmd.Env.info "HYPERBIB_VERBOSITY" in
-      B00_cli.B00_std.log_level ~docs ~env ()
+      B00_cli.B0_std.log_level ~docs ~env ()
     in
     let tty_cap =
       let env = Cmd.Env.info "HYPERBIB_COLOR" in
-      B00_cli.B00_std.tty_cap ~docs ~env ()
+      B00_cli.B0_std.tty_cap ~docs ~env ()
     in
     let app_dir =
       let doc = "Application directory. If unspecified defaults to the \

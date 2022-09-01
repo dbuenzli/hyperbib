@@ -5,7 +5,7 @@
 
 (** DOIs names and their resolution. *)
 
-open B00_std
+open B0_std
 
 (** {1:dois DOIs} *)
 

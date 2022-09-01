@@ -64,7 +64,7 @@ module Doi = struct
       let abstract = Option.value ~default:"" abstract in
       let cites =
         List.map String.trim @@
-        String.uniquify @@
+        String.distinct @@
         List.filter_map Fun.id (Option.value ~default:[] cited_dois)
       in
       let container_title = first (container_title) in
