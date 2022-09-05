@@ -70,9 +70,15 @@ let user_logout uf ~self =
     Hui.submit (El.span ~at:[Hclass.logout] [El.txt (Uimsg.logout)]) ]
 
 let user_login uf ~self =
-  let goto = Some (Kurl.Fmt.url uf self) (* FIXME can we use rel ? *) in
-  let dst = User.Url.v (Login { goto }) in
-  let href = Kurl.Fmt.rel_url uf ~src:self ~dst  in
+  let login_bare = Kurl.Fmt.bare uf (User.Url.v (Login { goto = None })) in
+  let self_bare = Kurl.Fmt.bare uf self in
+  let href = match Kurl.Bare.path login_bare = Kurl.Bare.path self_bare with
+  | true -> Kurl.Fmt.url uf self (* We are on the login page, goto self *)
+  | false ->
+      let goto = Some (Kurl.Fmt.url uf self) in
+      let dst = User.Url.v (Login { goto }) in
+      Kurl.Fmt.rel_url uf ~src:self ~dst
+  in
   El.span ~at:At.[Hclass.user_ui] [Hfrag.link ~href (El.txt Uimsg.login)]
 
 let auth_ui g uf ~self = match Gen.auth_ui g with
