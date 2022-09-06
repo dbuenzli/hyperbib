@@ -17,9 +17,13 @@ val pp : t Fmt.t
 (** [pp] formats a DOI. *)
 
 val extract : string -> t
-(** [extract s] tries to remove any resolver prefix of [s].
-    It just cuts the string at the last to one '/' character or
-    returns [s] otherwise. *)
+(** [extract s] trims [s] and tries to remove any resolver prefix.  It
+    cuts at the start of the first ["10."] substring and lowercases
+    US-ASCII characters. If ["10."] is not found this is [s] and
+    unlikely to be doi. *)
+
+val normalize : t -> t
+(** [normalize d] normalizes [d] by lowercasing US-ASCII characters. *)
 
 (** {1:res Resolution} *)
 

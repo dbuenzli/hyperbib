@@ -30,7 +30,7 @@ val filled_in_form :
   container:Container.t Import.entity option -> cites:Doi.t list -> El.html
 
 val new_form :
-  Page.Gen.t -> Reference.t -> cancel:Entity.Url.cancel_url ->  Page.t
+  Page.Gen.t -> Reference.t -> cancel:Entity.Url.cancel_url -> Page.t
 
 val deleted : Page.Gen.t -> Reference.t -> El.html
 

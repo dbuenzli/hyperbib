@@ -22,7 +22,7 @@ let page_html g =
          ~href:Doi.default_resolver (El.txt Doi.default_resolver);
        El.txt ". Another link root for the resolution can be specified \
                here:"];
-    El.p [Doi_html.resolver];
+    El.p [Page.doi_resolver];
     El.p
       [El.txt "This choice is persisted in your browser local storage."]
   ]

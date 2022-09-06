@@ -12,17 +12,14 @@ open Result.Syntax
 type t = string
 let pp = Fmt.string
 
+let normalize = String.lowercase_ascii
 let extract s =
   let s = String.trim s in
-  match String.rindex_opt s '/' with
-  | None -> s (* This is however unlikely to be a DOI. *)
-  | Some i ->
-      match String.rindex_from_opt s (i - 1) '/' with
-      | None -> s
-      | Some i -> String.subrange ~first:(i + 1) s
+  match String.find_sub ~sub:"10." s with
+  | None -> normalize s
+  | Some first -> normalize (String.subrange ~first s)
 
 (* Resolving *)
-
 
 let default_resolver = "https://doi.org"
 
@@ -35,7 +32,7 @@ let resp_success req resp = match Http.resp_status resp with
 
 let doi_uri ~resolver = function
 | "" -> Fmt.error "DOI is empty"
-| doi -> Ok (Fmt.str "%s/%s" resolver doi) (* FIXME URL encode ? *)
+| doi -> Ok (Fmt.str "%s/%s" resolver (Webs.Http.Pct.encode `Uri doi))
 
 let resolve_to_uri ?(resolver = default_resolver) r doi =
   let* uri = doi_uri ~resolver doi in

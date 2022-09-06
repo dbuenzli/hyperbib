@@ -93,7 +93,7 @@ let edit_submit uf ~submit c =
       Container.Url.v (Duplicate (Container.id c)), Uimsg.create_duplicate
   in
   let r = Hfrag.hc_request uf url and e = Hc.effect `Element in
-  let q = Hc.query "form:up" and rescue = Hc.query_rescue true in
+  let q = Hc.query "form:up" and rescue = Hc.query_rescue (`Bool true) in
   let t = Hc.target ":up :up :up" in
   let at = At.[t; r; e; q; rescue; Hui.Class.submit] in
   Hui.button ~at (El.txt label)

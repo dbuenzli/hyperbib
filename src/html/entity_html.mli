@@ -117,9 +117,9 @@ val container_input :
 val container_input_create :
   Kurl.fmt -> input_name:Entity.Url.input_name -> Container.t -> El.html
 (** [container_input_create uf ~input_name c] inputs [c] for creation
-    via hidden fields listed for now in {!Hquery.}. [input_name] is
+    via hidden fields listed for now in {!Hquery}. [input_name] is
     used in case the creation is removed, to replace it with a
-    {!container_input_finder}.  *)
+    {!container_input_finder}. *)
 
 val container_input_finder :
   Kurl.fmt -> input_name:Entity.Url.input_name -> El.html

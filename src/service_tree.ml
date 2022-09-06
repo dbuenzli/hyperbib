@@ -16,6 +16,7 @@ let v =
   |> Kurl.bind ["containers"] (immutable_session Container_service.v)
   |> Kurl.bind ["persons"] (immutable_session Person_service.v)
   |> Kurl.bind ["references"] (immutable_session Reference_service.v)
+  |> Kurl.bind ["suggestions"] (immutable_session Suggestion_service.v)
   |> Kurl.bind ["years"] (immutable_session Year_service.v)
   |> Kurl.bind ["users"] User_service.v
 

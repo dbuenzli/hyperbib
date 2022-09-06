@@ -47,12 +47,19 @@ val ref : At.t
 val ref_item : At.t
 val ref_list : At.t
 val testing : At.t
+val toc : At.t
+val secondary : At.t
 val subject : At.t
 val uppercase : At.t
 val user_ui : At.t
 val user_view : At.t
 val value : At.t
 val year : At.t
+
+(** {1:animate Animate} *)
+
+val fade : At.t
+
 
 (** {1:msg Messages} *)
 
@@ -73,23 +80,62 @@ val hspace_2 : At.t
 val hspace_4 : At.t
 val hspace_8 : At.t
 
-val vspace_0 : At.t
-val vspace_0_125 : At.t
-val vspace_0_25 : At.t
-val vspace_0_5 : At.t
-val vspace : At.t
-val vspace_2 : At.t
-val vspace_4 : At.t
-val vspace_8 : At.t
+val vspace_000 : At.t
+val vspace_0125 : At.t
+val vspace_025 : At.t
+val vspace_050 : At.t
+val vspace_075 : At.t
+val vspace_100 : At.t
+val vspace_125 : At.t
+val vspace_150 : At.t
+val vspace_175 : At.t
+val vspace_200 : At.t
+val vspace_400 : At.t
+val vspace_800 : At.t
 
-val font_micro : At.t
-val font_tiny : At.t
-val font_small : At.t
-val font : At.t
-val font_large : At.t
-val font_big : At.t
-val font_huge : At.t
+module Font : sig
+  val xx_small : At.t
+  val x_small : At.t
+  val small : At.t
+  val normal : At.t
+  val large : At.t
+  val x_large : At.t
+  val xx_large : At.t
 
+  val w100 : At.t
+  val w200 : At.t
+  val w300 : At.t
+  val w400 : At.t
+  val w500 : At.t
+  val w600 : At.t
+  val w700 : At.t
+  val w800 : At.t
+  val w900 : At.t
+
+  val w_light : At.t
+  val w_normal : At.t
+  val w_bold : At.t
+end
+
+module Margin : sig
+  val top_000 : At.t
+  val top_0125 : At.t
+  val top_025 : At.t
+  val top_050 : At.t
+  val top_075 : At.t
+  val top_100 : At.t
+  val top_125 : At.t
+  val top_150 : At.t
+end
+
+module Gap : sig
+  val v_025 : At.t
+  val v_050 : At.t
+  val x_025 : At.t
+  val x_050 : At.t
+  val y_025 : At.t
+  val y_050 : At.t
+end
 
 
 (*---------------------------------------------------------------------------

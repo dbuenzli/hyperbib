@@ -11,6 +11,7 @@ open Hyperbib.Std
 
 (** {1:outline Outline} *)
 
+val arrow_down_on_square : El.html
 val database : El.html
 val duplicate : El.html
 val eye : El.html

@@ -42,10 +42,36 @@ let html p = p.html
 
 (* Basic ui *)
 
+let doi_resolver =
+  El.span ~at:At.[class' "doi-resolver-ui"]
+    [ El.span [El.txt "Full text resolver:"]; El.sp;
+      El.span ~at:At.[class' "doi-resolver"]
+        (* FIXME commenting that is better than anything
+           but we still glitch on page reloads on FF. Not sure
+           why this is the case, update should happen before
+           the DOM is shown. *)
+        [(* El.label [El.txt Doi.default_resolver] *)]]
+
 let link_bibtex_file g uf ~self =
   let bibtex_file = Bibliography.Url.bibtex_file (Gen.bibliography g) in
   let href = Kurl.Fmt.rel_url uf ~src:self ~dst:bibtex_file in
   Hfrag.link ~href (El.splice [El.code [El.txt ".bib"]; El.txt " file"])
+
+let link_suggest_page g uf ~self =
+  let suggest = Suggestion.Url.v Index in
+  let href = Kurl.Fmt.rel_url uf ~src:self ~dst:suggest in
+  let txt = match Gen.user_view g with
+  | None | Some `Public -> Uimsg.make_a_suggestion
+  | Some `Private -> Uimsg.suggestions
+  in
+  Hfrag.link ~href (El.txt txt)
+
+let menu_secondary g uf ~self =
+  El.nav ~at:At.[Hclass.secondary]
+    [El.ul
+       [ El.li [link_bibtex_file g ~self uf];
+         El.li [link_suggest_page g ~self uf];
+         El.li [doi_resolver];]]
 
 let menu_items =
   [ Uimsg.references, Reference.Url.v Index;
@@ -59,7 +85,7 @@ let menu ~self uf menu_item =
     let href = Kurl.Fmt.rel_url uf ~src:self ~dst in
     El.li [El.a ~at:[At.href href] [El.txt title]]
   in
-  El.nav ~at:At.[class' "toc"] [El.ul (List.map li menu_items)]
+  El.nav ~at:At.[Hclass.toc] [El.ul (List.map li menu_items)]
 
 let user_logout uf ~self =
   let goto = Kurl.Fmt.url uf self (* FIXME can't we use rel ? *) in
@@ -150,12 +176,11 @@ let ui ?ui_ext g ~self =
               El.txt "  "; auth_ui; ]]
   in
   let menu = menu ~self uf menu_items in
-  let downloads =
-    El.div [El.span ~at:At.[class' "bibtex-file"] [link_bibtex_file g ~self uf]]
-  in
+  let menu_secondary = menu_secondary g uf ~self in
   El.div ~at:At.[class' "ui"]
+
     (* Why this inner div is needed is unclear *)
-    [ El.div [page_header; menu; downloads; Doi_html.resolver; user_view_ui]]
+    [ El.div [page_header; menu; menu_secondary; user_view_ui]]
 
 (* Page frame *)
 

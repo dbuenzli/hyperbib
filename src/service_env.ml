@@ -15,35 +15,43 @@ type t =
     caps : User.Caps.t;
     db_pool : Db.pool;
     editable : editable;
+    max_pending_suggestions : int;
     page_gen : Page.Gen.t;
-    static_dir : Fpath.t; }
+    static_dir : Fpath.t;
+  }
 
 (* Properties *)
 
 let conf e = e.conf
 let caps e = e.caps
 let editable e = e.editable
+let max_pending_suggestions e = e.max_pending_suggestions
 let page_gen e = e.page_gen
 let static_dir e = e.static_dir
 let url_fmt e = Page.Gen.url_fmt e.page_gen
 
 let v ~conf ~caps ~db_pool ~editable ~page_gen () =
+  let max_pending_suggestions = 30 in
   let static_dir = Hyperbib.Conf.static_dir conf in
-  { conf; caps; db_pool; editable; page_gen; static_dir; }
+  { conf; caps; db_pool; editable; max_pending_suggestions; page_gen;
+    static_dir; }
 
 let adjust e caps page_gen = { e with caps; page_gen }
 
 (* Convenience database brackets *)
 
-let with_db e f = Db.error_resp @@ Result.join @@ Rel_pool.with' e.db_pool f
-let with_db' e f = Result.join @@ Db.error_resp @@ Rel_pool.with' e.db_pool f
+let with_db e f =
+  Db.http_resp_error @@ Result.join @@ Rel_pool.with' e.db_pool f
+
+let with_db' e f =
+  Result.join @@ Db.http_resp_error @@ Rel_pool.with' e.db_pool f
 
 let with_db_transaction k e f =
-  Db.error_resp @@ Result.join @@ Result.join @@
+  Db.http_resp_error @@ Result.join @@ Result.join @@
   Rel_pool.with' e.db_pool (fun db -> Db.with_transaction k db f)
 
 let with_db_transaction' k e f =
-  Result.join @@ Db.error_resp @@ Result.join @@
+  Result.join @@ Db.http_resp_error @@ Result.join @@
   Rel_pool.with' e.db_pool (fun db -> Db.with_transaction k db f)
 
 (*---------------------------------------------------------------------------

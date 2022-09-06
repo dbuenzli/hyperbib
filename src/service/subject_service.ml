@@ -33,7 +33,9 @@ let get_page_data db g s =
   let all = Reference.list ~only_public in
   let id = Subject.id s in
   let refs = Reference.Subject.filter_subject_id (Rel_query.Int.v id) all in
-  let* refs = Reference.render_data ~only_public refs db |> Db.error_resp in
+  let* refs =
+    Reference.render_data ~only_public refs db |> Db.http_resp_error
+  in
   Ok (parent, refs)
 
 let get_subject_for_page_ref =

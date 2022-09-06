@@ -162,7 +162,7 @@ let edit_submit uf ~submit r =
   | `Edit -> Reference.Url.v (Update (Reference.id r)), Uimsg.save_reference
   in
   let r = Hfrag.hc_request uf url and e = Hc.effect `Element in
-  let q = Hc.query "form:up" and rescue = Hc.query_rescue true in
+  let q = Hc.query "form:up" and rescue = Hc.query_rescue (`Bool true) in
   let t = Hc.target ":up :up :up :up" in
   let at = At.[t; r; e; q; rescue; Hui.Class.submit] in
   Hui.button ~at (El.txt label)
@@ -222,7 +222,7 @@ let edit_reference
 
 let fill_ui g ~doi =
   let label =
-    let at = [Hclass.font_small] in
+    let at = [Hclass.Font.small] in
     El.span ~at [El.txt Uimsg.fill_in_form_with_doi]
   in
   let input =
@@ -234,14 +234,14 @@ let fill_ui g ~doi =
     Hui.button ~type':"submit" ~tip (El.txt Uimsg.fill_in)
   in
   let input =
-    let at = [Hclass.hspace_0_5] in
+    let at = [Hclass.Gap.v_050] in
     Hui.group ~at ~x_align:`Center ~dir:`H [input; fill_in]
   in
   let at =
     let url = Reference.Url.v (Fill_in_form "") in
     let r = Hfrag.hc_request (Page.Gen.url_fmt g) url in
     let t = Hc.target ":up .entity" in
-    [r; t; Hclass.vspace_0_125]
+    [r; t; Hclass.vspace_0125]
   in
   El.splice [El.form ~at [label; input]; El.hr ()]
 
@@ -371,12 +371,7 @@ let view_subjects uf ~self r = function
     let ss = List.map (Hfrag.link_subject ~self uf) ss in
     El.p [El.splice ~sep:(El.txt ", ") ss]
 
-let view_doi_link r = match Reference.doi r with
-| "" -> El.void
-| doi ->
-    let dlink = Fmt.str "%s/%s" Doi.default_resolver doi in
-    let at = At.[href dlink; v "data-doi" doi] in
-    El.a ~at [El.txt Uimsg.full_text]
+let view_doi_link r = Hfrag.doi_link (Reference.doi r) (El.txt Uimsg.full_text)
 
 let view_cites_link uf ~self r =
   let href = Kurl.Fmt.rel_url uf ~src:self ~dst:(Reference.Url.page r) in

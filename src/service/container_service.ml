@@ -26,7 +26,9 @@ let get_page_data db g s =
   let all = Reference.list ~only_public in
   let id = Container.id s in
   let refs = Reference.filter_container_id (Rel_query.Int.v id) all in
-  let* refs = Reference.render_data ~only_public refs db |> Db.error_resp in
+  let* refs =
+    Reference.render_data ~only_public refs db |> Db.http_resp_error
+  in
   Ok refs
 
 let get_container_for_page_ref =

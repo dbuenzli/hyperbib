@@ -48,6 +48,12 @@ let hc_edit_button ?(target = target_entity) uf url =
   let label = [Icon.pencil_alt; El.span [El.txt_of ellipsify Uimsg.edit]] in
   hc_button uf url ~target ~x_align:`Center ~dir:`H (El.splice label)
 
+let hc_integrate_button ?(target = target_entity) uf url =
+  let label = [Icon.arrow_down_on_square;
+               El.span [El.txt_of ellipsify Uimsg.integrate]] in
+  let href = Kurl.Fmt.url uf url in
+  Hui.button_link ~href ~x_align:`Center ~dir:`H (El.splice label)
+
 let hc_replace_button ?(target = target_entity) uf url =
   let label = [Icon.save_as; El.span [El.txt_of ellipsify Uimsg.replace]] in
   hc_button uf url ~target ~x_align:`Center ~dir:`H (El.splice label)
@@ -91,6 +97,18 @@ let anchor_a aid =
   El.a ~at:At.[anchor_href aid; class' "anchor"; v "aria-hidden" "true"] []
 
 let link ?(at = []) ~href:h content = El.a ~at:(At.href h :: at) [content]
+
+let doi_link ?(at = []) doi text = match doi with
+| "" -> El.void
+| doi ->
+    let dlink = Fmt.str "%s/%s" Doi.default_resolver doi in
+    let at = At.(href dlink :: v "data-doi" doi :: at) in
+    El.a ~at [text]
+
+let mailto_link ?(at = []) ?(subject = "") ~email text =
+  let subject = if subject = "" then "" else Fmt.str "?subject=%s" subject in
+  let href = Fmt.str "mailto:%s%s" email subject in
+  El.a ~at:(At.href href :: at) [text]
 
 (* Letter indexes *)
 

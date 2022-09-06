@@ -47,6 +47,7 @@ val target_entity : string
 val target_entity_up : string
 
 val hc_edit_button : ?target:string -> Kurl.fmt -> Kurl.t -> El.html
+val hc_integrate_button : ?target:string -> Kurl.fmt -> Kurl.t -> El.html
 val hc_replace_button : ?target:string -> Kurl.fmt -> Kurl.t -> El.html
 val hc_duplicate_button : ?target:string -> Kurl.fmt -> Kurl.t -> El.html
 val hc_delete_button : ?target:string -> Kurl.fmt -> Kurl.t -> El.html
@@ -72,6 +73,11 @@ val anchor_a : string -> El.html
 (** [anchor_a id] is an anchor for [id]. *)
 
 val link : ?at:At.t list -> href:string -> El.html -> El.html
+
+val doi_link : ?at:At.t list -> Doi.t -> El.html -> El.html
+
+val mailto_link :
+  ?at:At.t list -> ?subject:string -> email:string -> El.html -> El.html
 
 (** {1:letters Letter indexes} *)
 
@@ -114,6 +120,7 @@ val uppercase_span : ?at:At.t list -> string -> El.html
 
 val description : ?at:At.t list -> El.html -> El.html
 (** [description p] is an {!Hclass.description} paragraph. *)
+
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2021 University of Bern

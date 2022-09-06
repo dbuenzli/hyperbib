@@ -16,6 +16,8 @@ module Doi : sig
   type ref
   (** The type for the metadata of a DOI. *)
 
+  val ref_to_short_text_citation : ref -> string
+
   val get_ref :
     B00_http.Httpr.t option -> cache:Fpath.t -> Doi.t ->
     (ref option, string) result

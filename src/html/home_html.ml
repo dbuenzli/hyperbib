@@ -19,6 +19,10 @@ let page_html g =
     let t = Bibliography.project_title b in
     Hfrag.link ~href (El.txt t)
   in
+  let suggest =
+    let href = Kurl.Fmt.url (Page.Gen.url_fmt g) (Suggestion.Url.v Index) in
+    Hfrag.link ~href (El.txt Uimsg.your_suggestions_for_addition)
+  in
   El.section [
     El.header [
       El.h1 [El.txt (Bibliography.project_title b);];
@@ -40,7 +44,9 @@ let page_html g =
       El.txt "The bibliography is compiled by collaborators of the ";
       link_project;
       El.txt " project who curate additions and the subject \
-              classification.";];
+              classification. ";
+      suggest; El.txt " are welcome.";
+    ];
     El.p [
       El.strong [El.txt "Warning. "];
       El.txt "The current bibliographic data \

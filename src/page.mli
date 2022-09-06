@@ -52,6 +52,8 @@ module Gen : sig
   (** [testing g] is [true] if the testing install banner should be rendered *)
 end
 
+
+
 (** {1:pages Pages} *)
 
 type t
@@ -106,6 +108,10 @@ val error : Gen.t -> Http.req -> Http.resp -> Http.resp
 (** [error g req resp] is a generic HTML error page when [req] errors
     with [resp]. *)
 
+(** {1:fragments Fragment} *)
+
+val doi_resolver : El.html
+(** [doi_resolver] is a fragment for the client DOI resolution. *)
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2021 University of Bern

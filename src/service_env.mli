@@ -45,6 +45,10 @@ val static_dir : t -> Fpath.t
 val url_fmt : t -> Kurl.fmt
 (** [url_fmt e] is the URL formatter for [e]. *)
 
+val max_pending_suggestions : t -> int
+(** [max_pending_suggestions e] is the maximal number of
+    pending suggestions allowed. *)
+
 (** {1:brackets Convenience database brackets} *)
 
 val with_db :

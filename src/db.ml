@@ -173,7 +173,7 @@ let show_plan ?(name = "") db st =
 
 (* Webs convenience *)
 
-let error_to_resp ?(retry_after_s = 2) e =
+let http_resp_error ?(retry_after_s = 2) e =
   let explain = Rel_sqlite3.Error.message e in
   match Rel_sqlite3.Error.code e with
   | e when e = Rel_sqlite3.Error.busy_timeout ->
@@ -183,14 +183,15 @@ let error_to_resp ?(retry_after_s = 2) e =
   | _ ->
       Http.Resp.v ~explain Http.server_error_500
 
-let error_resp ?retry_after_s r =
-  Result.map_error (error_to_resp ?retry_after_s) r
+let http_resp_error ?retry_after_s r =
+  Result.map_error (http_resp_error ?retry_after_s) r
 
-let first' db st = error_resp (first db st)
-let list' db st = error_resp (list db st)
-let exec' db st = error_resp (exec db st)
-let insert' db st = error_resp (insert db st)
-let with_transaction' k db f = error_resp (Rel_sqlite3.with_transaction k db f)
+let first' db st = http_resp_error (first db st)
+let list' db st = http_resp_error (list db st)
+let exec' db st = http_resp_error (exec db st)
+let insert' db st = http_resp_error (insert db st)
+let with_transaction' k db f =
+  http_resp_error (Rel_sqlite3.with_transaction k db f)
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2021 University of Bern

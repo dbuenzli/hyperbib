@@ -31,10 +31,19 @@ module Doi = struct
       type' : string;
       volume : string; }
 
+  let ref_to_short_text_citation r =
+    let person p = Fmt.str "%s, %s" p.family p.given in
+    let authors = function
+    | [] -> "" | [p] -> person p | p :: _ -> person p ^ " et al."
+    in
+    Fmt.str "%s.\n%s. %d\n%s"
+      r.title r.container_title (fst r.issued) (authors r.authors)
+
   let person_equal p0 p1 =
     if String.equal p0.orcid p1.orcid then true else
     String.equal p0.family p1.family &&
     String.equal p0.given p1.given
+
 
   (* DOI metadata query and extraction *)
 

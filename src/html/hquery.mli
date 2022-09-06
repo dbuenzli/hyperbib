@@ -13,7 +13,8 @@ open Rel
 
 (** {1:gen Generic} *)
 
-(* FIXME not convient for form building *)
+(* FIXME not convient for form building. Should we separate kind from
+   key name ? *)
 
 type 'a kind
 val kind : string -> (string -> 'a option) -> 'a kind
@@ -22,6 +23,7 @@ val bool : bool kind
    does the right thing *)
 
 val int : int kind
+val string : string kind
 
 type 'a key
 val key : string -> 'a kind -> 'a key
@@ -45,6 +47,13 @@ val find_col :
     [none] is never considered. Absence of the value is [false] with
     HTML checkboxes. *)
 
+val get_col :
+  ('r, 'a) Col.t -> Http.query -> ('a, Http.resp) result
+(** [get_col] is like {!find_col} except this responds with
+    {!Http.Resp.bad_request_400} if the column cannot be found, except
+    for [Type.Bool] columns since absence of the values denotes
+    [false] for HTML checkboxes. *)
+
 val find_cols :
   cols:'r Col.v list -> Http.query -> ('r Col.value list, Http.resp) result
 
@@ -63,6 +72,9 @@ val careless_find_table_cols :
     {b WARNING.} It is not a good idea to use this function, when your
     database schema evolves, it may end up exposing columns to queries
     that weere not meant to be updatable by the query. *)
+
+
+
 
 
 val key_for_rel : ?suff:string -> 'r Table.t -> ('r, 'a) Col.t -> string

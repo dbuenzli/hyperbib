@@ -3,9 +3,15 @@
    Distributed under the ISC license, see terms at the end of the file.
   ---------------------------------------------------------------------------*)
 
-(** Doi resolver UI. *)
+(** DOI resolution UI fragments *)
 
-val resolver : Webs_html.El.html
+open Hyperbib.Std
+
+val warn_doi_exists :
+  Page.Gen.t -> self:Kurl.t -> string -> Reference.t -> El.html
+
+val warn_doi_suggestion_exists :
+  Page.Gen.t -> self:Kurl.t -> string -> Suggestion.t -> El.html
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2021 University of Bern.

@@ -5,7 +5,6 @@
 
 open Hyperbib.Std
 
-
 let bad_val_400 ~kind k v =
   let trunc = String.sub v 0 (Int.min (String.length v) 10) in
   let dots = if String.length trunc <> String.length v then "…" else "" in
@@ -24,6 +23,7 @@ let bool = { kind = "bool"; dec = bool_of_string_opt }
 let int = { kind = "int"; dec = int_of_string_opt }
 let int64 = { kind = "int64"; dec = Int64.of_string_opt }
 let float = { kind = "float"; dec = Float.of_string_opt }
+let string = { kind = "string"; dec = Option.some }
 
 let[@inline] kind_dec key kind s = match kind.dec s with
 | None -> bad_val_400 ~kind:kind.kind key s | Some v -> Ok v
@@ -50,7 +50,6 @@ let find_all k q =
       | Some v -> loop (v :: acc) ss
   in
   loop [] (Http.Query.find_all k.name q)
-
 
 let get k q = match Http.Query.find k.name q with
 | None -> no_key_400 ~kind:k.kind.kind k.name
@@ -108,28 +107,43 @@ let unhandled key t =
   let explain = Fmt.str "key %s: unhandled column type %a" key Rel.Type.pp t in
   Http.Resp.server_error_500 ~explain ()
 
+let decode_col_value :
+  type a. ('r, a) Rel.Col.t -> string -> (a, Http.resp) result =
+  fun col s -> match Rel.Col.type' col with
+  | Rel.Type.Bool -> Ok true
+  | Rel.Type.Int -> kind_dec (Rel.Col.name col) int s
+  | Rel.Type.Int64 -> kind_dec (Rel.Col.name col) int64 s
+  | Rel.Type.Float -> kind_dec (Rel.Col.name col) float s
+  | Rel.Type.Text -> Ok s
+  (* TODO *)
+  | Rel.Type.Option _ as t -> unhandled (Rel.Col.name col) t
+  | Rel.Type.Blob as t -> unhandled (Rel.Col.name col) t
+  | t -> unhandled (Rel.Col.name col) t
+
+let get_col :
+  type a. ('r, a) Rel.Col.t -> Http.query -> (a, Http.resp) result =
+  fun col q ->
+  let key = Rel.Col.name col in
+  match Http.Query.find key q with
+  | Some s -> decode_col_value col s
+  | None ->
+      begin match (Rel.Col.type' col) with
+      | Rel.Type.Bool -> (* HTML checkboxes work that way… *) Ok false
+      | t -> no_key_400 ~kind:(Fmt.str "%a" Rel.Type.pp t) key
+      end
+
 let find_col :
   type a. ('r, a) Rel.Col.t -> none:a -> Http.query -> (a, Http.resp) result =
   fun col ~none q ->
   let key = Rel.Col.name col in
   match Http.Query.find key q with
+  | Some s -> decode_col_value col s
   | None ->
       begin match (Rel.Col.type' col) with
       | Rel.Type.Bool -> (* HTML checkboxes work that way… *)
           Ok false
       | _ -> Ok none
       end
-  | Some s ->
-      match Rel.Col.type' col with
-      | Rel.Type.Bool -> Ok true
-      | Rel.Type.Int -> kind_dec key int s
-      | Rel.Type.Int64 -> kind_dec key int64 s
-      | Rel.Type.Float -> kind_dec key float s
-      | Rel.Type.Text -> Ok s
-      (* TODO *)
-      | Rel.Type.Option _ as t -> unhandled key t
-      | Rel.Type.Blob as t -> unhandled key t
-      | t -> unhandled key t
 
 
 let add_col_value (type c) ~col:(col : ('a, c) Rel.Col.t) q acc =

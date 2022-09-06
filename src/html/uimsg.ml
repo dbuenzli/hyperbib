@@ -5,6 +5,7 @@
 
 open Hyperbib.Std
 
+let about_your_suggestion = "About your suggestion"
 let author = "Author"
 let authors = "Authors"
 let add_author = "Add author"
@@ -28,6 +29,7 @@ let container_contained s = Fmt.str "These references are contained in ‘%s’.
 let container_contained_zero s = Fmt.str "No references are contained in ‘%s’." s
 let container_list_descr = "Containers of references found in the corpus."
 let copy = "Copy"
+let comment = "Comment"
 let create = "Create"
 let create_duplicate = "Create duplicate"
 let create_label = "Create label"
@@ -48,10 +50,14 @@ let document_in_bib s =
   Fmt.str "Warning, the document identified by DOI ‘%s’ is already part of the
     bibliography" s
 
+let document_suggested s =
+  Fmt.str "Warning, the document identified by DOI ‘%s’ is already suggested" s
+
 let doi = "DOI"
 let doi_not_found s =
   Fmt.str "Sorry, the document identified by DOI ‘%s’ cannot be found." s
 let doi_error = Fmt.str "Sorry, an unexpected error occured during DOI lookup."
+let doi_unspecified = "No DOI specified in ‘DOI’ field."
 let duplicate = "Duplicate"
 let edit = "Edit"
 let editor = "Editor"
@@ -59,9 +65,15 @@ let editors = "Editors"
 let editor_abbr = "ed."
 let editors_abbr = "eds."
 let email = "Email"
+let your_email = "Your email"
+let email_note =
+  "(optional, kept private, deleted after the suggestion is treated)"
+
 let error = "Error"
-let fill_in_form_with_doi = "Fill-in form with a DOI"
-let fill_in = "Fill-in"
+let fill_in_form_with_doi = "Fill in form with a DOI"
+let fill_in_suggestion_with_doi = "Fill in suggestion with a DOI"
+let fill_in = "Fill in"
+let fill_in_suggestion = "Fill in suggestion"
 let find_subject = "Find subject"
 let find_container = "Find container"
 let find_person = "Find person"
@@ -75,6 +87,8 @@ let in' = "In"
 let issn = "ISSN"
 let isbn = "ISBN"
 let issue = "Issue"
+let integrate = "Integrate"
+let integrate_suggestion = "Integrate suggestion"
 let it_is_still_applied_to = "It is still applied to"
 let it_will_be_removed_from = "It will be removed from"
 let kind_not_found k = Fmt.str "%s not found" k
@@ -86,7 +100,11 @@ let login_descr = "Please log in to edit the bibliography."
 let login_error = "Unknown user or wrong password. Please try again."
 let logout = "Log out"
 let make_all_authors_public = "Make all authors public"
+let make_a_suggestion = "Make a suggestion"
 let name = "Name"
+let need_a_doi_or_suggestion =
+  "You need to at least fill in the ‘DOI’ or ‘Suggested reference’ field."
+
 let new_container = "New container"
 let new_label = "New label"
 let new_person = "New person"
@@ -98,9 +116,10 @@ let not_implemented_501_descr = "Sorry, this feature is not implemented yet."
 let not_found = "Not found"
 let not_found_404 = "Page not found"
 let not_found_404_descr = "Sorry, this page does not exist."
-
+let no_pending_suggestions = "There are no pending suggestions."
 let note = "Note"
 let other = "Other"
+let optional = "(optional)"
 let or_username = "or username"
 let orcid = "ORCID"
 let pages = "Pages"
@@ -115,7 +134,14 @@ let person_mentioned_descr_zero s = Fmt.str "No reference mentions the person �
 let person_duplicate_will_be_added_to = "The new person duplicate will be added to"
 
 let persons = "Persons"
+
+let pending_suggestions = "Pending suggestions"
+let pending_suggestions_descr =
+  "These suggestions have already been made and are waiting for review."
+
+let please_try_again_in_a_few_days = "Please try again in a few days."
 let private' = "Private"
+let private_and_optional = "(kept private and optional)"
 let private_note = "Private note"
 let private_tip = "Show the private view"
 let public = "Public"
@@ -126,6 +152,9 @@ let really_delete_container s = Fmt.str "Do you really want to delete container 
 let really_delete_subject s = Fmt.str "Do you really want to delete subject ‘%s’ ?" s
 let really_delete_person s = Fmt.str "Do you really want to delete person ‘%s’ ?" s
 let really_delete_reference s = Fmt.str "Do you really want to delete reference ‘%s’ ?" s
+
+let really_delete_suggestion = "Do you really want to delete the suggestion"
+
 let reference = "Reference"
 let reference_list_descr = "All references in the corpus, listed by decreasing publication date."
 let references = "References"
@@ -162,7 +191,28 @@ let subject_applied_descr_zero s = Fmt.str "No reference has the subject ‘%s�
 let subject_deleted s = Fmt.str "The subject ‘%s’ was deleted." s
 let subject_duplicate_will_be_applied_to = "The new subject duplicate will be applied to"
 let subjects = "Subjects"
+let submit_suggestion = "Submit suggestion"
+let suggestion = "Suggestion"
+let suggestions = "Suggestions"
+let suggested_by = "Suggested by"
+let suggestion_form_descr =
+  "To make a suggestion, use the form below. Use a DOI to fill in \
+   the suggestion if you have one."
+
+let suggestions_too_many =
+  "Sorry! We are not accepting suggestions for the time being. We have \
+   too many pending suggestions."
+
+let suggested_reference = "Suggested reference"
+let system_thinks_you_are_a_bot =
+  "The system thinks you are a robot. If that is not the case please \
+   accept your apologies and contact one of the humans responsible for \
+   the bibliography."
+
 let this_cannot_be_undone = "This cannot be undone."
+let the_email_address_will_be_deleted =
+  "The email address will be deleted from the system."
+
 let this_will_also_delete = "This will also delete"
 let this_is_a_testing_site = "This is a testing site, your changes are not preserved"
 let title = "Title"
@@ -176,12 +226,16 @@ let user = "User"
 let undo_make_all_authors_public = "Undo make all authors public"
 let volume = "Volume"
 let warning = "Warning"
+
 let year = "Year"
 let year_index_descr = "Classified by year of earliest, online or print, publication date."
 let year_page_order_descr = "References published this year, ordered by earliest, online or print, publication date."
 let year_page_order_descr_zero = "No references published this year."
 let years = "Years"
-
+let your_suggestions_for_addition = "Your suggestions for addition"
+let you_may_want_to_send_an_email = "You may want to send an email to"
+let to_notify_the_suggestion_was_treated =
+  "to notify that the suggestion was treated."
 
 let these_n_references = function
 | 0 -> "no reference"

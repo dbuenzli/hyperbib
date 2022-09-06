@@ -184,6 +184,9 @@ val field_text :
   ?textarea_at:At.t list -> ?at:At.t list -> ?autogrow:bool -> min_rows:int ->
   label:El.html -> col:('r, string) Rel.Col.t -> 'r -> El.html
 
+(* XXX a version of field_text that takes a Col.value would be useful *)
+
+
 val field_select :
   ?select_at:At.t list -> ?at:At.t list -> label:El.html ->
   option_text:('a -> string) -> option_value:('a -> string) ->

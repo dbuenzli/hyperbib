@@ -122,12 +122,12 @@ val show_plan : ?name:string -> t -> 'a Rel_sql.Stmt.t -> 'a Rel_sql.Stmt.t
 
 (** {1:webs Webs responses} *)
 
-val error_resp :
+val http_resp_error :
   ?retry_after_s:int -> ('a, error) result -> ('a, Http.resp) result
-(** [error_resp e] is a webs response for [Error e]. {!Rel.Error.busy_time_out}
-    errors are mapped to a {!Webs.Http.service_unavailable_503} with
-    a {!Webs.Http.retry_after} header of [retry_after_s] seconds (default
-    to [2]). *)
+(** [http_resp_error e] is a webs response for [Error e].
+    {!Rel.Error.busy_time_out} errors are mapped to a
+    {!Webs.Http.service_unavailable_503} with a {!Webs.Http.retry_after}
+    header of [retry_after_s] seconds (default to [2]). *)
 
 (** Same as {!queries} but composed with {!error_resp}. *)
 

@@ -30,6 +30,7 @@ let tables =
     Table.V Reference.Contributor.table;
     Table.V Reference.Subject.table;
     Table.V Reference.Cites.table;
+    Table.V Suggestion.table;
   ]
 
 let v = Rel.Schema.v ~tables ()

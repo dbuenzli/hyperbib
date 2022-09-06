@@ -112,7 +112,7 @@ let entity_input_finder ?min_size ?(at = []) uf ~kind req ~value =
   let e = Hc.event ~debounce_ms:250 "input" in
   let eff = Hc.effect `Element in
   let pl = kind ^ "\u{207A}" in
-  let min_size = String.length pl - 1 in
+  let min_size = String.length pl (* - 1 *) in
   let pl = At.placeholder pl in
   let type' = At.type' "search" in
   let at = Hclass.value :: Hui.Class.finder_input :: at in
