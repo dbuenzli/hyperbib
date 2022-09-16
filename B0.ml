@@ -157,7 +157,8 @@ let deploy_test =
   B0_cmdlet.exit_of_result @@
   let remote_cmd =
     "cd hyperbib-next && eval $(opam env) && b0 && \
-     sudo systemctl restart hyperbib-next && echo 'Deployed!'"
+     sudo systemctl restart hyperbib-next && \
+     sudo systemctl status hyperbib-next"
   in
   Os.Cmd.run (exec_remote remote_cmd)
 
