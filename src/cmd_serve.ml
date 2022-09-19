@@ -57,7 +57,9 @@ let serve
     (* XXX still needs streamlining review when env get
        mutated. *)
     let* bib = Bibliography.get () in
-    let url_fmt = Kurl.Fmt.empty ~root:service_path () in
+    (* FIXME we need to get that data from somewhere. *)
+    let scheme = "https" and authority = "philoclimate.ch" in
+    let url_fmt = Kurl.Fmt.empty ~scheme ~authority ~root:service_path () in
     let url_fmt = Service_tree.url_fmt ~init:url_fmt in
     let page_gen =
       let auth_ui = None and user_view = None and private_data = false in

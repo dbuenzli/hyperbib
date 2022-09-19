@@ -74,6 +74,23 @@ let suggestion_of_req req =
   in
   Ok (Suggestion.v ~id:0 ~timestamp ~doi ~suggestion ~comment ~email ())
 
+let suggestion_notification env id =
+  if not (Service_env.suggestion_notification env) then Ok () else
+  let uf = Service_env.url_fmt env in
+  let url = Kurl.Fmt.url ~full:true uf (Suggestion.Url.v Index) in
+  let url = String.concat "#" [url; string_of_int id] in
+  let sender = Service_env.email_sender env in
+  let recipient = Service_env.notification_email env in
+  let bib = Page.Gen.bibliography (Service_env.page_gen env) in
+  let name = Bibliography.project_short_title bib in
+  let subject = String.concat " " [Uimsg.new_suggestion_on; name] in
+  let body =
+    Fmt.str "%s,\n\n%s\n\n  %s\n\n---"
+      Uimsg.hello Uimsg.someone_made_new_suggestion_here url
+    (* TODO add link how to deactivate. *)
+  in
+  Email.send ~sender ~recipient ~subject ~body
+
 (* Responses *)
 
 let confirm_delete env id =
@@ -93,6 +110,7 @@ let create env req =
   | Ok s ->
       let* id = Db.insert' db (Suggestion.create ~ignore_id:true s) in
       let uf = Service_env.url_fmt env in
+      let () = suggestion_notification env id |> Log.if_error ~use:() in
       let redirect = Suggestion.Url.v (Page {id; created = true}) in
       let headers = Hfrag.hc_redirect uf redirect in
       Ok (Http.Resp.empty ~headers Http.ok_200)

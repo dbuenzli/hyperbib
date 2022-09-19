@@ -73,6 +73,7 @@ val first_names : string
 val full_text : string
 val go_back_to_bib : string
 val goto_kind_index : string -> string
+val hello : string
 val help : string
 val here : string
 val in' : string
@@ -100,6 +101,7 @@ val new_label : string
 val new_person : string
 val new_reference : string
 val new_subject : string
+val new_suggestion_on : string
 val no_parent : string
 val not_implemented_501 : string
 val not_implemented_501_descr : string
@@ -166,6 +168,7 @@ val server_error_5XX : string
 val server_error_5XX_descr : string
 val something_went_wrong_XXX : string
 val something_went_wrong_XXX_descr : string
+val someone_made_new_suggestion_here : string
 val subject : string
 val subject_applied_descr : string -> string
 val subject_applied_descr_zero : string -> string

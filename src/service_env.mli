@@ -36,8 +36,19 @@ val caps : t -> User.Caps.t
 val editable : t -> editable
 (** [editable e] is the edition policy of [e]. *)
 
+val email_sender : t -> Email.address
+(** [email_sender e] is the email address used by the app to send emails. *)
+
+val notification_email : t -> Email.address
+(** [notification_email e] is the email address used for application
+    notifications (e.g new suggestions). *)
+
 val page_gen : t -> Page.Gen.t
 (** [page_gen e] is the page generator for [e]. *)
+
+val suggestion_notification : t -> bool
+(** [suggestion_notification e] is [true] if new suggestion are notified
+    to the {!notification_email}. *)
 
 val static_dir : t -> Fpath.t
 (** [static_dir e] is the directory in which static files can be found. *)
