@@ -150,18 +150,38 @@ let pull_data =
   B00_rsync.copy ~delete:true ~src_host:deploy_remote ~src dst
 
 let exec_remote cmd = Cmd.(atom "ssh" % "-t" % "philo" % cmd)
+
+let logs_cmd name = Fmt.str "sudo journalctl -a -f -u %s" name
+let deploy_cmd name =
+  Fmt.str "cd %s && eval $(opam env) && b0 && \
+           sudo systemctl restart %s && \
+           sudo systemctl status %s" name name name
+
 let deploy_test =
   let open Result.Syntax in
   let doc = "Build and deploy on test server" in
   B0_cmdlet.v "deploy-test" ~doc @@ fun env args ->
   B0_cmdlet.exit_of_result @@
-  let remote_cmd =
-    "cd hyperbib-next && eval $(opam env) && b0 && \
-     sudo systemctl restart hyperbib-next && \
-     sudo systemctl status hyperbib-next"
-  in
-  Os.Cmd.run (exec_remote remote_cmd)
+  Os.Cmd.run (exec_remote (deploy_cmd "hyperbib-next"))
 
+let deploy_live =
+  let open Result.Syntax in
+  let doc = "Build and deploy on the live server" in
+  B0_cmdlet.v "deploy-live" ~doc @@ fun env args ->
+  B0_cmdlet.exit_of_result @@
+  Os.Cmd.run (exec_remote (deploy_cmd "hyperbib"))
+
+let test_logs =
+  let open Result.Syntax in
+  B0_cmdlet.v "test-logs" ~doc:"Test server logs" @@ fun env args ->
+  B0_cmdlet.exit_of_result @@
+  Os.Cmd.run (exec_remote (logs_cmd "hyperbib-next"))
+
+let live_logs =
+  let open Result.Syntax in
+  B0_cmdlet.v "live-logs" ~doc:"Live server logs" @@ fun env args ->
+  B0_cmdlet.exit_of_result @@
+  Os.Cmd.run (exec_remote (logs_cmd "hyperbib"))
 
 (* Packs *)
 
