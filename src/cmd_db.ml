@@ -6,10 +6,24 @@
 open Hyperbib.Std
 open Result.Syntax
 
+let log_making_backup file =
+  Log.app (fun m -> m "Making backup to %a" Fpath.pp file)
+
 let make_backup db_file db =
   let backup = Db.stamped_backup_file db_file in
-  Log.app (fun m -> m "Making backup to %a" Fpath.pp_unquoted backup);
-  Db.backup backup db
+  log_making_backup backup; Db.backup backup db
+
+(* Backup *)
+
+let backup conf file =
+  Log.if_error ~use:Hyperbib.Exit.some_error @@
+  let db_file = Hyperbib.Conf.db_file conf in
+  let file = match file with
+  | None -> Db.stamped_backup_file db_file | Some file -> file
+  in
+  Result.join @@ Db.string_error @@ Db.with_open db_file @@ fun db ->
+  let* () = log_making_backup file; Db.backup file db in
+  Ok Hyperbib.Exit.ok
 
 (* Changes *)
 
@@ -109,6 +123,22 @@ open Cmdliner
 
 let exits = Hyperbib.Exit.Info.base_cmd
 
+let backup_cmd =
+  let doc = "Make a backup of the database" in
+  let man = [
+    `S Manpage.s_description;
+    `P "$(tname) makes a backup of the live database."; ]
+  in
+  let dst =
+    let doc = "The backup file. If unspecified a new timestamped file is \
+               written in data directory of the application directory."
+    in
+    Arg.(value & pos 0 (some Hyperbib.Cli.fpath) None &
+         info [] ~doc ~docv:"FILE")
+  in
+  Cmd.v (Cmd.info "backup" ~doc ~man)
+    Term.(const backup $ Hyperbib.Cli.conf $ dst)
+
 let changes_cmd =
   let doc = "Compare live database and application schema" in
   let man = [
@@ -206,7 +236,7 @@ let cmd =
     `P "The $(tname) command manages the application database."; ]
   in
   Cmd.group (Cmd.info "db" ~doc ~exits ~man)
-    [changes_cmd; schema_cmd; sql_cmd]
+    [backup_cmd; changes_cmd; schema_cmd; sql_cmd]
 
 
 (*---------------------------------------------------------------------------

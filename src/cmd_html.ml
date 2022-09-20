@@ -47,7 +47,7 @@ let man = [
 
 let dest =
   let doc = "Output directory." and docv = "HTML_DIR" in
-  Arg.(required & pos 1 (some B00_cli.fpath) None & info [] ~doc ~docv)
+  Arg.(required & pos 1 (some Hyperbib.Cli.fpath) None & info [] ~doc ~docv)
 
 let file_browsable =
   let doc = "Ensure the HTML can be browsed via the $(b,file://) protocol." in

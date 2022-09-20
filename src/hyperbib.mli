@@ -132,6 +132,9 @@ end
 (** Cli interaction. *)
 module Cli : sig
 
+  val fpath : Fpath.t Cmdliner.Arg.conv
+  (** [fpath] is a filepath converter. *)
+
   (** {1:conf Cli configuration} *)
 
   val conf : Conf.t Cmdliner.Term.t

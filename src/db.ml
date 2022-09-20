@@ -62,11 +62,9 @@ let vaccum_into file db =
   Rel_sqlite3.exec db vacuum
 
 let backup file db =
-  let tmp = Fpath.(file + ".tmp") in
-  let* _exists = Os.File.delete tmp in
+  let* tmp = Os.Path.tmp ~dir:(Fpath.parent file) () in
   let* () = vaccum_into tmp db in
-  let* () = Os.Path.rename ~force:true ~make_path:false ~src:tmp file in
-  Ok (Log.app (fun m -> m "Made stable database backup file."))
+  Os.Path.rename ~force:true ~make_path:false ~src:tmp file
 
 let backup_thread pool ~every_s file =
   let handle_error v =
@@ -77,6 +75,10 @@ let backup_thread pool ~every_s file =
   (* TODO we should do a clean termination. Do a control pipe
      and use select() *)
   let rec loop () =
+    let backup file db =
+      let* () = backup file db in
+      Ok (Log.app (fun m -> m "Made stable database backup file."))
+    in
     Rel_pool.with' pool (backup file) |> handle_error;
     Unix.sleep every_s;
     loop ()

@@ -109,6 +109,8 @@ end
 module Cli = struct
   open Cmdliner
 
+  let fpath = B00_cli.fpath
+
   let docs = Manpage.s_common_options
   let conf =
     let log_level =
@@ -124,7 +126,7 @@ module Cli = struct
                  current working directory."
       and docv = "APP_DIR" in
       let env = Cmd.Env.info "HYPERBIB_APP_DIR" in
-      Arg.(value & opt (some ~none:"." B00_cli.fpath) None &
+      Arg.(value & opt (some ~none:"." fpath) None &
            info ["a"; "app-dir"] ~doc ~docv ~env)
     in
     Term.term_result Term.(const Conf.with_cli $ log_level $ tty_cap $ app_dir)
