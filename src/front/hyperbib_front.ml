@@ -22,8 +22,8 @@ let remover e =
     Fut.await (Hc_page.Effect.feedback_remove ~target:rem Element) @@ fun () ->
     El.remove rem
   in
-  Ev.listen Ev.click on_click (El.as_target e);
-  Ev.listen Ev.pointerdown on_pointerdown (El.as_target e);
+  ignore (Ev.listen Ev.click on_click (El.as_target e));
+  ignore (Ev.listen Ev.pointerdown on_pointerdown (El.as_target e));
   El.set_prop hui_remover_prop true e
 
 let remover_interactions () =
@@ -89,6 +89,13 @@ let rec find_caret_location r = function
 
 let reordable reordering caret placeholder e =
   let off_x = ref 0. and off_y = ref 0. in
+  let lpointerdown = ref None in
+  let lpointerup = ref None in
+  let lpointermove = ref None in
+  let lhuicleanup = ref None in
+  let unlisten r = match !r with
+  | None -> () | Some l -> Ev.unlisten l
+  in
   let on_pointermove ev = match !reordering with
   | None -> ()
   | Some (r, peers) ->
@@ -118,8 +125,7 @@ let reordable reordering caret placeholder e =
         El.remove caret;
         El.remove placeholder;
     end;
-    Ev.unlisten Ev.pointerup on_pointerup (Document.as_target G.document);
-    Ev.unlisten Ev.pointermove on_pointermove (Document.as_target G.document)
+    unlisten lpointerup; unlisten lpointermove
   in
   let on_pointerdown ev = match !reordering with
   | Some _ -> ()
@@ -135,18 +141,23 @@ let reordable reordering caret placeholder e =
       El.set_inline_style El.Style.position (Jstr.v "absolute") e;
       El.set_inline_style El.Style.z_index (Jstr.v "1000") e;
       set_pos e (Ev.Mouse.page_x m -. !off_x) (Ev.Mouse.page_y m -. !off_y);
-      Ev.listen Ev.pointerup on_pointerup (Document.as_target G.document);
-      Ev.listen Ev.pointermove on_pointermove (Document.as_target G.document);
+      lpointerup :=
+        Some (Ev.listen Ev.pointerup on_pointerup
+                (Document.as_target G.document));
+      lpointermove := Some
+          (Ev.listen Ev.pointermove on_pointermove
+             (Document.as_target G.document));
   in
   let rec on_cleanup ev =
     (* We need that to unregister the on_mousedown closure *)
-    Ev.unlisten Ev.pointerdown on_pointerdown (El.as_target e);
-    Ev.unlisten hui_cleanup on_cleanup (El.as_target e)
+    unlisten lpointerdown; unlisten lhuicleanup;
   in
   (* Remove a potential previous listener *)
   ignore (Ev.dispatch (Ev.create hui_cleanup) (El.as_target e));
-  Ev.listen Ev.pointerdown on_pointerdown (El.as_target e);
-  Ev.listen hui_cleanup on_cleanup (El.as_target e)
+  lpointerdown :=
+    Some (Ev.listen Ev.pointerdown on_pointerdown (El.as_target e));
+  lhuicleanup :=
+    Some (Ev.listen hui_cleanup on_cleanup (El.as_target e))
 
 let ordering_interactions () =
   let setup_ordering e =
@@ -200,7 +211,7 @@ let finder_input i =
       end
   | _ -> ()
   in
-  Ev.listen Ev.keydown on_keydown (El.as_target i);
+  ignore (Ev.listen Ev.keydown on_keydown (El.as_target i));
   El.set_prop finder_input_prop true i;
   ()
 
@@ -236,7 +247,7 @@ let finder_result r =
       El.click r
   | _ -> ()
   in
-  Ev.listen Ev.keydown on_keydown (El.as_target r);
+  ignore (Ev.listen Ev.keydown on_keydown (El.as_target r));
   El.set_prop finder_result_prop true r;
   ()
 
@@ -267,7 +278,7 @@ let on_hc_cycle_end _ev =
 
 let install_event_handlers () =
   let document = Document.as_target G.document in
-  Ev.listen Hc_page.Ev.cycle_end on_hc_cycle_end document;
+  ignore (Ev.listen Hc_page.Ev.cycle_end on_hc_cycle_end document);
   ()
 
 let main () =

@@ -84,7 +84,7 @@ let layout ?x_align:xa ?align:a ?dir:d () = match d, a, xa with
 let _button ~type':t ?(at = []) ?x_align ?align ?dir ?tip label =
   let lats = layout ?x_align ?align ?dir () in
   let spinner = El.span ~at:At.[Class.spinner; v "aria-hidden" "true"] [] in
-  let tip = At.if_value At.Name.title tip in
+  let tip = At.if_some (Option.map At.title tip) in
   let at = At.(Class.button :: type' t :: tip :: (lats @ at)) in
   El.button ~at [ spinner; label; ]
 
