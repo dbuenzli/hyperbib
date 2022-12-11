@@ -10,20 +10,27 @@ type t =
     project_title : string;
     project_short_title : string;
     project_href : string;
-    favicon_href : string option; }
+    favicon_href : string option;
+    suggester_email_message : string; }
 
 let copyrights g = g.copyrights
 let project_title g = g.project_title
 let project_short_title g = g.project_short_title
 let project_href g = g.project_href
 let favicon_href g = g.favicon_href
+let suggester_email_message g = g.suggester_email_message
 
 let get () =
 Ok { copyrights = "© University of Bern";
      project_title = "Epistemology of Climate Change";
      project_short_title = "philoclimate.ch";
      project_href = "https://philoclimate.ch";
-     favicon_href = None; }
+     favicon_href = None;
+     suggester_email_message =
+       "Your suggestion has been integrated in the philoclimate.ch \
+        bibliography.\n Thank you!\n\n\
+        ---\n\
+        The collaborators of the Epistemology of Climate Change project" }
 
 (* XXX think a bit abour Kurl and the bibtex file case. Do we always
    have enough context in dec ? Do we want to tuck a user defined param

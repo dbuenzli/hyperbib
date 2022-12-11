@@ -44,7 +44,6 @@ module Std : sig
   (** {1:webs Webs_* opens} *)
 
   module Http = Webs.Http
-  module Session = Webs_kit.Session
   module Res = Webs_kit.Res
   module Kurl = Webs_kit.Kurl
   module At = Webs_html.At

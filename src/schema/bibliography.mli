@@ -13,6 +13,7 @@ val project_short_title : t -> string
 val project_href : t -> string
 val favicon_href : t -> string option
 val bibtex_filename : t -> string
+val suggester_email_message : t -> string
 
 val get : unit -> (t, string) result
 

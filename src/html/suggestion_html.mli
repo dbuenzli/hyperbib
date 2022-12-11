@@ -11,7 +11,8 @@ val page_404 : Page.Gen.t -> self:Kurl.t -> Page.t
 val email_field : string
 val bot_honeypot_field : string
 
-val confirm_delete : Page.Gen.t -> Suggestion.t -> El.html
+val confirm_delete :
+  Page.Gen.t -> Suggestion.t -> El.html
 
 val suggest_form :
   ?force_rescue:bool -> ?msg:El.html -> Page.Gen.t -> Suggestion.t -> El.html

@@ -136,7 +136,9 @@ let confirm_delete g s =
   | "" -> El.void, El.void
   | email ->
       let subject = Uimsg.about_your_suggestion in
-      let mailto = Hfrag.mailto_link ~subject ~email (El.txt email) in
+      let bib = Page.Gen.bibliography g in
+      let body = Bibliography.suggester_email_message bib in
+      let mailto = Hfrag.mailto_link ~subject ~body ~email (El.txt email) in
       El.p [El.txt Uimsg.you_may_want_to_send_an_email; El.sp; mailto; El.sp;
             El.txt Uimsg.to_notify_the_suggestion_was_treated],
       El.splice [El.sp; El.txt Uimsg.the_email_address_will_be_deleted]

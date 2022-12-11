@@ -77,7 +77,8 @@ val link : ?at:At.t list -> href:string -> El.html -> El.html
 val doi_link : ?at:At.t list -> Doi.t -> El.html -> El.html
 
 val mailto_link :
-  ?at:At.t list -> ?subject:string -> email:string -> El.html -> El.html
+  ?at:At.t list -> ?body:string ->
+  ?subject:string -> email:string -> El.html -> El.html
 
 (** {1:letters Letter indexes} *)
 

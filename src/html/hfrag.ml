@@ -105,9 +105,17 @@ let doi_link ?(at = []) doi text = match doi with
     let at = At.(href dlink :: v "data-doi" doi :: at) in
     El.a ~at [text]
 
-let mailto_link ?(at = []) ?(subject = "") ~email text =
-  let subject = if subject = "" then "" else Fmt.str "?subject=%s" subject in
-  let href = Fmt.str "mailto:%s%s" email subject in
+let mailto_link ?(at = []) ?(body = "") ?(subject = "") ~email text =
+  (* Do that properly at some point https://www.rfc-editor.org/rfc/rfc6068 *)
+  let esc s =
+    Http.Pct.encode `Uri_component @@
+    String.concat "\r\n" (String.split_on_char '\n' s)
+  in
+  let subj = if subject = "" then "" else Fmt.str "subject=%s" (esc subject) in
+  let body = if body = "" then "" else Fmt.str "body=%s" (esc body) in
+  let query = String.concat "&" [subj; body] in
+  let query = if query = "" then "" else "?" ^ query in
+  let href = Fmt.str "mailto:%s%s" email query in
   El.a ~at:(At.href href :: at) [text]
 
 (* Letter indexes *)
