@@ -18,8 +18,8 @@ let hyperbib =
   Cmd.group info ~default cmds
 
 let main () =
-  B00_cli.Exit.exit ~exec_error:Hyperbib.Exit.some_error @@
-  B00_cli.Exit.of_eval_result @@
+  B0_cli.Exit.exit ~exec_error:Hyperbib.Exit.some_error @@
+  B0_cli.Exit.of_eval_result @@
   Log.time (fun _ m -> m "total time hyperbib %s" Stamp.version) @@ fun () ->
   Cmd.eval_value hyperbib
 

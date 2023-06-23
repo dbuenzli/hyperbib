@@ -34,7 +34,7 @@ let lookup_doi env doi =
     Result.map_error
       (* Bof *)
       (fun e -> Result.get_error (Http.Resp.server_error_500 ~explain:e ())) @@
-    Result.map Option.some (B00_http.Httpr.get_curl ())
+    Result.map Option.some (B0_http.Http_client.get ())
   in
   Ok (doi, Import.Doi.get_ref httpr ~cache:doi_cache doi)
 

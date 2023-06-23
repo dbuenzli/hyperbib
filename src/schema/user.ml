@@ -5,7 +5,7 @@
 
 open Hyperbib.Std
 open Result.Syntax
-open B00_serialk_json
+open B0_json
 
 (* Passwords *)
 

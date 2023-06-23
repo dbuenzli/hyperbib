@@ -32,7 +32,7 @@ val fields : t -> string String.Map.t
 (** [fields e] are the BibTeX fields. Fields are lowercased according
     to {!B0_std.String.Ascii.lowercase}. *)
 
-val loc : t -> B00_serialk_text.Tloc.t
+val loc : t -> B0_text.Tloc.t
 (** [loc] is a location spanning the entry definition. *)
 
 val pp : t Fmt.t
@@ -58,7 +58,7 @@ val annote : t -> string option
 type error_kind
 (** The type for kinds of decoding errors. *)
 
-type error = error_kind * B00_serialk_text.Tloc.t
+type error = error_kind * B0_text.Tloc.t
 (** The type for errors. The error and its location. *)
 
 val of_string : ?file:Fpath.t -> string -> (t list, error) result

@@ -9,7 +9,7 @@ type 'a entity = [ `Exists of 'a | `To_create of 'a ]
 
 module Doi = struct
   open Result.Syntax
-  open B00_serialk_json
+  open B0_json
 
   (* What we extract from DOI metadata *)
 
@@ -188,7 +188,7 @@ end
 
 module Legacy = struct
   open Result.Syntax
-  open B00_serialk_json
+  open B0_json
 
   module Imap = Map.Make (Int)
 
@@ -425,9 +425,9 @@ module Legacy = struct
     let* () = List.iter_stop_on_error (insert_subject db) ss in
     let* refs = refs ~file:Fpath.(tables_dir / "refs.json") in
     let refs = List.filter_map Fun.id refs in
-    let* httpr = Result.map Option.some (B00_http.Httpr.get_curl ()) in
+    let* httpc = Result.map Option.some (B0_http.Http_client.get ()) in
     let cache = Hyperbib.Conf.doi_cache_dir conf in
-    let get_doi_ref = Doi.get_ref httpr ~cache in
+    let get_doi_ref = Doi.get_ref httpc ~cache in
     Ok (make_refs get_doi_ref db nmap refs)
 end
 

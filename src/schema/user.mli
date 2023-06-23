@@ -6,7 +6,7 @@
 (** Application users. *)
 
 open Hyperbib.Std
-open B00_serialk_json
+open B0_json
 
 (** {1:user User} *)
 
@@ -43,7 +43,7 @@ val fold : (t -> 'a -> 'a) -> s -> 'a -> 'a
 
 (** {1:serial Serialiazing} *)
 
-val of_json : s B00_serialk_json.Jsonq.t
+val of_json : s B0_json.Jsonq.t
 (** [of_json] queries a JSON array of objects of the form
 {v
    {

@@ -10,7 +10,7 @@
     here}. This a partial modelling of the format. *)
 
 open Hyperbib.Std
-open B00_serialk_json
+open B0_json
 
 type partial_date = int * (int * int option) option
 (** The type for {{:https://github.com/Crossref/rest-api-doc/blob/master/api_format.md#partial-date}partial date}. *)
@@ -51,8 +51,8 @@ module Work : sig
 end
 
 val for_doi :
-  B00_http.Httpr.t option ->
-  cache:Fpath.t -> Doi.t -> (B00_serialk_json.Json.t option, string) result
+  B0_http.Http_client.t option ->
+  cache:Fpath.t -> Doi.t -> (B0_json.Json.t option, string) result
 (** [for_doi httpr cache doi] looks up crossref metadata for doi [doi].
     Looks up in the local [cache] first. [None] is returned if the
     doi cannot be resolved (404). *)
@@ -62,9 +62,6 @@ val for_doi :
     From https://api.crossref.org/v1/types *)
 
 val types : (string * string) list
-
-
-
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2019 University of Bern

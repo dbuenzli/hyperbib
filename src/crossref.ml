@@ -5,7 +5,7 @@
 
 open Hyperbib.Std
 open Result.Syntax
-open B00_serialk_json
+open B0_json
 
 type partial_date = int * (int * int option) option
 let partial_date =

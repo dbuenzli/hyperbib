@@ -7,8 +7,10 @@ let rel_kit = B0_ocaml.libname "rel.kit"
 let rel_cli = B0_ocaml.libname "rel.cli"
 let rel_pool = B0_ocaml.libname "rel.pool"
 let rel_sqlite3 = B0_ocaml.libname "rel.sqlite3"
-let b00_kit = B0_ocaml.libname "b0.b00.kit"
 let b0_std = B0_ocaml.libname "b0.std"
+let b0 = B0_ocaml.libname "b0"
+let b0_file = B0_ocaml.libname "b0.file"
+let b0_kit = B0_ocaml.libname "b0.kit"
 let brr = B0_ocaml.libname "brr"
 let brr_note = B0_ocaml.libname "brr.note"
 let cmdliner = B0_ocaml.libname "cmdliner"
@@ -34,30 +36,30 @@ let src_front_dir = Fpath.v "src/front"
 let assets_to_static_dir b =
   let open Fut.Syntax in
   let m = B0_build.memo b in
-  B00.Memo.run_proc m @@ fun () ->
+  B0_memo.run_proc m @@ fun () ->
   let dir = B0_build.in_scope_dir b src_front_dir in
   let dst = B0_build.in_scope_dir b static_dir in
   let* assets = B0_srcs.select b Fpath.[ `Dir_rec dir ] in
   let assets = B0_srcs.by_ext assets in
-  let exts = B00_fexts.www in
+  let exts = B0_file_exts.www in
   let _ = B0_jsoo.copy_assets m assets ~exts ~assets_root:(Some dir) ~dst in
   Fut.return ()
 
 let front_to_static_dir b =
   let open Fut.Syntax in
   let m = B0_build.memo b in
-  B00.Memo.run_proc m @@ fun () ->
+  B0_memo.run_proc m @@ fun () ->
   let dst = B0_build.in_scope_dir b static_dir in
   let exe = B0_unit.get_meta B0_meta.exe_file (B0_build.current b) in
-  let* exe = B00.Memo.fail_if_error m exe in
-  B00.Memo.copy m ~src:exe Fpath.(dst / basename exe);
+  let* exe = B0_memo.fail_if_error m exe in
+  B0_memo.copy m ~src:exe Fpath.(dst / basename exe);
   let has_map = B0_unit.get_meta B0_jsoo.source_map (B0_build.current b) in
-  let has_map = match B00.Memo.fail_if_error m has_map with
+  let has_map = match B0_memo.fail_if_error m has_map with
   | Some `File -> true | Some `Inline | None -> false
   in
   if has_map then begin
     let map = Fpath.(exe -+ ".map") in
-    B00.Memo.copy m ~src:map Fpath.(dst / basename map);
+    B0_memo.copy m ~src:map Fpath.(dst / basename map);
   end;
   Fut.return ()
 
@@ -81,31 +83,35 @@ let vcs_describe b =
   (* XXX memo ? *)
   let open Result.Syntax in
   let dir = B0_build.scope_dir b (B0_build.current b) in
-  let* vcs = B00_vcs.get () ~dir in
-  B00_vcs.describe vcs ~dirty_mark:true "HEAD"
+  let* vcs = B0_vcs.get () ~dir in
+  B0_vcs.describe vcs ~dirty_mark:true "HEAD"
 
 let write_static_file_stamp b =
   let m = B0_build.memo b in
-  let r = B00.Memo.reviver m in
+  let r = B0_memo.reviver m in
   let asset_file file = B0_build.in_scope_dir b Fpath.(static_dir / file) in
   let files = List.map asset_file static_files in
   let stamp_ml = stamp_ml b in
-  let version = vcs_describe b |> B00.Memo.fail_if_error m in
-  B00.Memo.write m ~stamp:version ~reads:files stamp_ml @@ begin fun () ->
-  let stamp_file f = B000.Reviver.hash_file r f |> B00.Memo.fail_if_error m in
-  let stamps = List.map (fun f -> Hash.to_bytes (stamp_file f)) files in
-  let stamp = B000.Reviver.hash_string r (String.concat "" stamps) in
-  Ok (Fmt.str "let static_files = %S\nlet version = %S" (Hash.to_hex stamp)
-        version)
+  let version = vcs_describe b |> B0_memo.fail_if_error m in
+  B0_memo.write m ~stamp:version ~reads:files stamp_ml @@ begin fun () ->
+    let stamp_file f =
+      B0_zero.Reviver.hash_file r f |> B0_memo.fail_if_error m
+    in
+    let stamps =
+      List.map (fun f -> Hash.to_binary_string (stamp_file f)) files
+    in
+    let stamp = B0_zero.Reviver.hash_string r (String.concat "" stamps) in
+    Ok (Fmt.str "let static_files = %S\nlet version = %S" (Hash.to_hex stamp)
+          version)
   end;
   let mli = B0_build.in_scope_dir b stamp_mli_src in
-  B00.Memo.file_ready m mli;
-  B00.Memo.copy m ~src:mli (stamp_mli b)
+  B0_memo.file_ready m mli;
+  B0_memo.copy m ~src:mli (stamp_mli b)
 
 let hyperbib =
   let doc = "hyperbib tool" in
   let requires =
-    [ threads; cmdliner; ptime; ptime_clock; b0_std; b00_kit;
+    [ threads; cmdliner; ptime; ptime_clock; b0_std; b0; b0_file; b0_kit;
       rel; rel_kit; rel_cli; rel_sqlite3; rel_pool;
       webs; webs_connector; webs_kit; webs_unix; webs_cli; webs_httpc;
       webs_html; hc ]
@@ -145,11 +151,12 @@ let pull_data =
   let open Result.Syntax in
   B0_cmdlet.v "pull-data" ~doc:"Pull live data" @@ fun env args ->
   B0_cmdlet.exit_of_result @@
+  let* rsync = B0_rsync.get () in
   let src = Fpath.v "hyperbib/app/data/bib.sqlite3.backup" in
   let dst = B0_cmdlet.in_scope_dir env Fpath.(v "app/data/bib.sqlite3") in
-  B00_rsync.copy ~delete:true ~src_host:deploy_remote ~src dst
+  B0_rsync.copy rsync ~delete:true ~src_host:deploy_remote ~src dst
 
-let exec_remote cmd = Cmd.(atom "ssh" % "-t" % "philo" % cmd)
+let exec_remote cmd = Cmd.(arg "ssh" % "-t" % "philo" % cmd)
 
 let logs_cmd name = Fmt.str "sudo journalctl -a -f -u %s" name
 let deploy_cmd name =

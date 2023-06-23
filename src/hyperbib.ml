@@ -85,9 +85,9 @@ module Conf = struct
 
   let with_cli log_level tty_cap app_dir =
     Result.map_error (fun e -> `Msg e) @@
-    let log_level = B00_cli.B0_std.get_log_level log_level in
-    let tty_cap = B00_cli.B0_std.get_tty_cap tty_cap in
-    B00_cli.B0_std.setup tty_cap log_level ~log_spawns:Log.Debug;
+    let log_level = B0_cli.B0_std.get_log_level log_level in
+    let tty_cap = B0_cli.B0_std.get_tty_cap tty_cap in
+    B0_cli.B0_std.setup tty_cap log_level ~log_spawns:Log.Debug;
     let* app_dir = match app_dir with
     | Some app_dir -> Ok app_dir
     | None ->
@@ -109,17 +109,17 @@ end
 module Cli = struct
   open Cmdliner
 
-  let fpath = B00_cli.fpath
+  let fpath = B0_cli.fpath
 
   let docs = Manpage.s_common_options
   let conf =
     let log_level =
       let env = Cmd.Env.info "HYPERBIB_VERBOSITY" in
-      B00_cli.B0_std.log_level ~docs ~env ()
+      B0_cli.B0_std.log_level ~docs ~env ()
     in
     let tty_cap =
       let env = Cmd.Env.info "HYPERBIB_COLOR" in
-      B00_cli.B0_std.tty_cap ~docs ~env ()
+      B0_cli.B0_std.tty_cap ~docs ~env ()
     in
     let app_dir =
       let doc = "Application directory. If unspecified defaults to the \

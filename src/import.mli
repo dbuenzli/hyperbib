@@ -19,7 +19,7 @@ module Doi : sig
   val ref_to_short_text_citation : ref -> string
 
   val get_ref :
-    B00_http.Httpr.t option -> cache:Fpath.t -> Doi.t ->
+    B0_http.Http_client.t option -> cache:Fpath.t -> Doi.t ->
     (ref option, string) result
 
   val cites_of_ref : ref -> Doi.t list

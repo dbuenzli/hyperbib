@@ -4,7 +4,7 @@
   ---------------------------------------------------------------------------*)
 
 open B0_std
-open B00_serialk_text
+open B0_text
 
 let escape = (* The escape rules are a bit unclear. These are those of LaTeX *)
   let tilde_esc = "\\textasciitilde" in
@@ -63,10 +63,10 @@ let doi e = match String.Map.find_opt "doi" e.fields with
     | doi -> Some doi
     in
     (* chop scheme and authority in case there is one *)
-    match B00_http.Uri.parse_scheme doi with
+    match B0_http.Url.scheme doi with
     | None -> ret doi
     | Some _ ->
-        match B00_http.Uri.parse_path_and_query doi with
+        match B0_http.Url.path_and_query doi with
         | None -> ret doi
         | Some p -> ret p
 
@@ -76,7 +76,7 @@ let annote e = String.Map.find_opt "annote" e.fields
 (* Codec *)
 
 type error_kind = string
-type error = error_kind * B00_serialk_text.Tloc.t
+type error = error_kind * B0_text.Tloc.t
 
 let pp_error ppf (err, l) =
   Fmt.pf ppf "@[<v>%a:@,%a: %s@]"
