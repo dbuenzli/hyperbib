@@ -3,10 +3,10 @@
    Distributed under the ISC license, see terms at the end of the file.
   ---------------------------------------------------------------------------*)
 
-open Note
-open Brr_note
-open Brr_note_kit
 open Brr
+open Note
+open Note_brr
+open Note_brr_kit
 
 let string_editor : Jstr.t signal -> El.t -> bool signal * Jstr.t event
   =
@@ -38,7 +38,7 @@ let string_editor : Jstr.t signal -> El.t -> bool signal * Jstr.t event
 
 (* Quicly hacked and messy, needs reviewing with the right signal flow. *)
 
-open Brr_note_legacy
+open Note_brr_legacy
 
 let stored_doi_resolver : string Store.key = Store.key ()
 let get_stored_doi_resolver () = Store.find stored_doi_resolver
