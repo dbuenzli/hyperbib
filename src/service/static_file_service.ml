@@ -6,9 +6,9 @@
 open Hyperbib.Std
 open Result.Syntax
 
-let v env _sess r =
+let v env _sess request =
   let static_dir = Fpath.to_string (Service_env.static_dir env) in
-  let* file = Http.Req.to_absolute_filepath ~root:static_dir r in
+  let* file = Http.Request.to_absolute_filepath ~file_root:static_dir request in
   let file = Fpath.v file in
   let file = match Fpath.is_dir_path file with
   | true -> (* note because of path cleaning this is only for / *) file
@@ -17,19 +17,19 @@ let v env _sess r =
       | "" -> Fpath.(file + ".html")
       | _ -> file
   in
-  let dir_resp = Webs_unix.dir_index_file "index.html" |> Result.get_ok in
-  let* resp = Webs_unix.send_file ~dir_resp r (Fpath.to_string file) in
+  let dir_response = Webs_fs.dir_index_file "index.html" |> Result.get_ok in
+  let* resp = Webs_fs.send_file ~dir_response request (Fpath.to_string file) in
   (* FIXME do something nice in send_file maybe *)
   let resp = match Fpath.get_ext file with
   | ".css" | ".js" | ".woff2" ->
       (* FIXME versioning scheme, note something was done in Static_file *)
       let forever = "public, max-age=31536000, immutable" in
-      let hs = Http.Headers.(empty |> add Http.cache_control forever) in
-      Http.Resp.override_headers ~by:hs resp
+      let hs = Http.Headers.(def cache_control) forever Http.Headers.empty in
+      Http.Response.override_headers ~by:hs resp
   | ".html" ->
       let ctrl = "max-age=0" in
-      let hs = Http.Headers.(empty |> add Http.cache_control ctrl) in
-      Http.Resp.override_headers ~by:hs resp
+      let hs = Http.Headers.(def cache_control) ctrl Http.Headers.empty in
+      Http.Response.override_headers ~by:hs resp
   | _ -> resp
   in
   Ok resp

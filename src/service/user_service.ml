@@ -15,26 +15,26 @@ let auth_disabled = "auth disabled"
 
 let goto_or_service_path ~explain req ~goto =
   let goto = match goto with
-  | None -> Http.Path.encode (Http.Req.service_path req)
+  | None -> Http.Path.encode (Http.Request.service_path req)
   | Some goto -> goto
   in
-  Http.Resp.redirect ~explain Http.found_302 goto
+  Http.Response.redirect ~explain Http.Status.found_302 goto
 
 let authenticated ~explain app username ~goto = match goto with
-| Some goto -> Http.Resp.redirect ~explain Http.found_302 goto
-| None -> Page.resp (User_html.page (Service_env.page_gen app) ~username)
+| Some goto -> Http.Response.redirect ~explain Http.Status.found_302 goto
+| None -> Page.response (User_html.page (Service_env.page_gen app) ~username)
 
 let authenticate env sess req ~goto = match Service_env.editable env with
 | `No | `Unsafe ->
     Ok (sess, goto_or_service_path ~explain:auth_disabled req ~goto)
 | `With_login ->
-    Webs_kit.Session.for_error None @@
-    let* q = Http.Req.to_query req in
-    let err e = Http.Resp.v ~explain:e Http.server_error_500 in
+    Webs_session.for_error None @@
+    let* q = Http.Request.to_query req in
+    let err e = Http.Response.empty ~explain:e Http.Status.server_error_500 in
     let users_file = Hyperbib.Conf.users_file (Service_env.conf env) in
     let* users = Result.map_error err (User.load users_file) in
-    let username = Http.Query.find User.Url.username_key q in
-    let password = Http.Query.find User.Url.password_key q in
+    let username = Http.Query.find_first User.Url.username_key q in
+    let password = Http.Query.find_first User.Url.password_key q in
     let check = match username, password with
     | Some name, Some password -> User.check ~name ~password users
     | _ -> false
@@ -52,7 +52,8 @@ let authenticate env sess req ~goto = match Service_env.editable env with
         let explain = Fmt.str "bad credentials%s" log_user in
         let g = Service_env.page_gen env in
         let page = User_html.login g  ~msg:Uimsg.login_error ~goto in
-        Ok (None, Page.resp ~explain ~status:Http.unauthorized_401 page)
+        let status = Http.Status.unauthorized_401 in
+        Ok (None, Page.response ~explain ~status page)
 
 let login env sess req ~goto = match Service_env.editable env with
 | `No | `Unsafe ->
@@ -61,7 +62,8 @@ let login env sess req ~goto = match Service_env.editable env with
     match sess with
     | None | Some (Service.Session.Unsafe _) (* can't happen *) ->
         let g = Service_env.page_gen env in
-        Ok (None, Page.resp (User_html.login g ~msg:Uimsg.login_descr ~goto))
+        let msg = Uimsg.login_descr in
+        Ok (None, Page.response (User_html.login g ~msg ~goto))
     | Some (Service.Session.User { username; _ }) as s ->
         let explain = "already logged " ^ username in
         Ok (s, authenticated ~explain env username ~goto)
@@ -84,13 +86,13 @@ let view app sess req private' =
   Result.ok @@
   match sess with
   | None ->
-      None, Http.Resp.empty ~headers Http.unauthorized_401
+      None, Http.Response.empty ~headers Http.Status.unauthorized_401
   | Some (Service.Session.Unsafe _) ->
       let sess = Some (Service.Session.Unsafe { private_view = private' }) in
-      sess, Http.Resp.empty ~headers Http.ok_200
+      sess, Http.Response.empty ~headers Http.Status.ok_200
   | Some (Service.Session.User s) ->
       let sess = Some (Service.Session.User { s with private_view = private'})in
-      sess, Http.Resp.empty ~headers Http.ok_200
+      sess, Http.Response.empty ~headers Http.Status.ok_200
 
 let resp r env sess req = match (r : User.Url.t) with
 | Login { goto } -> login env sess req ~goto

@@ -56,7 +56,7 @@ let view_fields_resp ?authors_ui env db req id =
     Reference.render_data ~only_public ref db |> Db.http_resp_error
   in
   let part = Reference_html.view_fields ?authors_ui g ~self r ~render_data in
-  Ok (Page.resp_part part)
+  Ok (Page.part_response part)
 
 (* Reponses *)
 
@@ -66,7 +66,7 @@ let confirm_delete app id =
   let* r = get_reference db id in
   let g = Service_env.page_gen app in
   let confirm = Reference_html.confirm_delete g r in
-  Ok (Page.resp_part confirm)
+  Ok (Page.part_response confirm)
 
 let delete =
   Entity_service.delete (module Reference) ~deleted_html:Reference_html.deleted
@@ -78,7 +78,7 @@ let edit_form app req id =
   let g = Service_env.page_gen app in
   let* render_data = get_reference_data db g r in
   let edit_form = Reference_html.edit_form g r ~render_data in
-  Ok (Page.resp_part edit_form)
+  Ok (Page.part_response edit_form)
 
 let index app =
   Service_env.with_db_transaction `Deferred app @@ fun db ->
@@ -87,14 +87,14 @@ let index app =
   let refs = Reference.list ~only_public in
   let* render_data = Reference.render_data ~only_public refs db in
   let page = Reference_html.index g render_data in
-  Ok (Page.resp page)
+  Ok (Page.response page)
 
 let new_form app req ~cancel =
   let* () = Entity_service.check_edit_authorized app in
   Service_env.with_db_transaction' `Deferred app @@ fun db ->
   let g = Service_env.page_gen app in
   let page = Reference_html.new_form g Reference.new' ~cancel in
-  Ok (Page.resp page)
+  Ok (Page.response page)
 
 let fill_in_form env req doi =
   let* () = Entity_service.check_edit_authorized env in
@@ -102,7 +102,7 @@ let fill_in_form env req doi =
   let* cancel =
     Result.map_error
       (* Bof *)
-      (fun e -> Result.get_error (Http.Resp.bad_request_400 ~explain:e ())) @@
+      (fun e -> Result.get_error (Http.Response.bad_request_400 ~explain:e ())) @@
     let* bare = Kurl.Bare.of_req_referer req in
     Ok (Entity.Url.cancel_url_of_query (Kurl.Bare.query bare))
   in
@@ -111,13 +111,13 @@ let fill_in_form env req doi =
   let* explain, part =
     Service_block.fill_in_reference_form env db ~self ~cancel doi
   in
-  Ok (Page.resp_part ?explain part)
+  Ok (Page.part_response ?explain part)
 
 let change_authors_publicity env req id =
   let* () = Entity_service.check_edit_authorized env in
   Service_env.with_db_transaction' `Immediate env @@ fun db ->
-  let* q = Http.Req.to_query req in
-  let* is_undo = Hquery.find Hquery.key_is_undo ~none:false q in
+  let* q = Http.Request.to_query req in
+  let* is_undo = Hquery.find_first Hquery.key_is_undo ~none:false q in
   let* authors_ui = match is_undo with
   | true ->
       let* ids = Hquery.find_ids ~uniquify:true "undo" q in
@@ -147,7 +147,7 @@ let page app ref =
   let* r = get_reference_of_page_ref db g ~only_public ref in
   let* render_data, cites, cited_by = get_page_data db g r in
   let page = Reference_html.page g r ~render_data ~cites ~cited_by in
-  Ok (Page.resp page)
+  Ok (Page.response page)
 
 let maybe_create_container db vs q =
   match Hquery.find_create_container q with
@@ -182,7 +182,7 @@ let create app req = (* create and update are very similar factor out a bit. *)
   let* () = Entity_service.check_edit_authorized app in
   let entity_page_url id = Reference.Url.v (Page (None, id)) in
   Service_env.with_db_transaction' `Immediate app @@ fun db ->
-  let* q = Http.Req.to_query req in
+  let* q = Http.Request.to_query req in
   let* vs =
     Hquery.careless_find_table_cols ~ignore:[Col.V Reference.id']
       Reference.table q
@@ -217,12 +217,12 @@ let create app req = (* create and update are very similar factor out a bit. *)
   in
   let uf = Service_env.url_fmt app in
   let headers = Hfrag.hc_redirect uf (entity_page_url id) in
-  Ok (Http.Resp.empty ~headers Http.ok_200)
+  Ok (Http.Response.empty ~headers Http.Status.ok_200)
 
 let update env req id =
   let* () = Entity_service.check_edit_authorized env in
   Service_env.with_db_transaction' `Immediate env @@ fun db ->
-  let* q = Http.Req.to_query req in
+  let* q = Http.Request.to_query req in
   let ignore = [Col.V Reference.id'] in
   let* vs = Hquery.careless_find_table_cols ~ignore Reference.table q in
   let vs = match Hquery.find_date q with
@@ -254,7 +254,7 @@ let update env req id =
   let title = Reference_html.page_full_title g r in
   let html = Reference_html.view_full g ~self r ~render_data ~cites ~cited_by in
   let headers = Hfrag.hc_page_location_update uf self ~title () in
-  Ok (Page.resp_part ~headers html)
+  Ok (Page.part_response ~headers html)
 
 let view_fields app req id =
   Service_env.with_db_transaction' `Deferred app @@ fun db ->

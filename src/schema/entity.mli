@@ -169,32 +169,36 @@ module Url : sig
   (** {1:query Query keys} *)
 
   val replace_by : string
-  val replace_by_of_query : Http.query -> (Id.t, Http.resp) result
-  val replace_by_of_query' : Http.query -> (Id.t option , Http.resp) result
+  val replace_by_of_query :
+    Http.Query.t -> (Id.t, Http.Response.t) result
+
+  val replace_by_of_query' :
+    Http.Query.t -> (Id.t option , Http.Response.t) result
 
   type cancel_url = string option
-  val cancel_url_of_query : Http.query -> cancel_url
-  val cancel_url_to_query : cancel_url -> Http.query option
+  val cancel_url_of_query : Http.Query.t -> cancel_url
+  val cancel_url_to_query : cancel_url -> Http.Query.t option
 
   val select : string
-  val select_of_query : Http.query -> string
-  val select_to_query : string -> Http.query option
+  val select_of_query : Http.Query.t -> string
+  val select_to_query : string -> Http.Query.t option
 
   type input_name = string
-  val input_name_of_query : Http.query -> (input_name, Http.resp) result
-  val input_name_to_query : ?init:Http.query -> input_name -> Http.query
+  val input_name_of_query : Http.Query.t -> (input_name, Http.Response.t) result
+  val input_name_to_query : ?init:Http.Query.t -> input_name -> Http.Query.t
 
   type for_list = bool
-  val for_list_of_query : Http.query -> (for_list, Http.resp) result
-  val for_list_to_query : ?init:Http.query -> for_list -> Http.query
+  val for_list_of_query : Http.Query.t -> (for_list, Http.Response.t) result
+  val for_list_to_query : ?init:Http.Query.t -> for_list -> Http.Query.t
 
   (** {1:meth Methods} *)
 
   val meth_id :
-    Kurl.bare -> 'a Http.Meth.constraint' list -> string ->
-    ('a * Res.Id.t, Http.resp) result
+    Kurl.bare -> 'a Http.Method.constraint' list -> string ->
+    ('a * Res.Id.t, Http.Response.t) result
 
-  val get_id : Kurl.bare -> string -> ([> `GET ] * Res.Id.t, Http.resp) result
+  val get_id : Kurl.bare -> string ->
+    ([> `GET ] * Res.Id.t, Http.Response.t) result
 end
 
 (*---------------------------------------------------------------------------

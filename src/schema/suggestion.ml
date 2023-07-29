@@ -82,20 +82,20 @@ module Url = struct
 
   let dec u = match Kurl.Bare.path u with
   | [""] ->
-      let* meth = Kurl.allow Http.Meth.[get; post] u in
+      let* meth = Kurl.allow Http.Method.[get; post] u in
       let url = match meth with `GET -> Index | `POST -> Create in
       Kurl.ok url
   | ["part"; "confirm-delete"; id] ->
       let* `GET, id = Entity.Url.get_id u id in
       Kurl.ok (Confirm_delete id)
   | ["part"; "fill-in"] ->
-      let* `POST = Kurl.allow Http.Meth.[post] u in
+      let* `POST = Kurl.allow Http.Method.[post] u in
       Kurl.ok Fill_in
   | ["part"; "view-fields"; id] ->
       let* `GET, id = Entity.Url.get_id u id in
       Kurl.ok (View_fields id)
   | [id] ->
-      let* meth, id = Entity.Url.meth_id u Http.Meth.[get; delete] id in
+      let* meth, id = Entity.Url.meth_id u Http.Method.[get; delete] id in
       let url = match meth with
       | `DELETE -> Delete id
       | `GET ->
@@ -115,7 +115,7 @@ module Url = struct
   | Index -> Kurl.Bare.v `GET [""] ~ext:html
   | Page {id; created} ->
       let query = match created with
-      | true -> Http.Query.add "created" "" Http.Query.empty
+      | true -> Http.Query.empty |> Http.Query.def "created" ""
       | false -> Http.Query.empty
       in
       Kurl.bare `GET [Res.Id.to_string id] ~query ~ext:html

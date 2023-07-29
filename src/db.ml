@@ -180,10 +180,10 @@ let http_resp_error ?(retry_after_s = 2) e =
   match Rel_sqlite3.Error.code e with
   | e when e = Rel_sqlite3.Error.busy_timeout ->
       let dur = string_of_int retry_after_s in
-      let headers = Http.Headers.(empty |> add Http.retry_after dur) in
-      Http.Resp.v ~headers ~explain Http.service_unavailable_503
+      let headers = Http.Headers.empty |> Http.Headers.(def retry_after dur) in
+      Http.Response.empty ~headers ~explain Http.Status.service_unavailable_503
   | _ ->
-      Http.Resp.v ~explain Http.server_error_500
+      Http.Response.empty ~explain Http.Status.server_error_500
 
 let http_resp_error ?retry_after_s r =
   Result.map_error (http_resp_error ?retry_after_s) r

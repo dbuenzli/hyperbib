@@ -57,12 +57,12 @@ val new_entity_button : href:string -> label:string -> El.html
 (** {1:hc Hc responses} *)
 
 val hc_page_location_update :
-  ?init:Http.headers -> Kurl.fmt -> Kurl.t -> title:string -> unit ->
-  Http.headers
+  ?init:Http.Headers.t -> Kurl.fmt -> Kurl.t -> title:string -> unit ->
+  Http.Headers.t
 
-val hc_redirect : ?init:Http.headers -> Kurl.fmt -> Kurl.t -> Http.headers
+val hc_redirect : ?init:Http.Headers.t -> Kurl.fmt -> Kurl.t -> Http.Headers.t
 
-val url_of_req_referer : Http.req -> (Kurl.t, Http.resp) result
+val url_of_req_referer : Http.Request.t -> (Kurl.t, Http.Response.t) result
 
 (** {1:links Links and anchors} *)
 

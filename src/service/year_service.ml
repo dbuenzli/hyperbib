@@ -10,7 +10,7 @@ let list env =
   Service_env.with_db_transaction `Deferred env @@ fun db ->
   let* years = Db.list db Year.public_domain_stmt in
   let page = Year_html.index (Service_env.page_gen env) years in
-  Ok (Page.resp page)
+  Ok (Page.response page)
 
 let page env year =
   Service_env.with_db_transaction `Deferred env @@ fun db ->
@@ -20,7 +20,7 @@ let page env year =
   let refs = Year.filter ~year:(Rel_query.Int.v year) refs in
   let* render_data = Reference.render_data ~only_public refs db in
   let page = Year_html.page g ~year render_data in
-  Ok (Page.resp page)
+  Ok (Page.response page)
 
 let resp r env user req = match (r : Year.Url.t) with
 | Index -> list env

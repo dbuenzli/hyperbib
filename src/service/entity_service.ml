@@ -12,7 +12,7 @@ let check_edit_authorized env =
      and retry the request, we might need a bit of `hc` support. *)
   match User.Caps.edit (Service_env.caps env) with
   | true -> Ok ()
-  | false -> Http.Resp.unauthorized_401 () (* FIXME do something for user *)
+  | false -> Http.Response.unauthorized_401 () (* FIXME do something for user *)
 
 
 (* Data lookups *)
@@ -23,7 +23,7 @@ let get_entity
   =
   let* s = Db.first' db (E.find_id_stmt id) in
   match s with
-  | None -> Http.Resp.not_found_404 ()
+  | None -> Http.Response.not_found_404 ()
   | Some s -> Ok s
 
 (* Responses *)
@@ -34,12 +34,12 @@ let create
   =
   let* () = check_edit_authorized env in
   Service_env.with_db_transaction' `Immediate env @@ fun db ->
-  let* q = Http.Req.to_query req in
+  let* q = Http.Request.to_query req in
   let* vs = Hquery.careless_find_table_cols ~ignore:[Col.V E.id'] E.table q in
   let* id = Db.insert' db (E.create_cols ~ignore_id:true vs) in
   let uf = Service_env.url_fmt env in
   let headers = Hfrag.hc_redirect uf (entity_page_url id) in
-  Ok (Http.Resp.empty ~headers Http.ok_200)
+  Ok (Http.Response.empty ~headers Http.Status.ok_200)
 
 let delete
     (type t) (module E : Entity.IDENTIFIABLE_WITH_QUERIES with type t = t)
@@ -50,7 +50,7 @@ let delete
   let* c = get_entity (module E) db id in
   let* () = Db.exec' db (E.delete id) in
   let deleted = deleted_html (Service_env.page_gen env) c in
-  Ok (Page.resp_part deleted)
+  Ok (Page.part_response deleted)
 
 
 (* Page references *)
@@ -64,7 +64,7 @@ let entity_for_page_ref
   let get_res id =
     let resp_page_404 ?explain req_name id =
       let page = page_404 g ~self:(page_url req_name id) in
-      Error (Page.resp_404 ?explain page)
+      Error (Page.response_404 ?explain page)
     in
     let* p = Db.first' db (entity_find_id_stmt id) in
     match p with

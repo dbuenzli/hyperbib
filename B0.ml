@@ -15,16 +15,14 @@ let brr = B0_ocaml.libname "brr"
 let note = B0_ocaml.libname "note"
 let note_brr = B0_ocaml.libname "note.brr"
 let cmdliner = B0_ocaml.libname "cmdliner"
+let htmlit = B0_ocaml.libname "htmlit"
 let hc = B0_ocaml.libname "hc"
 let hc_page = B0_ocaml.libname "hc.page"
 let ptime = B0_ocaml.libname "ptime"
 let ptime_clock = B0_ocaml.libname "ptime.clock.os"
-let threads = B0_ocaml.libname "threads.posix"
+let threads = B0_ocaml.libname "threads"
 let webs = B0_ocaml.libname "webs"
 let webs_cli = B0_ocaml.libname "webs.cli"
-let webs_connector = B0_ocaml.libname "webs.connector"
-let webs_html = B0_ocaml.libname "webs.html"
-let webs_httpc = B0_ocaml.libname "webs.httpc"
 let webs_kit = B0_ocaml.libname "webs.kit"
 let webs_unix = B0_ocaml.libname "webs.unix"
 
@@ -112,9 +110,10 @@ let hyperbib =
   let doc = "hyperbib tool" in
   let requires =
     [ threads; cmdliner; ptime; ptime_clock; b0_std; b0; b0_file; b0_kit;
+      htmlit;
       rel; rel_kit; rel_cli; rel_sqlite3; rel_pool;
-      webs; webs_connector; webs_kit; webs_unix; webs_cli; webs_httpc;
-      webs_html; hc ]
+      webs; webs_kit; webs_unix; webs_cli;
+      hc ]
   in
   let srcs =
     (* XXX slightly messy we need to copy it over because of

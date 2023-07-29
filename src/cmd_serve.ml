@@ -8,7 +8,8 @@ open Result.Syntax
 
 let log_startup c env =
   let app_dir = Hyperbib.Conf.app_dir (Service_env.conf env) in
-  let l = Webs_httpc.listener c and service_path = Webs_httpc.service_path c in
+  let l = Webs_http11_gateway.listener c in
+  let service_path = Webs_http11_gateway.service_path c in
   Log.app (fun m ->
       m  "@[<v>Hyperbib %s database schema v%d@,\
                Application directory: %a@,\
@@ -16,7 +17,7 @@ let log_startup c env =
         Stamp.version
         Schema.version
         (Fmt.code Fpath.pp_unquoted) app_dir
-        (Fmt.code Webs_unix.pp_listener) l
+        (Fmt.code Webs_listener.pp) l
         (Fmt.code Http.Path.pp) service_path);
   if (Service_env.editable env = `Unsafe) then
     Log.warn (fun m -> m "Anyone can edit the bibliography, no login required.")
@@ -75,11 +76,13 @@ let serve
     let tree = Service_tree.v and fallback = Static_file_service.v in
     Ok (Service.v ~service_path ~private_key ~secure_cookie tree ~fallback env)
   in
-  let log = Webs_connector.default_log ~trace:true () in
-  let c = Webs_httpc.create ~log ~listener ~service_path ~max_connections () in
+  let log = Http.Connector.Log.default ~trace:true () in
+  let c =
+    Webs_http11_gateway.make ~log ~listener ~service_path ~max_connections ()
+  in
   log_startup c env;
   start_backup_thread ~conf ~db_pool ~backup_every_s;
-  let* () = Webs_httpc.serve c service in
+  let* () = Webs_http11_gateway.serve c service in
   let* () = finish ~db_pool in
   log_shutdown ();
   Ok Hyperbib.Exit.ok

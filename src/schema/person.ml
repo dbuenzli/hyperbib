@@ -145,38 +145,38 @@ module Url = struct
   open Result.Syntax
 
   let role = "role"
-  let role_of_query q = match Http.Query.find role q with
+  let role_of_query q = match Http.Query.find_first role q with
   | None -> Ok None
   | Some "editor" -> Ok (Some Editor)
   | Some "author" -> Ok (Some Author)
   | Some r ->
       let reason = Fmt.str "key %s: unknown role '%S'" role r in
-      Http.Resp.bad_request_400 ~reason ()
+      Http.Response.bad_request_400 ~reason ()
 
   let role_to_query ?(init = Http.Query.empty) = function
   | None -> init
-  | Some r -> Http.Query.add role (role_to_string r) init
+  | Some r -> init |> Http.Query.def role (role_to_string r)
 
   let first = "first"
   let last = "last"
   let orcid = "orcid"
-  let person_of_query q = match Http.Query.find first q with
-  | None -> Http.Resp.bad_request_400 ~reason:"No person found" ()
+  let person_of_query q = match Http.Query.find_first first q with
+  | None -> Http.Response.bad_request_400 ~reason:"No person found" ()
   | Some f ->
-      match Http.Query.find last q with
-      | None -> Http.Resp.bad_request_400 ~reason:"No person found" ()
+      match Http.Query.find_first last q with
+      | None -> Http.Response.bad_request_400 ~reason:"No person found" ()
       | Some l ->
-          match Http.Query.find orcid q with
-          | None -> Http.Resp.bad_request_400 ~reason:"No person found" ()
+          match Http.Query.find_first orcid q with
+          | None -> Http.Response.bad_request_400 ~reason:"No person found" ()
           | Some orcid ->
               Ok (Person.v ~id:0 ~last_name:l ~first_names:f ~orcid
                     ~note:"" ~private_note:"" ~public:true ())
 
   let person_to_query ?(init = Http.Query.empty) p =
     init
-    |> Http.Query.add last (Person.last_name p)
-    |> Http.Query.add first (Person.first_names p)
-    |> Http.Query.add orcid (Person.orcid p)
+    |> Http.Query.def last (Person.last_name p)
+    |> Http.Query.def first (Person.first_names p)
+    |> Http.Query.def orcid (Person.orcid p)
 
   type named_id = string option * id
   type t =
@@ -204,7 +204,7 @@ module Url = struct
 
   let dec u = match Kurl.Bare.path u with
   | [""] ->
-      let* meth = Kurl.allow Http.Meth.[get; post] u in
+      let* meth = Kurl.allow Http.Method.[get; post] u in
       let url = match meth with `GET -> Index | `POST -> Create in
       Kurl.ok url
   | ["part"; "confirm-delete"; id] ->
@@ -223,7 +223,7 @@ module Url = struct
       let* `GET, id = Entity.Url.get_id u id in
       Kurl.ok (Duplicate_form id)
   | ["part"; "new-form"] ->
-      let* `GET = Kurl.allow Http.Meth.[get] u in
+      let* `GET = Kurl.allow Http.Method.[get] u in
       let cancel = Entity.Url.cancel_url_of_query (Kurl.Bare.query u) in
       Kurl.ok (New_form { cancel })
   | ["part"; "input"; id] ->
@@ -233,36 +233,36 @@ module Url = struct
       let* role = role_of_query (Kurl.Bare.query u) in
       Kurl.ok (Input (for_list, input_name, role, id))
   | ["part"; "input-create"] ->
-      let* `GET = Kurl.allow Http.Meth.[get] u in
+      let* `GET = Kurl.allow Http.Method.[get] u in
       let* for_list = Entity.Url.for_list_of_query (Kurl.Bare.query u) in
       let* input_name = Entity.Url.input_name_of_query (Kurl.Bare.query u) in
       let* role = role_of_query (Kurl.Bare.query u) in
       let* p = person_of_query (Kurl.Bare.query u) in
       Kurl.ok (Input_create (for_list, input_name, role, p))
   | ["part"; "input-finder"] ->
-      let* `GET = Kurl.allow Http.Meth.[get] u in
+      let* `GET = Kurl.allow Http.Method.[get] u in
       let* for_list = Entity.Url.for_list_of_query (Kurl.Bare.query u) in
       let* input_name = Entity.Url.input_name_of_query (Kurl.Bare.query u) in
       let* role = role_of_query (Kurl.Bare.query u) in
       Kurl.ok (Input_finder (for_list, input_name, role))
   | ["part"; "input-finder-find"] ->
-      let* `GET = Kurl.allow Http.Meth.[get] u in
+      let* `GET = Kurl.allow Http.Method.[get] u in
       let* for_list = Entity.Url.for_list_of_query (Kurl.Bare.query u) in
       let* input_name = Entity.Url.input_name_of_query (Kurl.Bare.query u) in
       let* role = role_of_query (Kurl.Bare.query u) in
       let q = Entity.Url.select_of_query (Kurl.Bare.query u) in
       Kurl.ok (Input_finder_find (for_list, input_name, role, q))
   | ["action"; "duplicate"; id] ->
-      let* `POST, id = Entity.Url.meth_id u Http.Meth.[post] id in
+      let* `POST, id = Entity.Url.meth_id u Http.Method.[post] id in
       Kurl.ok (Duplicate id)
   | ["action"; "replace"; id] ->
-      let* `POST, id = Entity.Url.meth_id u Http.Meth.[post] id in
+      let* `POST, id = Entity.Url.meth_id u Http.Method.[post] id in
       Kurl.ok (Replace id)
   | [name; id] ->
       let* `GET, id = Entity.Url.get_id u id in
       Kurl.ok (Page (Some name, id))
   | [id] ->
-      let* meth, id = Entity.Url.meth_id u Http.Meth.[get; put; delete] id in
+      let* meth, id = Entity.Url.meth_id u Http.Method.[get; put; delete] id in
       let url = match meth with
       | `GET -> Page (None, id) | `PUT -> Update id | `DELETE -> Delete id
       in

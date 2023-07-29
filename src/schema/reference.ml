@@ -630,13 +630,13 @@ module Url = struct
   | View_fields of id
 
   let doi = "doi"
-  let get_doi u = match Http.Query.find doi (Kurl.Bare.query u) with
-  | None -> Http.Resp.bad_request_400 ()
+  let get_doi u = match Http.Query.find_first doi (Kurl.Bare.query u) with
+  | None -> Http.Response.bad_request_400 ()
   | Some doi -> Ok doi
 
   let dec u = match Kurl.Bare.path u with
   | [""] ->
-      let* meth = Kurl.allow Http.Meth.[get; post] u in
+      let* meth = Kurl.allow Http.Method.[get; post] u in
       let url = match meth with `GET -> Index | `POST -> Create in
       Kurl.ok url
   | ["part"; "confirm-delete"; id] ->
@@ -646,7 +646,7 @@ module Url = struct
       let* `GET, id = Entity.Url.get_id u id in
       Kurl.ok (Edit_form id)
   | ["part"; "fill-in-form"] ->
-      let* `GET = Kurl.allow Http.Meth.[get] u in
+      let* `GET = Kurl.allow Http.Method.[get] u in
       let* doi = get_doi u in
       Kurl.ok (Fill_in_form doi)
   | ["part"; "view-fields"; id] ->
@@ -661,7 +661,7 @@ module Url = struct
       Kurl.ok (Duplicate_form id)
 *)
   | ["part"; "new-form"] ->
-      let* `GET = Kurl.allow Http.Meth.[get] u in
+      let* `GET = Kurl.allow Http.Method.[get] u in
       let cancel = Entity.Url.cancel_url_of_query (Kurl.Bare.query u) in
       Kurl.ok (New_form { cancel })
 (*
@@ -673,13 +673,13 @@ module Url = struct
       Kurl.ok (Replace id)
 *)
   | ["action"; "change-authors-publicity"; id] ->
-      let* `POST, id = Entity.Url.meth_id u Http.Meth.[post] id in
+      let* `POST, id = Entity.Url.meth_id u Http.Method.[post] id in
       Kurl.ok (Change_authors_publicity id)
   | [name; id] ->
       let* `GET, id = Entity.Url.get_id u id in
       Kurl.ok (Page (Some name, id))
   | [id] ->
-      let* meth, id = Entity.Url.meth_id u Http.Meth.[get; put; delete] id in
+      let* meth, id = Entity.Url.meth_id u Http.Method.[get; put; delete] id in
       let url = match meth with
       | `GET -> Page (None, id) | `PUT -> Update id | `DELETE -> Delete id
       in
@@ -712,7 +712,7 @@ module Url = struct
       (* XXX something feels wrong with Kurl here separate
          URL req / resp types ? *)
       let query = match d with
-      | "" -> None | d -> Some (Http.Query.(empty |> add doi d))
+      | "" -> None | d -> Some (Http.Query.empty |> Http.Query.def doi d)
       in
       Kurl.bare `GET ["part"; "fill-in-form"] ?query
   | New_form { cancel } ->

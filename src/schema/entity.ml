@@ -145,55 +145,58 @@ module Url = struct
   let replace_by = "replace-by"
 
   (* XXX remove eventually *)
-  let replace_by_of_query q = match Http.Query.find replace_by q with
-  | None -> Http.Resp.bad_request_400 ()
+  let replace_by_of_query q = match Http.Query.find_first replace_by q with
+  | None -> Http.Response.bad_request_400 ()
   | Some r -> Res.Id.decode r
 
-  let replace_by_of_query' q = match Http.Query.find replace_by q with
+  let replace_by_of_query' q = match Http.Query.find_first replace_by q with
   | None | Some "" -> Ok None
   | Some r -> Result.map Option.some (Res.Id.decode r)
 
 
   type cancel_url = string option
   let cancel = "cancel"
-  let cancel_url_of_query query = Http.Query.find cancel query
+  let cancel_url_of_query query = Http.Query.find_first cancel query
   let cancel_url_to_query = function
-  | None -> None | Some goto -> Some (Http.Query.(empty |> add cancel goto))
+  | None -> None
+  | Some goto -> Some (Http.Query.empty |> Http.Query.def cancel goto)
 
   let select = "select"
-  let select_of_query q = Option.value ~default:"" (Http.Query.find select q)
+  let select_of_query q =
+    Option.value ~default:"" (Http.Query.find_first select q)
+
   let select_to_query = function
   | "" -> None
-  | sel -> Some (Http.Query.(empty |> add select sel))
+  | sel -> Some (Http.Query.empty |> Http.Query.def select sel)
 
   type input_name = string
   let input_name = "input-name"
-  let input_name_of_query q = match Http.Query.find input_name q with
-  | None -> Http.Resp.bad_request_400 ()
+  let input_name_of_query q = match Http.Query.find_first input_name q with
+  | None -> Http.Response.bad_request_400 ()
   | Some n -> Ok n
 
   type for_list = bool
   let for_list = "for-list"
-  let for_list_of_query q = match Http.Query.find for_list q with
+  let for_list_of_query q = match Http.Query.find_first for_list q with
   | None -> Ok false
   | Some bool ->
       match bool_of_string_opt bool with
-      | None -> Http.Resp.bad_request_400 ~reason:"%S: not a boolean" ()
+      | None -> Http.Response.bad_request_400 ~reason:"%S: not a boolean" ()
       | Some bool -> Ok bool
 
   let for_list_to_query ?(init = Http.Query.empty) b =
-    Http.Query.add for_list (string_of_bool b) init
+    init |> Http.Query.def for_list (string_of_bool b)
 
 
   let input_name_to_query ?(init = Http.Query.empty) n =
-    Http.Query.add input_name n init
+    init |> Http.Query.def input_name n
 
   let meth_id u ms id =
     let* meth = Kurl.allow ms u in
     let* id = Res.Id.decode id in
     Ok (meth, id)
 
-  let get_id u id = meth_id u Http.Meth.[get] id
+  let get_id u id = meth_id u Http.Method.[get] id
 end
 
 (*---------------------------------------------------------------------------

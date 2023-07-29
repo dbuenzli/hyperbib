@@ -9,12 +9,6 @@ open B0_json
 
 (* Passwords *)
 
-let random_salt ~len =
-  let () = Random.self_init () in
-  let b = Bytes.create len in
-  for i = 0 to len - 1 do Bytes.set_uint8 b i (Random.int 256) done;
-  Bytes.unsafe_to_string b
-
 type password =
   { algo : [ `Pbkdf2_hmac_sha_256 ];
     iterations : int;
@@ -23,11 +17,13 @@ type password =
 
 let password algo iterations salt key = { algo; iterations; salt; key }
 
-let make_password pass =
-  let key_len = 32 in
-  let iterations = 400_000 in
-  let salt = random_salt ~len:8 in
-  let key = Webs_kit.Sha_256.pbkdf2_hmac ~key_len ~iterations ~pass ~salt () in
+let make_password password =
+  let key_length = 32 in
+  let iterations = 600_000 in
+  let salt = Webs_hash.Sha_256.random_salt ~length:16 () in
+  let key =
+    Webs_hash.Sha_256.pbkdf2_hmac ~key_length ~iterations ~password ~salt ()
+  in
   { algo = `Pbkdf2_hmac_sha_256; iterations; salt; key; }
 
 (* Users *)
@@ -46,14 +42,16 @@ let add ~name ~password us =
   let user = user name password in
   String.Map.add name user us
 
-let check ~name ~password:pass us = match String.Map.find_opt name us with
+let check ~name ~password us = match String.Map.find_opt name us with
 | None -> false
 | Some u ->
-    let key_len = String.length u.password.key in
+    let key_length = String.length u.password.key in
     let iterations = u.password.iterations in
     let salt = u.password.salt in
-    let k = Webs_kit.Sha_256.pbkdf2_hmac ~key_len ~iterations ~pass ~salt () in
-    Webs_kit.Sha_256.equal_key k u.password.key
+    let key =
+      Webs_hash.Sha_256.pbkdf2_hmac ~key_length ~iterations ~password ~salt ()
+    in
+    Webs_hash.Sha_256.equal_key key u.password.key
 
 let fold f us acc = String.Map.fold (fun _ u -> f u) us acc
 
@@ -136,9 +134,10 @@ module Url = struct
   let username_key = "username"
   let password_key = "password"
 
-  let goto_of_query query = Http.Query.find goto_key query
+  let goto_of_query query = Http.Query.find_first goto_key query
   let goto_to_query goto = match goto with
-  | None -> None | Some goto -> Some (Http.Query.(empty |> add goto_key goto))
+  | None -> None |
+    Some goto -> Some (Http.Query.empty |> Http.Query.def goto_key goto)
 
   type t =
   | Login of { goto : goto }
@@ -148,21 +147,21 @@ module Url = struct
 
   let dec u = match Kurl.Bare.path u with
   | ["login"] ->
-      let* meth = Kurl.allow Http.Meth.[get; post] u in
+      let* meth = Kurl.allow Http.Method.[get; post] u in
       let goto = goto_of_query (Kurl.Bare.query u) in
       (match meth with
       | `GET -> Kurl.ok (Login { goto })
       | `POST -> Kurl.ok (Authenticate { goto }))
   | ["logout"] ->
-      let* `POST = Kurl.allow Http.Meth.[post] u in
+      let* `POST = Kurl.allow Http.Method.[post] u in
       let goto = goto_of_query (Kurl.Bare.query u) in
       Kurl.ok (Logout { goto })
   | ["view"; "private"; private'] ->
-      let* `POST = Kurl.allow Http.Meth.[post] u in
+      let* `POST = Kurl.allow Http.Method.[post] u in
       let* private' = match private' with
       | "true" -> Ok true
       | "false" -> Ok false
-      | _ -> Http.Resp.not_found_404 ()
+      | _ -> Http.Response.not_found_404 ()
       in
       Kurl.ok (View { private' })
   | _ ->

@@ -33,7 +33,8 @@ let lookup_doi env doi =
   let* httpr =
     Result.map_error
       (* Bof *)
-      (fun e -> Result.get_error (Http.Resp.server_error_500 ~explain:e ())) @@
+      (fun e ->
+         Result.get_error (Http.Response.server_error_500 ~explain:e ())) @@
     Result.map Option.some (B0_http.Http_client.get ())
   in
   Ok (doi, Import.Doi.get_ref httpr ~cache:doi_cache doi)

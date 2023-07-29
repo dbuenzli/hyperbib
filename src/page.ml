@@ -258,34 +258,36 @@ let for_404 ?ui_ext g ~kind ~self ~consult =
 
 (* Responses *)
 
-let resp_part ?explain ?reason ?headers ?(status = Http.ok_200) part =
-  let html = El.to_string ~doc_type:false part in
-  Http.Resp.html ?explain ?reason ?headers status html
+let part_response
+    ?explain ?reason ?headers ?(status = Http.Status.ok_200) part
+  =
+  let html = El.to_string ~doctype:false part in
+  Http.Response.html ?explain ?reason ?headers status html
 
-let resp ?explain ?reason ?headers ?(status = Http.ok_200) p =
-  let html = El.to_string ~doc_type:true p.html in
-  Http.Resp.html ?explain ?reason ?headers status html
+let response ?explain ?reason ?headers ?(status = Http.Status.ok_200) p =
+  let html = El.to_string ~doctype:true p.html in
+  Http.Response.html ?explain ?reason ?headers status html
 
-let resp_404 ?explain ?reason ?headers p =
-  resp ?explain ?reason ?headers ~status:Http.not_found_404 p
+let response_404 ?explain ?reason ?headers p =
+  response ?explain ?reason ?headers ~status:Http.Status.not_found_404 p
 
 (* Errors *)
 
-let error g req resp' =
+let error g request response' =
   let uf = Gen.url_fmt g in
-  let is_hc_req = Http.Headers.mem Hc.hc (Http.Req.headers req) in
+  let is_hc_req = Http.Headers.mem Hc.hc (Http.Request.headers request) in
   let self =
     let bare =
-      if not is_hc_req then Kurl.Bare.of_req req else
+      if not is_hc_req then Kurl.Bare.of_req request else
       (* Make links relative to the requesting page, not to the request *)
-      match Kurl.Bare.of_req_referer req with
+      match Kurl.Bare.of_req_referer request with
       | Ok b -> b
-      | Error e -> Log.err (fun m -> m "%s" e); Kurl.Bare.of_req req
+      | Error e -> Log.err (fun m -> m "%s" e); Kurl.Bare.of_req request
     in
     Kurl.v Kurl.any bare
   in
   let with_code title status = Fmt.str "%s (%d)" title status in
-  let title, descr = match Http.Resp.status resp' with
+  let title, descr = match Http.Response.status response' with
   | 401 -> Uimsg.unauthorized_401, Uimsg.unauthorized_401_descr
   | 404 -> Uimsg.not_found_404, Uimsg.not_found_404_descr
   | 501 -> Uimsg.not_implemented_501, Uimsg.not_implemented_501_descr
@@ -300,16 +302,13 @@ let error g req resp' =
   let content =
     El.section [ El.h1 [El.txt title]; El.p [El.txt descr; El.sp; goto_bib;]]
   in
-  (* FIXME webs body and content length business this shows we do it wrong. *)
-  let explain = Http.Resp.explain resp' in
-  let headers =
-    Http.Headers.undef Http.content_length (Http.Resp.headers resp')
-  in
-  let status = Http.Resp.status resp' in
-  let reason = Http.Resp.reason resp' in
-  if is_hc_req then resp_part ~reason ~explain ~headers ~status content else
-  let p = with_content g ~self ~title ~content in
-  resp ~reason ~explain ~headers ~status p
+  let explain = Http.Response.explain response' in
+  let headers = Http.Response.headers response' in
+  let status = Http.Response.status response' in
+  let reason = Http.Response.reason response' in
+  if is_hc_req then part_response ~reason ~explain ~headers ~status content else
+  let page = with_content g ~self ~title ~content in
+  response ~reason ~explain ~headers ~status page
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2021 University of Bern

@@ -4,7 +4,6 @@
   ---------------------------------------------------------------------------*)
 
 open Hyperbib.Std
-open Webs_kit
 
 (** Service environment.
 
@@ -63,18 +62,18 @@ val max_pending_suggestions : t -> int
 (** {1:brackets Convenience database brackets} *)
 
 val with_db :
-  t -> (Db.t -> ('a, Db.error) result) -> ('a, Http.resp) result
+  t -> (Db.t -> ('a, Db.error) result) -> ('a, Http.Response.t) result
 
 val with_db' :
-  t -> (Db.t -> ('a, Http.resp) result) -> ('a, Http.resp) result
+  t -> (Db.t -> ('a, Http.Response.t) result) -> ('a, Http.Response.t) result
 
 val with_db_transaction :
   Db.transaction_kind -> t -> (Db.t -> ('a, Db.error) result) ->
-  ('a, Http.resp) result
+  ('a, Http.Response.t) result
 
 val with_db_transaction' :
-  Db.transaction_kind -> t -> (Db.t -> ('a, Http.resp) result) ->
-  ('a, Http.resp) result
+  Db.transaction_kind -> t -> (Db.t -> ('a, Http.Response.t) result) ->
+  ('a, Http.Response.t) result
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2021 University of Bern

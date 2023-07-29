@@ -18,7 +18,7 @@
  *)
 
 open Webs
-open Webs_html
+open Htmlit
 
 (** Classes. *)
 module Class : sig
@@ -148,7 +148,7 @@ val input_string' :
 
 val input_text' :
   ?at:At.t list ->  ?autogrow:bool -> min_rows:int -> name:string ->
-  string -> Webs_html.El.html
+  string -> El.html
 
 val input_bool' : ?at:At.t list -> name:string -> bool -> El.html
 
@@ -173,7 +173,7 @@ val field_bool :
 val field_string' :
   ?input_at:At.t list -> ?at:At.t list -> ?autocomplete:bool ->
   ?autogrow:bool -> min_size:int -> label:El.html ->
-  name:string -> string -> Webs_html.El.html
+  name:string -> string -> El.html
 
 val field_string :
   ?input_at:At.t list -> ?at:At.t list -> ?autocomplete:bool ->

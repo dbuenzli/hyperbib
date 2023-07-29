@@ -5,7 +5,6 @@
 
 open Hyperbib.Std
 open Result.Syntax
-open Webs_kit
 
 (* Sessions *)
 
@@ -43,13 +42,13 @@ module Session = struct
       end
     with Failure e -> Error e
 
-  let state = Session.State.v ~eq:( = ) ~encode ~decode ()
+  let state = Webs_session.State.make ~encode ~decode ~equal:( = ) ()
 
-  type handler = (t, Session.client_stored_error) Session.handler
+  type handler = (t, Webs_session.client_stored_error) Webs_session.Handler.t
   let handler ~service_path ~private_key ~secure_cookie:secure =
     let name = "hyperbib" in
-    let atts = Http.Cookie.atts ~secure ~path:service_path () in
-    Session.client_stored ~atts ~private_key ~name ()
+    let attributes = Http.Cookie.attributes ~secure ~path:service_path () in
+    Webs_session.client_stored ~attributes ~private_key ~name ()
 end
 
 (* Service private key setup. This could be in a webs bazaar. *)
@@ -69,11 +68,11 @@ let setup_private_key ~file =
   | true ->
       Result.map_error (err_load_private_key file) @@
       let* key = Os.File.read file in
-      Authenticatable.private_key_of_ascii_string key
+      Webs_authenticatable.Private_key.of_ascii_string key
   | false ->
       Result.map_error (err_save_private_key file) @@
-      let key = Authenticatable.random_private_key_hs256 () in
-      let save = Authenticatable.private_key_to_ascii_string key in
+      let key = Webs_authenticatable.Private_key.random_hs256 () in
+      let save = Webs_authenticatable.Private_key.to_ascii_string key in
       let force = true and make_path = false in
       let* () = Os.File.write ~force ~make_path ~mode:0o600 file save in
       Ok key
@@ -81,18 +80,19 @@ let setup_private_key ~file =
 (* Sub services *)
 
 type sub =
-  Service_env.t -> Session.t option -> Http.req ->
-  (Session.t Webs_kit.Session.resp, Session.t Webs_kit.Session.resp) result
+  Service_env.t -> Session.t option -> Http.Request.t ->
+  (Session.t Webs_session.response, Session.t Webs_session.response) result
 
 type sub_with_immutable_session =
-  Service_env.t -> Session.t option -> Http.req -> (Http.resp, Http.resp) result
+  Service_env.t -> Session.t option -> Http.Request.t ->
+  (Http.Response.t, Http.Response.t) result
 
 let sub_with_immutable_session service app sess req =
-  Webs_kit.Session.for_result sess (service app sess req)
+  Webs_session.for_result sess (service app sess req)
 
 (* Service *)
 
-type t = Service_env.t -> Http.req -> Http.resp
+type t = Service_env.t -> Http.Request.t -> Http.Response.t
 
 (* FIXME the following should still be further streamlined.
    Should we move what is in page_gen to service_env ? We need
@@ -151,29 +151,31 @@ let adjust_env_and_session env sess =
           env, sess
 
 let v ~service_path ~private_key ~secure_cookie tree ~fallback env =
-  let serve sess req =
-    let sess = match sess with
+  let serve session request =
+    let session = match session with
     | Ok v -> v
     | Error e ->
         (* Simply drop the session for now *)
-        let e = Webs_kit.Session.client_stored_error_message e in
+        let e = Webs_session.client_stored_error_message e in
         Log.err (fun m -> m "Session error: %s" e); None
     in
-    let env, sess = adjust_env_and_session env sess in
-    let sess, resp =
-      Http.Resp.result @@
-      let* req = Webs_kit.Session.for_error sess (Http.Req.clean_path req) in
-      let sub = Kurl.find_service tree  (Kurl.Bare.of_req req) in
-      let* sub = Webs_kit.Session.for_error sess sub in
+    let env, session = adjust_env_and_session env session in
+    let session, response =
+      Http.Response.result @@
+      let* () =
+        Webs_session.for_error session (Http.Request.clean_path request)
+      in
+      let sub = Kurl.find_service tree  (Kurl.Bare.of_req request) in
+      let* sub = Webs_session.for_error session sub in
       match sub with
-      | Some sub -> sub env sess req
-      | None -> (sub_with_immutable_session fallback) env sess req
+      | Some sub -> sub env session request
+      | None -> (sub_with_immutable_session fallback) env session request
     in
-    let error = Page.error (Service_env.page_gen env) req in
-    sess, Http.Resp.map_errors ~only_empty:true error resp
+    let error = Page.error (Service_env.page_gen env) request in
+    session, Http.Response.map_errors ~only_empty:true error response
   in
   let handler = Session.handler ~service_path ~private_key ~secure_cookie in
-  Webs_kit.Session.setup Session.state handler serve
+  Webs_session.setup Session.state handler serve
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2021 University of Bern

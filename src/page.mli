@@ -88,25 +88,26 @@ val full_title : Gen.t -> title:string -> string
 
 (** {1:resp Respones} *)
 
-val resp :
-  ?explain:string -> ?reason:string -> ?headers:Http.headers -> ?status:int ->
-  t -> Http.resp
+val response :
+  ?explain:string -> ?reason:string -> ?headers:Http.Headers.t -> ?status:int ->
+  t -> Http.Response.t
 (** [resp p] is an HTML page response for [p]. *)
 
-val resp_part :
-  ?explain:string -> ?reason:string -> ?headers:Http.headers -> ?status:int ->
-  El.html -> Http.resp
-(** [resp_part html] an HTML part response for [html] *)
+val part_response :
+  ?explain:string -> ?reason:string -> ?headers:Http.Headers.t -> ?status:int ->
+  El.html -> Http.Response.t
+(** [part_response html] an HTML part response for [html] *)
 
-val resp_404 :
-  ?explain:string -> ?reason:string -> ?headers:Http.headers -> t -> Http.resp
+val response_404 :
+  ?explain:string -> ?reason:string -> ?headers:Http.Headers.t -> t ->
+  Http.Response.t
 (** [resp_404] is [resp ~status:Http.not_found_404]. *)
 
 (** {1:errors Errors} *)
 
-val error : Gen.t -> Http.req -> Http.resp -> Http.resp
-(** [error g req resp] is a generic HTML error page when [req] errors
-    with [resp]. *)
+val error : Gen.t -> Http.Request.t -> Http.Response.t -> Http.Response.t
+(** [error g request response] is a generic HTML error page when [request]
+    errors with [response]. *)
 
 (** {1:fragments Fragment} *)
 

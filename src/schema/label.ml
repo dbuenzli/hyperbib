@@ -152,9 +152,10 @@ module Url = struct
   open Result.Syntax
 
   let cancel = "cancel"
-  let cancel_of_query query = Http.Query.find cancel query
+  let cancel_of_query query = Http.Query.find_first cancel query
   let cancel_to_query goto = match goto with
-  | None -> None | Some goto -> Some (Http.Query.(empty |> add cancel goto))
+  | None -> None | Some goto ->
+      Some (Http.Query.empty |> Http.Query.def cancel goto)
 
   type label = t
   type named_id = string option * id
@@ -172,22 +173,22 @@ module Url = struct
     let* id = Res.Id.decode id in
     Ok (id, meth)
 
-  let id_get req id = let* id, `GET = id_meth req Http.Meth.[get] id in Ok id
+  let id_get req id = let* id, `GET = id_meth req Http.Method.[get] id in Ok id
 
   let dec u = match Kurl.Bare.path u with
   | [""] ->
-      let* meth = Kurl.allow Http.Meth.[get; post] u in
+      let* meth = Kurl.allow Http.Method.[get; post] u in
       let url = match meth with `GET -> Index | `POST -> Create in
       Kurl.ok url
   | ["api"; "ui"; "edit"; id] -> let* id = id_get u id in Kurl.ok (Edit id)
   | ["api"; "ui"; "view"; id] -> let* id = id_get u id in Kurl.ok (View id)
   | ["edit"; "new"] ->
-      let* `GET = Kurl.allow Http.Meth.[get] u in
+      let* `GET = Kurl.allow Http.Method.[get] u in
       let cancel = cancel_of_query (Kurl.Bare.query u) in
       Kurl.ok (Edit_new { cancel })
   | [name; id] -> let* id = id_get u id in Kurl.ok (Page (Some name, id))
   | [id] ->
-      let* id, meth = id_meth u Http.Meth.[get;put] id in
+      let* id, meth = id_meth u Http.Method.[get;put] id in
       Kurl.ok @@ (match meth with `GET -> Page (None, id) | `PUT -> (Update id))
   | _ ->
       Kurl.no_match

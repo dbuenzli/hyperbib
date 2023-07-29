@@ -36,11 +36,10 @@ module Std = struct
   (* Webs needs *)
 
   module Http = Webs.Http
-  module Session = Webs_kit.Session
-  module Res = Webs_kit.Res
-  module Kurl = Webs_kit.Kurl
-  module At = Webs_html.At
-  module El = Webs_html.El
+  module Res = Webs_bazaar.Res
+  module Kurl = Webs_bazaar.Kurl
+  module At = Htmlit.At
+  module El = Htmlit.El
 
 end
 

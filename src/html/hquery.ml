@@ -9,11 +9,11 @@ let bad_val_400 ~kind k v =
   let trunc = String.sub v 0 (Int.min (String.length v) 10) in
   let dots = if String.length trunc <> String.length v then "…" else "" in
   let reason = Fmt.str "key %s: not a %s: %s%s" k kind trunc dots in
-  Http.Resp.bad_request_400 ~reason ()
+  Http.Response.bad_request_400 ~reason ()
 
 let no_key_400 ~kind k =
   let reason = Fmt.str "%s key %s not found" kind k in
-  Http.Resp.bad_request_400 ~reason ()
+  Http.Response.bad_request_400 ~reason ()
 
 (* Generic *)
 
@@ -32,10 +32,10 @@ type 'a key = { name : string; kind : 'a kind }
 let key name kind = { name; kind }
 let[@inline] dec k s = kind_dec k.name k.kind s
 
-let find k ~none q = match Http.Query.find k.name q with
+let find_first k ~none q = match Http.Query.find_first k.name q with
 | None -> Ok none | Some s -> dec k s
 
-let find' k q = match Http.Query.find k.name q with
+let find_first' k q = match Http.Query.find_first k.name q with
 | None -> Ok None | Some s ->
     match k.kind.dec s with
     | None -> bad_val_400 ~kind:k.kind.kind k.name s
@@ -51,7 +51,7 @@ let find_all k q =
   in
   loop [] (Http.Query.find_all k.name q)
 
-let get k q = match Http.Query.find k.name q with
+let get k q = match Http.Query.find_first k.name q with
 | None -> no_key_400 ~kind:k.kind.kind k.name
 | Some v -> dec k v
 
@@ -80,7 +80,7 @@ let find_ids ~uniquify key q = match Http.Query.find_all key q with
         match int_of_string_opt i (* FIXME *)  with
         | None ->
             let reason = Fmt.str "key %s: %S is not an identifier" key i in
-            Http.Resp.bad_request_400 ~reason ()
+            Http.Response.bad_request_400 ~reason ()
         | Some i when uniquify && Intset.mem i seen -> loop seen acc ids
         | Some i ->  loop (Intset.add i seen) (i :: acc) ids
     in
@@ -105,10 +105,10 @@ let parse_kind ~kind kind_of_string col acc k v = match kind_of_string v with
 
 let unhandled key t =
   let explain = Fmt.str "key %s: unhandled column type %a" key Rel.Type.pp t in
-  Http.Resp.server_error_500 ~explain ()
+  Http.Response.server_error_500 ~explain ()
 
 let decode_col_value :
-  type a. ('r, a) Rel.Col.t -> string -> (a, Http.resp) result =
+  type a. ('r, a) Rel.Col.t -> string -> (a, Http.Response.t) result =
   fun col s -> match Rel.Col.type' col with
   | Rel.Type.Bool -> Ok true
   | Rel.Type.Int -> kind_dec (Rel.Col.name col) int s
@@ -121,10 +121,10 @@ let decode_col_value :
   | t -> unhandled (Rel.Col.name col) t
 
 let get_col :
-  type a. ('r, a) Rel.Col.t -> Http.query -> (a, Http.resp) result =
+  type a. ('r, a) Rel.Col.t -> Http.Query.t -> (a, Http.Response.t) result =
   fun col q ->
   let key = Rel.Col.name col in
-  match Http.Query.find key q with
+  match Http.Query.find_first key q with
   | Some s -> decode_col_value col s
   | None ->
       begin match (Rel.Col.type' col) with
@@ -133,10 +133,12 @@ let get_col :
       end
 
 let find_col :
-  type a. ('r, a) Rel.Col.t -> none:a -> Http.query -> (a, Http.resp) result =
+  type a.
+  ('r, a) Rel.Col.t -> none:a -> Http.Query.t -> (a, Http.Response.t) result
+  =
   fun col ~none q ->
   let key = Rel.Col.name col in
-  match Http.Query.find key q with
+  match Http.Query.find_first key q with
   | Some s -> decode_col_value col s
   | None ->
       begin match (Rel.Col.type' col) with
@@ -145,10 +147,9 @@ let find_col :
       | _ -> Ok none
       end
 
-
 let add_col_value (type c) ~col:(col : ('a, c) Rel.Col.t) q acc =
   let key = Rel.Col.name col in
-  match Http.Query.find key q with
+  match Http.Query.find_first key q with
   | None ->
       begin match (Rel.Col.type' col) with
       | Rel.Type.Bool ->
@@ -200,7 +201,7 @@ let is_undo = "is-undo"
 let key_is_undo = key is_undo bool
 
 let date_key = "x-date"
-let find_date q = match Http.Query.find date_key q with
+let find_date q = match Http.Query.find_first date_key q with
 | None | Some "" -> Ok None
 | Some s -> Result.map Option.some (Date.partial_of_string s)
 
@@ -212,12 +213,12 @@ let create_container_issn = "x-container-issn"
 let create_container_isbn = "x-container-isbn"
 
 let find_create_container q =
-  match Http.Query.find create_container_title q with
+  match Http.Query.find_first create_container_title q with
   | None -> None
   | Some title ->
       let get o = Option.value ~default:"" o in
-      let issn = get @@ Http.Query.find create_container_issn q in
-      let isbn = get @@ Http.Query.find create_container_isbn q in
+      let issn = get @@ Http.Query.find_first create_container_issn q in
+      let isbn = get @@ Http.Query.find_first create_container_isbn q in
       let public = Http.Query.mem "public" q (* XXX Brittle *) in
       Option.some @@
         Container.v
@@ -256,9 +257,9 @@ let create_person_keys = function
 let find_create_person ~public ~role q =
   let first, last, orcid = create_person_keys role in
   let ( let* ) = Option.bind in
-  let* first_names = Http.Query.find first q in
-  let* last_name = Http.Query.find last q in
-  let* orcid = Http.Query.find orcid q in
+  let* first_names = Http.Query.find_first first q in
+  let* last_name = Http.Query.find_first last q in
+  let* orcid = Http.Query.find_first orcid q in
   Option.some @@ Person.v
     ~id:0 ~last_name ~first_names ~orcid ~note:"" ~private_note:"" ~public ()
 
@@ -300,7 +301,7 @@ let find_create_contributors q =
     Ok
     (find_contributor_kind ~public Person.Author q,
      find_contributor_kind ~public Person.Editor q)
-  with Failure e -> Http.Resp.bad_request_400 ~explain:e ()
+  with Failure e -> Http.Response.bad_request_400 ~explain:e ()
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2021 University of Bern

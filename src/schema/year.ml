@@ -29,7 +29,7 @@ module Url = struct
   | Page of int
 
   let dec u =
-    let* `GET = Kurl.allow Http.Meth.[get] u in
+    let* `GET = Kurl.allow Http.Method.[get] u in
     match Kurl.Bare.path u with
     | [""] -> Kurl.ok Index
     | [y] -> Result.map (fun y -> Some (Page y)) (Res.Id.decode y)

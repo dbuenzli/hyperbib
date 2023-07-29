@@ -7,7 +7,6 @@
 
 open Hyperbib.Std
 open Result.Syntax
-open Webs_kit
 
 type editable = [ `No | `With_login | `Unsafe ]
 type t =

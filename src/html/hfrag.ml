@@ -88,7 +88,7 @@ let hc_redirect ?(init = Http.Headers.empty) uf url =
 
 let url_of_req_referer req = match Kurl.Bare.of_req_referer req with
 | Ok ref -> Ok (Kurl.v Kurl.any ref)
-| Error e -> Http.Resp.bad_request_400 ~explain:e ()
+| Error e -> Http.Response.bad_request_400 ~explain:e ()
 
 (* Links and anchors *)
 

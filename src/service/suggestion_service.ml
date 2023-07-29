@@ -38,7 +38,7 @@ let honeypot_error fill =
     let msg = El.txt Uimsg.system_thinks_you_are_a_bot in
     El.p ~at:[Hclass.message; Hclass.error] [msg]
   in
-  Error (Page.resp_part ~explain ~status:Http.forbidden_403 html)
+  Error (Page.part_response ~explain ~status:Http.Status.forbidden_403 html)
 
 let validate_suggestion db env req s =
   let g = Service_env.page_gen env in
@@ -58,7 +58,7 @@ let validate_suggestion db env req s =
       Ok (Error (Suggestion_html.suggest_form ~force_rescue:true ~msg g s))
 
 let suggestion_of_req req =
-  let* q = Http.Req.to_query req in
+  let* q = Http.Request.to_query req in
   let honey = Hquery.key Suggestion_html.bot_honeypot_field Hquery.string in
   let* fill = Hquery.get honey q in
   if fill <> "" then honeypot_error fill else
@@ -99,21 +99,21 @@ let confirm_delete env id =
   let* s = get_suggestion db id in
   let g = Service_env.page_gen env in
   let confirm = Suggestion_html.confirm_delete g s in
-  Ok (Page.resp_part confirm)
+  Ok (Page.part_response confirm)
 
 let create env req =
   Service_env.with_db_transaction' `Immediate env @@ fun db ->
   let* s = suggestion_of_req req in
   let* v = validate_suggestion db env req s in
   match v with
-  | Error html -> Ok (Page.resp_part html)
+  | Error html -> Ok (Page.part_response html)
   | Ok s ->
       let* id = Db.insert' db (Suggestion.create ~ignore_id:true s) in
       let uf = Service_env.url_fmt env in
       let () = suggestion_notification env id |> Log.if_error ~use:() in
       let redirect = Suggestion.Url.v (Page {id; created = true}) in
       let headers = Hfrag.hc_redirect uf redirect in
-      Ok (Http.Resp.empty ~headers Http.ok_200)
+      Ok (Http.Response.empty ~headers Http.Status.ok_200)
 
 let delete env id =
   let* () = Entity_service.check_edit_authorized env in
@@ -121,7 +121,7 @@ let delete env id =
   let* c = get_suggestion db id in
   let* () = Db.exec' db (Suggestion.delete id) in
   let headers = Http.Headers.(empty |> def (name "hc-reload") "true") in
-  Ok (Page.resp_part ~headers (El.splice []))
+  Ok (Page.part_response ~headers (El.splice []))
 
 let fill_in env req =
   Service_env.with_db_transaction' `Deferred env @@ fun db ->
@@ -138,14 +138,14 @@ let fill_in env req =
     Suggestion.v ~id:0 ~timestamp:0 ~doi ~suggestion ~comment ~email ()
   in
   let html = Suggestion_html.suggest_form ~force_rescue:true ?msg g s in
-  Ok (Page.resp_part ?explain html)
+  Ok (Page.part_response ?explain html)
 
 let view_fields env req id =
   Service_env.with_db_transaction' `Deferred env @@ fun db ->
   let* s = get_suggestion db id in
   let g = Service_env.page_gen env in
   let* self = Hfrag.url_of_req_referer req in
-  Ok (Page.resp_part (Suggestion_html.view_fields g s ~self))
+  Ok (Page.part_response (Suggestion_html.view_fields g s ~self))
 
 let integrate env req id =
   let* () = Entity_service.check_edit_authorized env in
@@ -164,7 +164,7 @@ let integrate env req id =
   in
   let g = Service_env.page_gen env in
   let page = Suggestion_html.integrate g s ~form in
-  Ok (Page.resp page)
+  Ok (Page.response page)
 
 let created env req id =
   Service_env.with_db_transaction' `Immediate env @@ fun db ->
@@ -174,10 +174,10 @@ let created env req id =
   | None ->
       let page_url = Suggestion.Url.v (Page {id; created = true}) in
       let page = Suggestion_html.page_404 g ~self:page_url in
-      Error (Page.resp_404 page)
+      Error (Page.response_404 page)
   | Some s ->
       let page = Suggestion_html.created g s in
-      Ok (Page.resp page)
+      Ok (Page.response page)
 
 let index env =
   Service_env.with_db_transaction' `Deferred env @@ fun db ->
@@ -185,7 +185,7 @@ let index env =
   let* ss = Db.list' db Suggestion.list_stmt in
   let is_full = List.length ss > Service_env.max_pending_suggestions env in
   let page = Suggestion_html.index g ss ~is_full in
-  Ok (Page.resp page)
+  Ok (Page.response page)
 
 let resp r env user req = match (r : Suggestion.Url.t) with
 | Create -> create env req
