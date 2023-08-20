@@ -9,7 +9,7 @@ open Rel
 
 let check_edit_authorized env =
   (* FIXME if the webapp is editable we should ask for login
-     and retry the request, we might need a bit of `hc` support. *)
+     and retry the request, we might need a bit of `htmlact` support. *)
   match User.Caps.edit (Service_env.caps env) with
   | true -> Ok ()
   | false -> Http.Response.unauthorized_401 () (* FIXME do something for user *)
@@ -38,7 +38,7 @@ let create
   let* vs = Hquery.careless_find_table_cols ~ignore:[Col.V E.id'] E.table q in
   let* id = Db.insert' db (E.create_cols ~ignore_id:true vs) in
   let uf = Service_env.url_fmt env in
-  let headers = Hfrag.hc_redirect uf (entity_page_url id) in
+  let headers = Hfrag.htmlact_redirect uf (entity_page_url id) in
   Ok (Http.Response.empty ~headers Http.Status.ok_200)
 
 let delete

@@ -88,9 +88,9 @@ let finder_result
     let at = [viz; Hui.Class.for_table E.table; Hclass.value] in
     El.span ~at [render e]
   in
-  let r = Hfrag.hc_request uf (action e) in
-  let t = Hc.target ":up :up :up" in
-  let e = Hc.effect `Element in
+  let r = Hfrag.htmlact_request uf (action e) in
+  let t = Htmlact.target ":up :up :up" in
+  let e = Htmlact.effect `Element in
   let tab_index = At.tabindex (-1) in
   let title = At.v "title" tip in
   let role = At.v "role" "option" in
@@ -107,10 +107,10 @@ let input_finder_results
   El.ol ~at:[At.v "role" "listbox"] (List.map li es @ [c])
 
 let entity_input_finder ?min_size ?(at = []) uf ~kind req ~value =
-  let r = Hfrag.hc_request uf req in
-  let t = Hc.target (":up :up ol") in
-  let e = Hc.event ~debounce_ms:250 "input" in
-  let eff = Hc.effect `Element in
+  let r = Hfrag.htmlact_request uf req in
+  let t = Htmlact.target (":up :up ol") in
+  let e = Htmlact.event ~debounce_ms:250 "input" in
+  let eff = Htmlact.effect `Element in
   let pl = kind ^ "\u{207A}" in
   let min_size = String.length pl (* - 1 *) in
   let pl = At.placeholder pl in
@@ -123,9 +123,9 @@ let entity_remove_button ~req ~tip =
   let at = match req with
   | None -> [Hclass.hui_remove]
   | Some (meth, url) ->
-      let r = Hc.request ~meth url in
-      let t = Hc.target ":up :up" in
-      let e = Hc.effect `Element in
+      let r = Htmlact.request ~meth url in
+      let t = Htmlact.target ":up :up" in
+      let e = Htmlact.effect `Element in
       [r; t; e]
   in
   let at = Hui.Class.button :: Hclass.remove :: Hclass.entity :: at in
@@ -341,10 +341,10 @@ let container_input_finder uf ~input_name =
   let input_container_id = input_entity_id ~input_name None in
   let input =
     let req = Container.Url.v (Input_finder_find (input_name, "")) in
-    let r = Hfrag.hc_request uf req in
-    let t = Hc.target (":up :up ol") in
-    let e = Hc.event ~debounce_ms:250 "input" in
-    let eff = Hc.effect `Element in
+    let r = Hfrag.htmlact_request uf req in
+    let t = Htmlact.target (":up :up ol") in
+    let e = Htmlact.event ~debounce_ms:250 "input" in
+    let eff = Htmlact.effect `Element in
     let pl = Uimsg.container ^ "\u{207A}" in
     let pl = At.placeholder pl in
     let type' = At.type' "search" in

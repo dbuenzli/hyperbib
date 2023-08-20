@@ -18,7 +18,7 @@ let ui_ext g ~self =
 
 let entity_cancel_button uf c =
   let cancel = Container.Url.v (View_fields (Container.id c)) in
-  Hfrag.hc_cancel_button uf cancel
+  Hfrag.htmlact_cancel_button uf cancel
 
 let h1_container ?title uf ~self c =
   let viz = if Container.public c then At.void else Hclass.private' in
@@ -40,7 +40,7 @@ let confirm_delete g c ~ref_count =
   let delete_button =
     let confirm = Container.Url.v (Delete (Container.id c)) in
     let target = Hfrag.target_entity_up in
-    Hfrag.hc_delete uf confirm ~target (El.txt Uimsg.confirm_delete)
+    Hfrag.htmlact_delete uf confirm ~target (El.txt Uimsg.confirm_delete)
   in
   let bs = Hui.group ~align:`Justify ~dir:`H [delete_button; cancel_button] in
   let really =
@@ -92,9 +92,10 @@ let edit_submit uf ~submit c =
   | `Duplicate ->
       Container.Url.v (Duplicate (Container.id c)), Uimsg.create_duplicate
   in
-  let r = Hfrag.hc_request uf url and e = Hc.effect `Element in
-  let q = Hc.query "form:up" and rescue = Hc.query_rescue (`Bool true) in
-  let t = Hc.target ":up :up :up" in
+  let r = Hfrag.htmlact_request uf url and e = Htmlact.effect `Element in
+  let q = Htmlact.query "form:up" in
+  let rescue = Htmlact.query_rescue (`Bool true) in
+  let t = Htmlact.target ":up :up :up" in
   let at = At.[t; r; e; q; rescue; Hui.Class.submit] in
   Hui.button ~at (El.txt label)
 
@@ -166,8 +167,8 @@ let replace_form g c ~ref_count =
                 El.sp; refs; El.txt "."]
   in
   let at =
-    let r = Hfrag.hc_request uf (Container.Url.v (Replace (Container.id c))) in
-    let e = Hc.effect `Element in
+    let r = Hfrag.htmlact_request uf (Container.Url.v (Replace (Container.id c))) in
+    let e = Htmlact.effect `Element in
     At.[Hclass.entity; Hclass.editing; r; e]
   in
   let replace = El.div ~at:[Hclass.replace] [input_container]in
@@ -179,12 +180,12 @@ let view_private_note = Entity_html.view_private_note (module Container)
 let edit_ui g uf c =
   if not (Page.Gen.editable g) then El.void else
   let cid = Container.id c in
-  let edit = Hfrag.hc_edit_button uf (Container.Url.v (Edit_form cid)) in
-  let rep = Hfrag.hc_replace_button uf (Container.Url.v (Replace_form cid)) in
+  let edit = Hfrag.htmlact_edit_button uf (Container.Url.v (Edit_form cid)) in
+  let rep = Hfrag.htmlact_replace_button uf (Container.Url.v (Replace_form cid)) in
   let dup =
-    Hfrag.hc_duplicate_button uf (Container.Url.v (Duplicate_form cid))
+    Hfrag.htmlact_duplicate_button uf (Container.Url.v (Duplicate_form cid))
   in
-  let del = Hfrag.hc_delete_button uf (Container.Url.v (Confirm_delete cid)) in
+  let del = Hfrag.htmlact_delete_button uf (Container.Url.v (Confirm_delete cid)) in
   let left = Hui.group ~dir:`H [edit; rep; dup] in
   Hui.group ~at:[Hclass.entity_ui] ~align:`Justify ~dir:`H [left; del]
 

@@ -18,73 +18,75 @@ let title ~sub ~sup = String.concat " – " [sub; sup]
 
 let ellipsify s = s ^ "…"
 
-(* Hc requests *)
+(* Htmlact requests *)
 
-let hc_request uf u =
+let htmlact_request uf u =
   let meth, url = Kurl.Fmt.req uf u in
-  Hc.request ~meth url
+  Htmlact.request ~meth url
 
 let target_entity = "." ^ (snd (At.to_pair Hclass.entity)) ^ ":up"
 let target_entity_up = target_entity ^ " :up"
 
-let hc_button ?(at = []) ?x_align ?align ?dir ?tip uf url ?query ?target label =
-  let r = hc_request uf url in
-  let t = At.if_some (Option.map Hc.target target) in
-  let e = Hc.effect `Element in
-  let q = match query with None -> At.void | Some q -> Hc.query q in
+let htmlact_button
+    ?(at = []) ?x_align ?align ?dir ?tip uf url ?query ?target label
+  =
+  let r = htmlact_request uf url in
+  let t = At.if_some (Option.map Htmlact.target target) in
+  let e = Htmlact.effect `Element in
+  let q = match query with None -> At.void | Some q -> Htmlact.query q in
   Hui.button ~at:(r :: t :: e :: q :: at) ?x_align ?align ?dir ?tip label
 
-let hc_delete ?(at = []) ?x_align ?align ?dir ?tip uf url ~target label =
-  let r = hc_request uf url in
-  let t = Hc.target target and e = Hc.effect `Element in
+let htmlact_delete ?(at = []) ?x_align ?align ?dir ?tip uf url ~target label =
+  let r = htmlact_request uf url in
+  let t = Htmlact.target target and e = Htmlact.effect `Element in
   Hui.delete ~at:(r :: t :: e :: at) ?x_align ?align ?dir ?tip label
 
-let hc_cancel ?(at = []) ?x_align ?align ?dir ?tip uf url ~target label =
-  let r = hc_request uf url in
-  let t = Hc.target target and e = Hc.effect `Element in
+let htmlact_cancel ?(at = []) ?x_align ?align ?dir ?tip uf url ~target label =
+  let r = htmlact_request uf url in
+  let t = Htmlact.target target and e = Htmlact.effect `Element in
   Hui.cancel ~at:(r :: t :: e :: at) ?x_align ?align ?dir ?tip label
 
-let hc_edit_button ?(target = target_entity) uf url =
+let htmlact_edit_button ?(target = target_entity) uf url =
   let label = [Icon.pencil_alt; El.span [El.txt_of ellipsify Uimsg.edit]] in
-  hc_button uf url ~target ~x_align:`Center ~dir:`H (El.splice label)
+  htmlact_button uf url ~target ~x_align:`Center ~dir:`H (El.splice label)
 
-let hc_integrate_button ?(target = target_entity) uf url =
+let htmlact_integrate_button ?(target = target_entity) uf url =
   let label = [Icon.arrow_down_on_square;
                El.span [El.txt_of ellipsify Uimsg.integrate]] in
   let href = Kurl.Fmt.url uf url in
   Hui.button_link ~href ~x_align:`Center ~dir:`H (El.splice label)
 
-let hc_replace_button ?(target = target_entity) uf url =
+let htmlact_replace_button ?(target = target_entity) uf url =
   let label = [Icon.save_as; El.span [El.txt_of ellipsify Uimsg.replace]] in
-  hc_button uf url ~target ~x_align:`Center ~dir:`H (El.splice label)
+  htmlact_button uf url ~target ~x_align:`Center ~dir:`H (El.splice label)
 
-let hc_duplicate_button ?(target = target_entity) uf url =
+let htmlact_duplicate_button ?(target = target_entity) uf url =
   let label = [Icon.duplicate; El.span [El.txt_of ellipsify Uimsg.duplicate]] in
-  hc_button uf url ~target ~x_align:`Center ~dir:`H (El.splice label)
+  htmlact_button uf url ~target ~x_align:`Center ~dir:`H (El.splice label)
 
-let hc_delete_button ?(target = target_entity) uf url =
+let htmlact_delete_button ?(target = target_entity) uf url =
   let label = [Icon.trash; El.span [El.txt_of ellipsify Uimsg.delete]] in
-  hc_delete uf url ~target ~x_align:`Center ~dir:`H (El.splice label)
+  htmlact_delete uf url ~target ~x_align:`Center ~dir:`H (El.splice label)
 
-let hc_cancel_button ?(target = target_entity) uf url =
-  hc_cancel uf url ~target (El.txt Uimsg.cancel)
+let htmlact_cancel_button ?(target = target_entity) uf url =
+  htmlact_cancel uf url ~target (El.txt Uimsg.cancel)
 
 let new_entity_button ~href ~label =
   let label = [Icon.plus_sm; El.span [El.txt_of ellipsify label]] in
   Hui.button_link ~href ~x_align:`Center ~dir:`H (El.splice label)
 
-(* Hc responses *)
+(* Htmlact responses *)
 
-let hc_page_location_update ?(init = Http.Headers.empty) uf url ~title () =
+let htmlact_page_location_update ?(init = Http.Headers.empty) uf url ~title () =
   let url = Kurl.Fmt.url uf url in
-  let title = Hc.encode_location_title title in
+  let title = Htmlact.encode_location_title title in
   Http.Headers.(init
-                |> def Hc.location_replace url
-                |> def Hc.location_title title)
+                |> def Htmlact.location_replace url
+                |> def Htmlact.location_title title)
 
-let hc_redirect ?(init = Http.Headers.empty) uf url =
+let htmlact_redirect ?(init = Http.Headers.empty) uf url =
   let url = Kurl.Fmt.url uf url in
-  Http.Headers.(empty |> def Hc.redirect url)
+  Http.Headers.(empty |> def Htmlact.redirect url)
 
 let url_of_req_referer req = match Kurl.Bare.of_req_referer req with
 | Ok ref -> Ok (Kurl.v Kurl.any ref)

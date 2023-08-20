@@ -117,8 +117,10 @@ let user_view g uf ~self view =
     let at = match view with
     | `Public -> At.[disabled]
     | `Private ->
-        let req = Hfrag.hc_request uf (User.Url.v (View {private' = false})) in
-        [req; Hc.effect `None]
+        let req =
+          Hfrag.htmlact_request uf (User.Url.v (View {private' = false}))
+        in
+        [req; Htmlact.effect `None]
     in
     Hui.button ~at ~tip:Uimsg.public_tip (El.txt Uimsg.public)
   in
@@ -126,8 +128,10 @@ let user_view g uf ~self view =
     let at = match view with
     | `Private -> At.[disabled]
     | `Public ->
-        let req = Hfrag.hc_request uf (User.Url.v (View {private' = true})) in
-        [req; Hc.effect `None]
+        let req =
+          Hfrag.htmlact_request uf (User.Url.v (View {private' = true}))
+        in
+        [req; Htmlact.effect `None]
     in
     Hui.button ~at ~tip:Uimsg.private_tip (El.txt Uimsg.private')
   in
@@ -275,10 +279,12 @@ let response_404 ?explain ?reason ?headers p =
 
 let error g request response' =
   let uf = Gen.url_fmt g in
-  let is_hc_req = Http.Headers.mem Hc.hc (Http.Request.headers request) in
+  let is_htmlact_req =
+    Http.Headers.mem Htmlact.htmlact (Http.Request.headers request)
+  in
   let self =
     let bare =
-      if not is_hc_req then Kurl.Bare.of_req request else
+      if not is_htmlact_req then Kurl.Bare.of_req request else
       (* Make links relative to the requesting page, not to the request *)
       match Kurl.Bare.of_req_referer request with
       | Ok b -> b
@@ -306,7 +312,8 @@ let error g request response' =
   let headers = Http.Response.headers response' in
   let status = Http.Response.status response' in
   let reason = Http.Response.reason response' in
-  if is_hc_req then part_response ~reason ~explain ~headers ~status content else
+  if is_htmlact_req
+  then part_response ~reason ~explain ~headers ~status content else
   let page = with_content g ~self ~title ~content in
   response ~reason ~explain ~headers ~status page
 

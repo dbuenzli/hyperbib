@@ -73,7 +73,9 @@ let duplicate env req src =
   let* dst = Db.insert' db (Container.create_cols ~ignore_id:true vs) in
   let* () = Db.exec' db (Container.Label.copy_applications_stmt ~src ~dst) in
   let uf = Service_env.url_fmt env in
-  let headers = Hfrag.hc_redirect uf (Container.Url.v (Page (None, dst))) in
+  let headers =
+    Hfrag.htmlact_redirect uf (Container.Url.v (Page (None, dst)))
+  in
   Ok (Http.Response.empty ~headers Http.Status.ok_200)
 
 let duplicate_form env req id =
@@ -155,7 +157,7 @@ let replace env req this =
       let* () = Db.exec' db rep in
       let* () = Db.exec' db (Container.delete this) in
       let uf = Service_env.url_fmt env in
-      let headers = Hfrag.hc_redirect uf (Container.Url.v (Page (None, by))) in
+      let headers = Hfrag.htmlact_redirect uf (Container.Url.v (Page (None, by))) in
       Ok (Http.Response.empty ~headers Http.Status.ok_200)
 
 let input env ~input_name id =
@@ -214,7 +216,7 @@ let update env req id =
   let* self = Hfrag.url_of_req_referer req in
   let html = Container_html.view_full g c ~self refs in
   let title = Container_html.page_full_title g c in
-  let headers = Hfrag.hc_page_location_update uf self ~title () in
+  let headers = Hfrag.htmlact_page_location_update uf self ~title () in
   Ok (Page.part_response ~headers html)
 
 let view_fields env req id =

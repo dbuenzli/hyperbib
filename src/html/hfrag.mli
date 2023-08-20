@@ -22,45 +22,46 @@ val title : sub:string -> sup:string -> string
 val ellipsify : string -> string
 (** [ellipsify s] adds … at the end of [s]. *)
 
-(** {1:hc Hc requests} *)
+(** {1:htmlact_requests Htmlact requests} *)
 
-val hc_request : Kurl.fmt -> Kurl.t -> At.t
-(** [hc_request uf url] is an [hc-request] attribute for url [url]
+val htmlact_request : Kurl.fmt -> Kurl.t -> At.t
+(** [htmlact_request uf url] is an [htmlact-request] attribute for url [url]
     formatted by [uf]. *)
 
-val hc_button :
+val htmlact_button :
   ?at:At.t list -> ?x_align:Hui.align -> ?align:Hui.align -> ?dir:Hui.dir ->
   ?tip:string -> Kurl.fmt -> Kurl.t -> ?query:string -> ?target:string ->
   El.html -> El.html
 
-val hc_delete :
+val htmlact_delete :
   ?at:At.t list -> ?x_align:Hui.align -> ?align:Hui.align -> ?dir:Hui.dir ->
   ?tip:string -> Kurl.fmt -> Kurl.t -> target:string -> El.html -> El.html
 
-val hc_cancel :
+val htmlact_cancel :
   ?at:At.t list -> ?x_align:Hui.align -> ?align:Hui.align -> ?dir:Hui.dir ->
   ?tip:string -> Kurl.fmt -> Kurl.t -> target:string -> El.html -> El.html
 
-(** {2:hc Hc entity buttons} *)
+(** {2:htmlact_entity Htmlact entity buttons} *)
 
 val target_entity : string
 val target_entity_up : string
 
-val hc_edit_button : ?target:string -> Kurl.fmt -> Kurl.t -> El.html
-val hc_integrate_button : ?target:string -> Kurl.fmt -> Kurl.t -> El.html
-val hc_replace_button : ?target:string -> Kurl.fmt -> Kurl.t -> El.html
-val hc_duplicate_button : ?target:string -> Kurl.fmt -> Kurl.t -> El.html
-val hc_delete_button : ?target:string -> Kurl.fmt -> Kurl.t -> El.html
-val hc_cancel_button : ?target:string -> Kurl.fmt -> Kurl.t -> El.html
+val htmlact_edit_button : ?target:string -> Kurl.fmt -> Kurl.t -> El.html
+val htmlact_integrate_button : ?target:string -> Kurl.fmt -> Kurl.t -> El.html
+val htmlact_replace_button : ?target:string -> Kurl.fmt -> Kurl.t -> El.html
+val htmlact_duplicate_button : ?target:string -> Kurl.fmt -> Kurl.t -> El.html
+val htmlact_delete_button : ?target:string -> Kurl.fmt -> Kurl.t -> El.html
+val htmlact_cancel_button : ?target:string -> Kurl.fmt -> Kurl.t -> El.html
 val new_entity_button : href:string -> label:string -> El.html
 
-(** {1:hc Hc responses} *)
+(** {1:htamlact_responses Htmlact responses} *)
 
-val hc_page_location_update :
+val htmlact_page_location_update :
   ?init:Http.Headers.t -> Kurl.fmt -> Kurl.t -> title:string -> unit ->
   Http.Headers.t
 
-val hc_redirect : ?init:Http.Headers.t -> Kurl.fmt -> Kurl.t -> Http.Headers.t
+val htmlact_redirect :
+  ?init:Http.Headers.t -> Kurl.fmt -> Kurl.t -> Http.Headers.t
 
 val url_of_req_referer : Http.Request.t -> (Kurl.t, Http.Response.t) result
 

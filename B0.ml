@@ -16,8 +16,8 @@ let note = B0_ocaml.libname "note"
 let note_brr = B0_ocaml.libname "note.brr"
 let cmdliner = B0_ocaml.libname "cmdliner"
 let htmlit = B0_ocaml.libname "htmlit"
-let hc = B0_ocaml.libname "hc"
-let hc_page = B0_ocaml.libname "hc.page"
+let htmlact = B0_ocaml.libname "htmlact"
+let htmlact_page = B0_ocaml.libname "htmlact.page"
 let ptime = B0_ocaml.libname "ptime"
 let ptime_clock = B0_ocaml.libname "ptime.clock.os"
 let threads = B0_ocaml.libname "threads"
@@ -64,7 +64,7 @@ let front_to_static_dir b =
 let hyperbib_js =
   let srcs = [ `Dir src_front_dir ] in
   let doc = "hyperbib front-end" in
-  let requires = [brr; note; note_brr; hc_page] in
+  let requires = [brr; note; note_brr; htmlact_page] in
   let meta = B0_jsoo.meta ~requires () in
   let wrap proc b = assets_to_static_dir b; front_to_static_dir b; proc b in
   B0_jsoo.exe "hyperbib.js" ~wrap ~doc ~srcs ~meta
@@ -110,10 +110,10 @@ let hyperbib =
   let doc = "hyperbib tool" in
   let requires =
     [ threads; cmdliner; ptime; ptime_clock; b0_std; b0; b0_file; b0_kit;
-      htmlit;
+      htmlit; htmlact;
       rel; rel_kit; rel_cli; rel_sqlite3; rel_pool;
       webs; webs_kit; webs_unix; webs_cli;
-      hc ]
+      ]
   in
   let srcs =
     (* XXX slightly messy we need to copy it over because of
@@ -212,13 +212,14 @@ let default =
         "cmdliner", {|>= "1.0.4"|};
         "ptime", {||};
         "webs", {||};
-        "hc", {||};
+        "htmlit", {||};
+        "htmlact", {||};
         "rel", {||};
         "note", {||};
         "brr", {||};
         "js_of_ocaml", {||};]
     |> add B0_opam.Meta.pin_depends
-      ["hc.~dev", "git+https://erratique.ch/repos/hc.git#master";
+      ["htmlact.~dev", "git+https://erratique.ch/repos/htmlact.git#master";
        "rel.~dev", "git+https://erratique.ch/repos/rel.git#master";
        "webs.~dev", "git+https://erratique.ch/repos/webs.git#master"]
     |> add B0_opam.Meta.build {|[["b0"]]|}

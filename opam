@@ -22,7 +22,8 @@ depends: [
   "cmdliner" {>= "1.0.4"}
   "ptime"
   "webs"
-  "hc"
+  "htmlit"
+  "htmlact"
   "rel"
   "note"
   "brr"
@@ -31,7 +32,7 @@ depends: [
 build: "b0"
 dev-repo: "git+https://erratique.ch/repos/hyperbib.git"
 pin-depends: [
-  ["hc.~dev" "git+https://erratique.ch/repos/hc.git#master"]
+  ["htmlact.~dev" "git+https://erratique.ch/repos/htmlact.git#master"]
   ["rel.~dev" "git+https://erratique.ch/repos/rel.git#master"]
   ["webs.~dev" "git+https://erratique.ch/repos/webs.git#master"]
 ]

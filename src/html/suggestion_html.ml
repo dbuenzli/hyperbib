@@ -15,9 +15,11 @@ let doi_input g s =
   let label = El.span ~at:[Hui.Class.label] [label] in
   let input = Hui.input_string ~autogrow:true ~min_size:25 ~col s in
   let fill_in =
-    let r = Hfrag.hc_request (Page.Gen.url_fmt g) (Suggestion.Url.v Fill_in) in
-    let t = Hc.target "form:up" in
-    let q = Hc.query "form:up" in
+    let r =
+      Hfrag.htmlact_request (Page.Gen.url_fmt g) (Suggestion.Url.v Fill_in)
+    in
+    let t = Htmlact.target "form:up" in
+    let q = Htmlact.query "form:up" in
     let tip = Uimsg.fill_in_suggestion_with_doi in
     let text = El.txt Uimsg.fill_in_suggestion in
     Hui.button ~type':"submit" ~at:[r;t;q;] ~tip text
@@ -60,11 +62,13 @@ let buttons ?(force_rescue = false) g =
   let uf = Page.Gen.url_fmt g in
   let submit =
     let label = Uimsg.submit_suggestion in
-    let r = Hfrag.hc_request uf (Suggestion.Url.v Create) in
-    let t = Hc.target "form:up" in
-    let e = Hc.effect `Element in
-    let q = Hc.query "form:up" in
-    let rescue = Hc.query_rescue (if force_rescue then `Force else `Bool true)in
+    let r = Hfrag.htmlact_request uf (Suggestion.Url.v Create) in
+    let t = Htmlact.target "form:up" in
+    let e = Htmlact.effect `Element in
+    let q = Htmlact.query "form:up" in
+    let rescue =
+      Htmlact.query_rescue (if force_rescue then `Force else `Bool true)
+    in
     let at = At.[t; r; e; q; rescue; Hui.Class.submit] in
     Hui.button ~at (El.txt label)
   in
@@ -120,12 +124,12 @@ let confirm_delete g s =
   let uf = Page.Gen.url_fmt g in
   let cancel_button =
     let cancel = Suggestion.Url.v (View_fields (Suggestion.id s)) in
-    Hfrag.hc_cancel_button uf cancel
+    Hfrag.htmlact_cancel_button uf cancel
   in
   let delete_button =
     let confirm = Suggestion.Url.v (Delete (Suggestion.id s)) in
     let target = Hfrag.target_entity in
-    Hfrag.hc_delete uf confirm ~target (El.txt Uimsg.confirm_delete)
+    Hfrag.htmlact_delete uf confirm ~target (El.txt Uimsg.confirm_delete)
   in
   let bs = Hui.group ~align:`Justify ~dir:`H [delete_button; cancel_button] in
   let really = El.p [El.txt Uimsg.really_delete_suggestion; doi s; El.txt "?"]in
@@ -181,8 +185,10 @@ let edit_ui g s =
   let uf = Page.Gen.url_fmt g in
   let id = Suggestion.id s in
   let integrate = Suggestion.Url.v (Page {id; created = false}) in
-  let integrate = Hfrag.hc_integrate_button uf integrate in
-  let del = Hfrag.hc_delete_button uf (Suggestion.Url.v (Confirm_delete id)) in
+  let integrate = Hfrag.htmlact_integrate_button uf integrate in
+  let del =
+    Hfrag.htmlact_delete_button uf (Suggestion.Url.v (Confirm_delete id))
+  in
   let at = [Hclass.entity_ui; Hclass.Margin.top_000] in
   let ui = Hui.group ~at ~align:`Justify ~dir:`H [integrate; del] in
   El.splice [ui; El.hr ()]

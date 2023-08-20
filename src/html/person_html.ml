@@ -18,7 +18,7 @@ let ui_ext g ~self =
 
 let entity_cancel_button uf p =
   let cancel = Person.Url.v (View_fields (Person.id p)) in
-  Hfrag.hc_cancel_button uf cancel
+  Hfrag.htmlact_cancel_button uf cancel
 
 let orcid_html p = match Person.orcid p with
 | "" -> El.void
@@ -47,7 +47,7 @@ let confirm_delete g p ~ref_count =
   let delete_button =
     let confirm = Person.Url.v (Delete (Person.id p)) in
     let target = Hfrag.target_entity_up in
-    Hfrag.hc_delete uf confirm ~target (El.txt Uimsg.confirm_delete)
+    Hfrag.htmlact_delete uf confirm ~target (El.txt Uimsg.confirm_delete)
   in
   let bs = Hui.group ~align:`Justify ~dir:`H [delete_button; cancel_button] in
   let really =
@@ -103,9 +103,9 @@ let edit_submit uf ~submit p =
   | `Edit -> Person.Url.v (Update (Person.id p)), Uimsg.save_person
   | `Duplicate -> Person.Url.v (Duplicate (Person.id p)), Uimsg.create_duplicate
   in
-  let r = Hfrag.hc_request uf url and e = Hc.effect `Element in
-  let q = Hc.query "form:up" and rescue = Hc.query_rescue (`Bool true) in
-  let t = Hc.target ":up :up :up" in
+  let r = Hfrag.htmlact_request uf url and e = Htmlact.effect `Element in
+  let q = Htmlact.query "form:up" and rescue = Htmlact.query_rescue (`Bool true) in
+  let t = Htmlact.target ":up :up :up" in
   let at = At.[t; r; e; q; rescue; Hui.Class.submit] in
   Hui.button ~at (El.txt label)
 
@@ -182,8 +182,8 @@ let replace_form g p ~ref_count =
                 refs; El.txt "."]
   in
   let at =
-    let r = Hfrag.hc_request uf (Person.Url.v (Replace (Person.id p))) in
-    let e = Hc.effect `Element in
+    let r = Hfrag.htmlact_request uf (Person.Url.v (Replace (Person.id p))) in
+    let e = Htmlact.effect `Element in
     At.[Hclass.entity; Hclass.editing; r; e]
   in
   let h1 = h1_person uf ~self ~orcid:true p in
@@ -196,10 +196,14 @@ let view_private_note = Entity_html.view_private_note (module Person)
 let edit_ui g uf s =
   if not (Page.Gen.editable g) then El.void else
   let pid = Person.id s in
-  let edit = Hfrag.hc_edit_button uf (Person.Url.v (Edit_form pid)) in
-  let rep = Hfrag.hc_replace_button uf (Person.Url.v (Replace_form pid)) in
-  let dup = Hfrag.hc_duplicate_button uf (Person.Url.v (Duplicate_form pid)) in
-  let del = Hfrag.hc_delete_button uf (Person.Url.v (Confirm_delete pid)) in
+  let edit = Hfrag.htmlact_edit_button uf (Person.Url.v (Edit_form pid)) in
+  let rep = Hfrag.htmlact_replace_button uf (Person.Url.v (Replace_form pid)) in
+  let dup =
+    Hfrag.htmlact_duplicate_button uf (Person.Url.v (Duplicate_form pid))
+  in
+  let del =
+    Hfrag.htmlact_delete_button uf (Person.Url.v (Confirm_delete pid))
+  in
   let left = Hui.group ~dir:`H [edit; rep; dup] in
   Hui.group ~at:[Hclass.entity_ui] ~align:`Justify ~dir:`H [left; del]
 

@@ -4,7 +4,7 @@ Given a test database in `app/` the following invocation makes it easy
 to test the webapp in any browser on http://localhost:8000/ 
 
 ```
-b0 -a hyperbib -- serve --edit=unsafe --insecure-cookie
+b0 -- hyperbib serve --edit=unsafe --insecure-cookie
 ```
 
 # Code layout 
@@ -57,15 +57,15 @@ and `.css` files and the front end code. The OCaml files are compiled
 to JavaScript via `js_of_ocaml` and *for now* everything is copied
 over by the build system to [`app/static`](app/static).
 
-For now there's very little code there. Beyond the generic `hc`
+For now there's very little code there. Beyond the generic `htmlact`
 support we just have the logic for changing DOI URLs on the page
 according to a user defined resolver stored on its browser and a few
 generic tools to work around the deficiencies of the HTML native UI
 widgets.
 
-The goal is to have as little as possible here and push the `hc` way.
-A few more things could be removed if we improve it, e.g. with local
-DOM tree substitutions.
+The goal is to have as little as possible here and push the `htmlact`
+way.  A few more things could be removed if we improve it, e.g. with
+local DOM tree substitutions.
 
 # Web service
 
@@ -93,12 +93,12 @@ format is recommended by the [Library of congress][loc]).
 The SQL database definition can be output via 
 
 ```
-b0 -a hyperbib -- db schema app
+b0 -- hyperbib db schema app
 ```
 
 To visualize the schema diagram use 
 ```
-b0 -a hyperbib -- db schema app  --format=dot | dot -Tsvg > /tmp/hyperbib.svg \
+b0 -- hyperbib db schema app  --format=dot | dot -Tsvg > /tmp/hyperbib.svg \
   && show-uri /tmp/hyperbib.svg
 ```
 

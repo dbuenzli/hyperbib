@@ -19,8 +19,8 @@ let remover e =
     let rem = El.parent e |> Option.get |> El.parent |> Option.get in
     Ev.prevent_default ev;
     Ev.stop_propagation ev;
-    Fut.await (Hc_page.Effect.feedback_remove ~target:rem Element) @@ fun () ->
-    El.remove rem
+    Fut.await (Htmlact_page.Effect.feedback_remove ~target:rem Element) @@
+    fun () -> El.remove rem
   in
   ignore (Ev.listen Ev.click on_click (El.as_target e));
   ignore (Ev.listen Ev.pointerdown on_pointerdown (El.as_target e));
@@ -261,7 +261,7 @@ let finder_interactions () =
 
 (* Installing interactions. *)
 
-(* FIXME nail down a strategy for applying stuff on hc
+(* FIXME nail down a strategy for applying stuff on htmlact
    element insertions. *)
 
 let install_interactions () =
@@ -270,7 +270,7 @@ let install_interactions () =
   finder_interactions ();
   ()
 
-let on_hc_cycle_end _ev =
+let on_htmlact_cycle_end _ev =
   (* The new data may have dois we need to replace. *)
   Doi_relinker.relink_dois ();
   install_interactions ();
@@ -278,11 +278,11 @@ let on_hc_cycle_end _ev =
 
 let install_event_handlers () =
   let document = Document.as_target G.document in
-  ignore (Ev.listen Hc_page.Ev.cycle_end on_hc_cycle_end document);
+  ignore (Ev.listen Htmlact_page.Ev.cycle_end on_htmlact_cycle_end document);
   ()
 
 let main () =
-  Hc_page.init ();
+  Htmlact_page.init ();
   Doi_relinker.install ();
   install_interactions ();
   install_event_handlers ();

@@ -460,7 +460,7 @@ footer { font-size: var(--size-font-tiny); color: var(--color-fg-light); }
   background-color: var(--color-button-bg);
   opacity: 0.8; }
 
-.button:disabled, .button.hc-request
+.button:disabled, .button.htmlact-request
 { border: solid 1px var(--color-button-disable-border);
   background-color: var(--color-button-disabled-fg);
   color: var(--color-button-disabled-bg); }
@@ -613,24 +613,24 @@ footer { font-size: var(--size-font-tiny); color: var(--color-fg-light); }
   box-shadow: 0 0 0 2px var(--color-submit);
   border-radius: 1px; }
 
-/* Hc transitions */
+/* Htmlact transitions */
 
-.hc-out { transition: all var(--dur-short); }
+.htmlact-out { transition: all var(--dur-short); }
 
 .input { transition-property: background-color, box-shadow;
          transition-duration: var(--dur-short) }
 
-.hc-in .input, .hc-out .input
+.htmlact-in .input, .htmlact-out .input
 { background-color: inherit !important; /* easier for specificity */
   box-shadow: none !important; }
 
-.hc-out.removable, .hc-in.removable { opacity: 0; }
-.hc-out.removable { transition: all var(--dur-short-outro); }
+.htmlact-out.removable, .htmlact-in.removable { opacity: 0; }
+.htmlact-out.removable { transition: all var(--dur-short-outro); }
 
-.hc-out.fade
-{ --hc-out-duration: var(--dur-short-outro);
+.htmlact-out.fade
+{ --htmlact-out-duration: var(--dur-short-outro);
   opacity: 0; transition: opacity var(--dur-short-outro) }
-.hc-in.fade { opacity: 0; }
+.htmlact-in.fade { opacity: 0; }
 .fade { opacity: 1; transition: opacity var(--dur-short)}
 
 /* Hyperbib UI */

@@ -216,7 +216,7 @@ let create app req = (* create and update are very similar factor out a bit. *)
     |> Db.http_resp_error
   in
   let uf = Service_env.url_fmt app in
-  let headers = Hfrag.hc_redirect uf (entity_page_url id) in
+  let headers = Hfrag.htmlact_redirect uf (entity_page_url id) in
   Ok (Http.Response.empty ~headers Http.Status.ok_200)
 
 let update env req id =
@@ -253,7 +253,7 @@ let update env req id =
   let* self = Hfrag.url_of_req_referer req in
   let title = Reference_html.page_full_title g r in
   let html = Reference_html.view_full g ~self r ~render_data ~cites ~cited_by in
-  let headers = Hfrag.hc_page_location_update uf self ~title () in
+  let headers = Hfrag.htmlact_page_location_update uf self ~title () in
   Ok (Page.part_response ~headers html)
 
 let view_fields app req id =

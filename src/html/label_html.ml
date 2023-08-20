@@ -19,19 +19,19 @@ let ui_ext g ~self = match Page.Gen.editable g with
     Hui.group ~at:At.[Hclass.entity_ui] ~dir:`H [new_button]
 
 (*
-let hc_request rf r = Hfrag.hc_request rf (Kurl.v Label.Url.kind r)
+let htmlact_request rf r = Hfrag.htmlact_request rf (Kurl.v Label.Url.kind r)
 let buttons_view rf l =
   let edit_button =
-    let r = hc_request rf @@ Edit (Label.id l) in
-    let t = Hc.target ".form:up" and e = Hc.effect `Element in
+    let r = htmlact_request rf @@ Edit (Label.id l) in
+    let t = Htmlact.target ".form:up" and e = Hc.effect `Element in
     Hui.button ~at:[r; t; e] (El.txt "Edit")
   in
   Hui.group ~dir:`H [edit_button]
 
 let buttons_edit rf l =
   let cancel_button =
-    let r = hc_request rf @@ Edit (Label.id l) in
-    let t = Hc.target ".form:up" and e = Hc.effect `Element in
+    let r = htmlact_request rf @@ Edit (Label.id l) in
+    let t = Htmlact.target ".form:up" and e = Hc.effect `Element in
     Hui.cancel ~at:[r; t; e] (El.txt "Cancel")
   in
   Hui.group ~align:`Justify ~dir:`H
@@ -48,8 +48,8 @@ let form ~edit rf l = El.void
   let at = match edit with
   | false -> []
   | true ->
-      let r = hc_request rf @@ Update (Label.id l) in
-      let e = Hc.effect `Element in
+      let r = htmlact_request rf @@ Update (Label.id l) in
+      let e = Htmlact.effect `Element in
       [r; e]
   in
   Hui.form ~at ~edit [

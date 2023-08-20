@@ -112,7 +112,7 @@ let create env req =
       let uf = Service_env.url_fmt env in
       let () = suggestion_notification env id |> Log.if_error ~use:() in
       let redirect = Suggestion.Url.v (Page {id; created = true}) in
-      let headers = Hfrag.hc_redirect uf redirect in
+      let headers = Hfrag.htmlact_redirect uf redirect in
       Ok (Http.Response.empty ~headers Http.Status.ok_200)
 
 let delete env id =
@@ -120,7 +120,7 @@ let delete env id =
   Service_env.with_db_transaction' `Immediate env @@ fun db ->
   let* c = get_suggestion db id in
   let* () = Db.exec' db (Suggestion.delete id) in
-  let headers = Http.Headers.(empty |> def (name "hc-reload") "true") in
+  let headers = Http.Headers.def Htmlact.reload "true" Http.Headers.empty in
   Ok (Page.part_response ~headers (El.splice []))
 
 let fill_in env req =

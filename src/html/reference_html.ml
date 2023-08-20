@@ -37,7 +37,7 @@ let h1_reference uf ~self ?title r =
 
 let entity_cancel_button uf s =
   let cancel = Reference.Url.v (View_fields (Reference.id s)) in
-  Hfrag.hc_cancel_button uf cancel
+  Hfrag.htmlact_cancel_button uf cancel
 
 let confirm_delete g r =
   let self = Reference.Url.page r in
@@ -47,7 +47,7 @@ let confirm_delete g r =
   let delete_button =
     let confirm = Reference.Url.v (Delete (Reference.id r)) in
     let target = Hfrag.target_entity_up in
-    Hfrag.hc_delete uf confirm ~target (El.txt Uimsg.confirm_delete)
+    Hfrag.htmlact_delete uf confirm ~target (El.txt Uimsg.confirm_delete)
   in
   let bs = Hui.group ~align:`Justify ~dir:`H [delete_button; cancel_button] in
   let really =
@@ -161,9 +161,10 @@ let edit_submit uf ~submit r =
   | `New _ -> Reference.Url.v Create, Uimsg.create_reference
   | `Edit -> Reference.Url.v (Update (Reference.id r)), Uimsg.save_reference
   in
-  let r = Hfrag.hc_request uf url and e = Hc.effect `Element in
-  let q = Hc.query "form:up" and rescue = Hc.query_rescue (`Bool true) in
-  let t = Hc.target ":up :up :up :up" in
+  let r = Hfrag.htmlact_request uf url and e = Htmlact.effect `Element in
+  let q = Htmlact.query "form:up" in
+  let rescue = Htmlact.query_rescue (`Bool true) in
+  let t = Htmlact.target ":up :up :up :up" in
   let at = At.[t; r; e; q; rescue; Hui.Class.submit] in
   Hui.button ~at (El.txt label)
 
@@ -239,8 +240,8 @@ let fill_ui g ~doi =
   in
   let at =
     let url = Reference.Url.v (Fill_in_form "") in
-    let r = Hfrag.hc_request (Page.Gen.url_fmt g) url in
-    let t = Hc.target ":up .entity" in
+    let r = Hfrag.htmlact_request (Page.Gen.url_fmt g) url in
+    let t = Htmlact.target ":up .entity" in
     [r; t; Hclass.vspace_0125]
   in
   El.splice [El.form ~at [label; input]; El.hr ()]
@@ -298,13 +299,13 @@ let undo_make_all_authors_public_button uf rid ~ids =
   let is_undo = El.input ~at:At.[hidden; name Hquery.is_undo; value "true"]() in
   let url = Reference.Url.v (Change_authors_publicity rid) in
   let label = Uimsg.undo_make_all_authors_public in
-  Hfrag.hc_button ~query:":scope > *" ~target:Hfrag.target_entity uf url
+  Hfrag.htmlact_button ~query:":scope > *" ~target:Hfrag.target_entity uf url
     ~at:Hui.Class.[tiny] (El.splice (El.txt label :: is_undo :: ids))
 
 let make_all_authors_public_button uf rid =
   let label = Uimsg.make_all_authors_public in
   let url = Reference.Url.v (Change_authors_publicity rid) in
-  Hfrag.hc_button ~target:Hfrag.target_entity uf url
+  Hfrag.htmlact_button ~target:Hfrag.target_entity uf url
     ~at:Hui.Class.[tiny] (El.txt label)
 
 let view_persons ?(ui = El.void) ~class' uf ~self = function
@@ -459,8 +460,10 @@ let list_section
 let edit_ui g uf r =
   if not (Page.Gen.editable g) then El.void else
   let rid = Reference.id r in
-  let edit = Hfrag.hc_edit_button uf (Reference.Url.v (Edit_form rid)) in
-  let del = Hfrag.hc_delete_button uf (Reference.Url.v (Confirm_delete rid)) in
+  let edit = Hfrag.htmlact_edit_button uf (Reference.Url.v (Edit_form rid)) in
+  let del =
+    Hfrag.htmlact_delete_button uf (Reference.Url.v (Confirm_delete rid))
+  in
   let left = Hui.group ~dir:`H [edit] in
   Hui.group ~at:[Hclass.entity_ui] ~align:`Justify ~dir:`H [left; del]
 
