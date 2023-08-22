@@ -17,17 +17,17 @@ ties up the web service definition from the datastructure definitions
 in 
 [src/schema](src/schema), their HTML rendering in [src/html](src/html)
 and their service in [src/service](src/service) which are 
-evenetually aggregated in the final URL request tree by
-[`src/service.ml`](src/service.ml). 
+eventually aggregated in the final URL request tree by
+[`src/service_tree.ml`](src/service_tree.ml). 
 
 [src/html](src/html) also has the page generation mecanism and a few
 more generic helper modules which could eventually be a bit
 generalized and maybe librarificated.
 
-In general given a data model entity, for example a `Person.t`. The following
+In general given a schema entity, for example a `Person.t`. The following
 modules are defined:
 
-* `src/model/person.ml[i]`. Defines the OCaml datatype, it's representation
+* `src/schema/person.ml[i]`. Defines the OCaml datatype, it's representation
   as a table, related database queries and operations and the definition of 
   a `Kurl` URL request kind for it in `Person.Url`.
 * `src/html/person_html.ml[i]`. This has HTML rendering fragments for 
@@ -39,9 +39,9 @@ modules are defined:
 
 This layered structure has a few advantages for module dependencies:
 
-1. `Person_html` can access the whole model and the URLs requests
+1. `Person_html` can access the whole schema and the URLs requests
    to format.
-2. `Person_service` can access the whole model and all the HTML renderings.
+2. `Person_service` can access the whole schema and all the HTML renderings.
 
 Since we have highly hyperlinked data we still occasionaly run by
 accident into the annoying circular dependency.

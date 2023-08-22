@@ -14,7 +14,7 @@ In order to install and run Hyperbib you need:
 * Sqlite3 >= v3.26.2
 * A bunch of OCaml libraries.
 
-## Using the web appliction with a webserver 
+## Using the web application with a webserver 
 
 ### Systemd 
 

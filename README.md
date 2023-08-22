@@ -18,7 +18,7 @@ projects.
 
 ```
 opam install . --deps-only 
-b0 -a hyperbib -- --help 
+b0 -- hyperbib --help 
 ```
 
 # Documentation 
