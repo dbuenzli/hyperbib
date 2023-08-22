@@ -21,8 +21,8 @@ let ellipsify s = s ^ "…"
 (* Htmlact requests *)
 
 let htmlact_request uf u =
-  let meth, url = Kurl.Fmt.req uf u in
-  Htmlact.request ~meth url
+  let method', url = Kurl.Fmt.req uf u in
+  Htmlact.request ~method' url
 
 let target_entity = "." ^ (snd (At.to_pair Hclass.entity)) ^ ":up"
 let target_entity_up = target_entity ^ " :up"

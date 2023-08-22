@@ -122,8 +122,8 @@ let entity_input_finder ?min_size ?(at = []) uf ~kind req ~value =
 let entity_remove_button ~req ~tip =
   let at = match req with
   | None -> [Hclass.hui_remove]
-  | Some (meth, url) ->
-      let r = Htmlact.request ~meth url in
+  | Some (method', url) ->
+      let r = Htmlact.request ~method' url in
       let t = Htmlact.target ":up :up" in
       let e = Htmlact.effect `Element in
       [r; t; e]
