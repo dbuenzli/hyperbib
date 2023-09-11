@@ -37,7 +37,7 @@ let url_fmt e = Page.Gen.url_fmt e.page_gen
 let v ~conf ~caps ~db_pool ~editable ~page_gen () =
   (* FIXME store these things in the db or in a json file. *)
   let max_pending_suggestions = 30 in
-  let email_sender = "machine@philoclimate.ch" in
+  let email_sender = "vps@erratique.ch" in
   let notification_email = "bib@philoclimate.ch" in
   let suggestion_notification = true in
   let static_dir = Hyperbib.Conf.static_dir conf in
