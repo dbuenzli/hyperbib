@@ -24,7 +24,7 @@ module Std = struct
       let cp _ _ rel () =
         Log.if_error ~use:() @@
         let src = Fpath.(src // rel) and dst = Fpath.(dst // rel) in
-        Os.File.copy ~force:true ~make_path:true ~src dst
+        Os.File.copy ~force:true ~make_path:true src ~dst
       in
       Os.Dir.fold_files ?dotfiles ?follow_symlinks ~rel:true ~recurse cp src ()
   end
@@ -98,8 +98,8 @@ module Conf = struct
           "Working directory is not an application directory.\n\
            %a: Use option %a to specify one or %a to use this directory\n\
           \      as an application directory."
-                  Fmt.(tty_string [`Fg `Yellow]) "Hint"
-                  Fmt.(code string) "-a" Fmt.(code string) "-a ."
+                  Fmt.(tty' [`Fg `Yellow]) "Hint"
+                  Fmt.code' "-a" Fmt.code' "-a ."
     in
     let* app_dir = Os.Path.realpath app_dir in
     Ok (v ~log_level ~tty_cap ~app_dir ())

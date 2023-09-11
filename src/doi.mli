@@ -27,18 +27,18 @@ val normalize : t -> t
 
 (** {1:res Resolution} *)
 
-val default_resolver : B0_http.Url.t
+val default_resolver : Url.t
 (** [default_resolver] is the default resolver used to
     resolve DOIs. This is [https://doi.org]. *)
 
 val resolve_to_url :
   ?resolver:string -> B0_http.Http_client.t -> t ->
-  (B0_http.Url.t, string) result
+  (Url.t, string) result
 (** [resolve_to_url r ~resolver doi] resolve [doi] with [resolver]
       to an URL with [resolver] (defaults to {!default_resolver}). *)
 
 val resolve_to_content_type :
-  ?resolver:B0_http.Url.t -> content_type:string ->
+  ?resolver:Url.t -> content_type:string ->
   B0_http.Http_client.t -> t -> (string option, string) result
 (** [resolve_to_bib r ~resolver ~format doi] resolves [doi] to a
     format [format] (the value of the HTTP [Accept:] header)

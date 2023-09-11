@@ -64,7 +64,7 @@ let vaccum_into file db =
 let backup file db =
   let* tmp = Os.Path.tmp ~dir:(Fpath.parent file) () in
   let* () = vaccum_into tmp db in
-  Os.Path.rename ~force:true ~make_path:false ~src:tmp file
+  Os.Path.rename ~force:true ~make_path:false tmp ~dst:file
 
 let backup_thread pool ~every_s file =
   let handle_error v =

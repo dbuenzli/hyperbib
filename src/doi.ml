@@ -37,8 +37,8 @@ let doi_url ~resolver = function
 
 let resolve_to_url ?(resolver = default_resolver) httpc doi =
   let* url = doi_url ~resolver doi in
-  let request = Http.Request.v ~url `GET in
-  let* response = Http_client.request ~follow:false httpc request in
+  let request = Http.Request.make ~url `GET in
+  let* response = Http_client.fetch ~follow:false httpc request in
   match List.assoc_opt "location" (Http.Response.headers response) with
   | None -> Error "No 'location' header found in response"
   | Some uri -> Ok uri
@@ -48,8 +48,8 @@ let resolve_to_content_type
   =
   let headers = ["Accept", content_type] in
   let* url = doi_url ~resolver doi in
-  let request = Http.Request.v ~headers ~url `GET in
-  let* response = Http_client.request httpc request in
+  let request = Http.Request.make ~headers ~url `GET in
+  let* response = Http_client.fetch httpc request in
   response_success request response
 
 let bibtex = "application/x-bibtex; charset=utf-8"
