@@ -3,6 +3,7 @@ open Result.Syntax
 
 (* OCaml libraries *)
 
+let unix = B0_ocaml.libname "unix"
 let rel = B0_ocaml.libname "rel"
 let rel_kit = B0_ocaml.libname "rel.kit"
 let rel_cli = B0_ocaml.libname "rel.cli"
@@ -109,8 +110,8 @@ let write_static_file_stamp b =
 let hyperbib =
   let doc = "hyperbib tool" in
   let requires =
-    [ threads; cmdliner; ptime; ptime_clock; b0_std; b0; b0_file; b0_kit;
-      htmlit; htmlact;
+    [ unix; threads; cmdliner; ptime; ptime_clock; b0_std; b0; b0_file;
+      b0_kit; htmlit; htmlact;
       rel; rel_kit; rel_cli; rel_sqlite3; rel_pool;
       webs; webs_kit; webs_unix; webs_cli;
       ]
