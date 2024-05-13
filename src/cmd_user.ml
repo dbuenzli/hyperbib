@@ -14,7 +14,7 @@ let add conf name password force =
   | true when not force ->
       Log.err begin fun m ->
         m "User %s already exists. Use %a to bypass."
-          name Fmt.(code string) "--force"
+          name Fmt.code "--force"
       end;
       Ok Hyperbib.Exit.user_exists
   | _ ->

@@ -57,7 +57,7 @@ let setup_private_key ~file =
   let err_load_private_key file e =
     Fmt.str "@[<v>Service private key error: %s@,\
              To create a new one (logs out all users) delete file:@,%a@]"
-      e Fmt.(code Fpath.pp_unquoted) file
+      e Fmt.(code' Fpath.pp_unquoted) file
   in
   let err_save_private_key file e =
     Fmt.str

@@ -121,7 +121,7 @@ let ensure_schema ?(read_only = false) s db =
       Fmt.error
         "@[<v>Live database and application schema do not match.@,\
          Use %a to inspect changes and upgrade the live schema.@]"
-        Fmt.(code string) "hyperbib db changes"
+        Fmt.code "hyperbib db changes"
 
 let schema = Rel_sqlite3.schema_of_db
 
