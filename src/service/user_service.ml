@@ -3,7 +3,7 @@
    SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
-open Hyperbib.Std
+open Hyperbib_std
 open Result.Syntax
 
 (* It's a bit unclear whether we would not be better off disabling the
@@ -31,7 +31,7 @@ let authenticate env sess req ~goto = match Service_env.editable env with
     Webs_session.for_error None @@
     let* q = Http.Request.to_query req in
     let err e = Http.Response.empty ~explain:e Http.Status.server_error_500 in
-    let users_file = Hyperbib.Conf.users_file (Service_env.conf env) in
+    let users_file = Hyperbib_app.Conf.users_file (Service_env.conf env) in
     let* users = Result.map_error err (User.load users_file) in
     let username = Http.Query.find_first User.Url.username_key q in
     let password = Http.Query.find_first User.Url.password_key q in

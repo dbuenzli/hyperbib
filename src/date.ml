@@ -3,12 +3,11 @@
    SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
-open Hyperbib.Std
-open Rel
+open Hyperbib_std
 
-(* A much much much better model for partial would be a range
-   of two unix timestamps, but I couldn't find a way to mark it work
-   well in the db. *)
+(* A much much much better model for partial would be a range of two
+   unix timestamps, but I couldn't find a way to make it work well in
+   the db. *)
 
 type day = int
 type month = int
@@ -17,8 +16,7 @@ type year = int
 (* md partial *)
 
 type md_partial = month * day option
-
-let md_partial_dec s =
+let md_partial_of_string s =
   let i = int_of_string in
   try match String.split_on_char '-' s with
   | [m] -> Ok (i m, None)
@@ -27,28 +25,17 @@ let md_partial_dec s =
   with
   | Failure _ -> Fmt.error "%S: not of the form MM[-DD]" s
 
-let md_partial_enc (m, d) = match d with
-| None -> Ok (Fmt.str "%02d" m)
-| Some d ->  Ok (Fmt.str "%02d-%02d" m d)
+let md_partial_to_string (m, d) = match d with
+| None -> Fmt.str "%02d" m
+| Some d ->  Fmt.str "%02d-%02d" m d
 
-let md_partial_of_string = md_partial_dec
-let pp_md_partial ppf v = Fmt.string ppf (md_partial_enc v |> Result.get_ok)
-
-let ask_md_partial_type =
-  let name = "date-md-partial" and pp = pp_md_partial in
-  let coded = Type.Coded.v ~name ~pp md_partial_enc md_partial_dec Type.Text in
-  Type.Coded coded
+let pp_md_partial ppf v = Fmt.string ppf (md_partial_to_string v)
 
 (* partial *)
 
 type partial = year * md_partial option
 
-let enc_partial (y, md) = match md with
-| None -> Ok (Fmt.str "%04d" y)
-| Some (m, None) -> Ok (Fmt.str "%04d-%02d" y m)
-| Some (m, Some d) -> Ok (Fmt.str "%04d-%02d-%02d" y m d)
-
-let dec_partial s =
+let partial_of_string s =
   let i = int_of_string in
   try match String.split_on_char '-' s with
   | [y] -> Ok (i y, None)
@@ -58,11 +45,9 @@ let dec_partial s =
   with
   | Failure _ -> Fmt.error "%S: not of the form YYYY[-MM[-DD]]" s
 
-let partial_of_string = dec_partial
-let partial_to_string v = enc_partial v |> Result.get_ok
-let pp_partial ppf v = Fmt.string ppf (enc_partial v |> Result.get_ok)
+let partial_to_string (y, md) = match md with
+| None -> Fmt.str "%04d" y
+| Some (m, None) -> Fmt.str "%04d-%02d" y m
+| Some (m, Some d) -> Fmt.str "%04d-%02d-%02d" y m d
 
-let ask_partial_type =
-  let name = "date-partial" and pp = pp_partial in
-  let coded = Type.Coded.v ~name ~pp enc_partial dec_partial Type.Text in
-  Type.Coded coded
+let pp_partial ppf v = Fmt.string ppf (partial_to_string v)

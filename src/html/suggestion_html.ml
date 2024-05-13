@@ -3,7 +3,7 @@
    SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
-open Hyperbib.Std
+open Hyperbib_std
 
 let page_404 g ~self =
   let consult = Suggestion.Url.v Index in
@@ -16,7 +16,7 @@ let doi_input g s =
   let input = Hui.input_string ~autogrow:true ~min_size:25 ~col s in
   let fill_in =
     let r =
-      Hfrag.htmlact_request (Page.Gen.url_fmt g) (Suggestion.Url.v Fill_in)
+      Html_kit.htmlact_request (Page.Gen.url_fmt g) (Suggestion.Url.v Fill_in)
     in
     let t = Htmlact.target "form:up" in
     let q = Htmlact.query "form:up" in
@@ -62,7 +62,7 @@ let buttons ?(force_rescue = false) g =
   let uf = Page.Gen.url_fmt g in
   let submit =
     let label = Uimsg.submit_suggestion in
-    let r = Hfrag.htmlact_request uf (Suggestion.Url.v Create) in
+    let r = Html_kit.htmlact_request uf (Suggestion.Url.v Create) in
     let t = Htmlact.target "form:up" in
     let e = Htmlact.effect `Element in
     let q = Htmlact.query "form:up" in
@@ -89,15 +89,15 @@ let suggest_form ?force_rescue ?(msg = El.void) g s =
   let comment = input_comment s in
   let email = input_email s in
   let at = At.[class' "suggest"] in
-  Hfrag.form_no_submit ~at
+  Html_kit.form_no_submit ~at
     [ doi; msg; suggestion; comment; email; bot_honeypot;
       buttons ?force_rescue g]
 
 let pending_anchor = "pending"
 
 let doi s =
-  let txt = El.txt ("DOI:" ^ Suggestion.doi s) in
-  let d = Hfrag.doi_link (Suggestion.doi s) txt in
+  let txt = El.txt ("doi:" ^ Suggestion.doi s) in
+  let d = Html_kit.doi_link (Suggestion.doi s) txt in
   if El.is_void d then d else El.small [El.sp ; d]
 
 let created g s =
@@ -115,7 +115,7 @@ let created g s =
     let pending = Kurl.Fmt.rel_url uf ~src:self ~dst:(Suggestion.Url.v Index) in
     let pending = String.concat "#" [pending; string_of_int (Suggestion.id s)]in
     El.p [El.txt "has been added to the list of ";
-          Hfrag.link ~href:pending (El.txt "pending suggestions.")]
+          Html_kit.link ~href:pending (El.txt "pending suggestions.")]
   in
   let content = El.section [h1; thanks; theref; sugg; added] in
   Page.with_content g ~self ~title ~content
@@ -124,12 +124,12 @@ let confirm_delete g s =
   let uf = Page.Gen.url_fmt g in
   let cancel_button =
     let cancel = Suggestion.Url.v (View_fields (Suggestion.id s)) in
-    Hfrag.htmlact_cancel_button uf cancel
+    Html_kit.htmlact_cancel_button uf cancel
   in
   let delete_button =
     let confirm = Suggestion.Url.v (Delete (Suggestion.id s)) in
-    let target = Hfrag.target_entity in
-    Hfrag.htmlact_delete uf confirm ~target (El.txt Uimsg.confirm_delete)
+    let target = Html_kit.target_entity in
+    Html_kit.htmlact_delete uf confirm ~target (El.txt Uimsg.confirm_delete)
   in
   let bs = Hui.group ~align:`Justify ~dir:`H [delete_button; cancel_button] in
   let really = El.p [El.txt Uimsg.really_delete_suggestion; doi s; El.txt "?"]in
@@ -142,7 +142,7 @@ let confirm_delete g s =
       let subject = Uimsg.about_your_suggestion in
       let bib = Page.Gen.bibliography g in
       let body = Bibliography.suggester_email_message bib in
-      let mailto = Hfrag.mailto_link ~subject ~body ~email (El.txt email) in
+      let mailto = Html_kit.mailto_link ~subject ~body ~email (El.txt email) in
       El.p [El.txt Uimsg.you_may_want_to_send_an_email; El.sp; mailto; El.sp;
             El.txt Uimsg.to_notify_the_suggestion_was_treated],
       El.splice [El.sp; El.txt Uimsg.the_email_address_will_be_deleted]
@@ -164,7 +164,7 @@ let view_private_email g s =
   let email = Suggestion.email s in
   if Page.Gen.only_public g || email = "" then El.void else
   let subject = Uimsg.about_your_suggestion in
-  let mailto = Hfrag.mailto_link ~subject ~email (El.txt email) in
+  let mailto = Html_kit.mailto_link ~subject ~email (El.txt email) in
   El.em [El.txt Uimsg.suggested_by; El.sp; mailto; El.br ()]
 
 let view_private g s =
@@ -185,9 +185,9 @@ let edit_ui g s =
   let uf = Page.Gen.url_fmt g in
   let id = Suggestion.id s in
   let integrate = Suggestion.Url.v (Page {id; created = false}) in
-  let integrate = Hfrag.htmlact_integrate_button uf integrate in
+  let integrate = Html_kit.htmlact_integrate_button uf integrate in
   let del =
-    Hfrag.htmlact_delete_button uf (Suggestion.Url.v (Confirm_delete id))
+    Html_kit.htmlact_delete_button uf (Suggestion.Url.v (Confirm_delete id))
   in
   let at = [Hclass.entity_ui; Hclass.Margin.top_000] in
   let ui = Hui.group ~at ~align:`Justify ~dir:`H [integrate; del] in
@@ -201,7 +201,7 @@ let view_fields ?(no_ui = false) g ~self s =
   let private' = view_private g s in
   let ui = if no_ui then El.void else edit_ui g s in
   El.div ~at:[At.id id; Hclass.entity; Hclass.vspace_025; Hclass.fade]
-    [ Hfrag.anchor_a id; preamble; suggestion; private'; ui]
+    [ Html_kit.anchor_a id; preamble; suggestion; private'; ui]
 
 let integrate_html g ~self s ~form =
   let h1 = El.h1 [El.txt Uimsg.integrate_suggestion] in
@@ -214,7 +214,7 @@ let integrate g s ~form =
   Page.with_content g ~self ~title:Uimsg.suggestions ~content
 
 let index_html g ~self ss ~is_full =
-  let h1 = El.h1 [Hfrag.uppercase_span Uimsg.suggestions ] in
+  let h1 = El.h1 [Html_kit.uppercase_span Uimsg.suggestions ] in
   let preamble = match Page.Gen.only_public g with
   | true ->
       if is_full then too_many_suggestions else
@@ -226,10 +226,10 @@ let index_html g ~self ss ~is_full =
   let pendings = match ss with
   | [] -> El.void
   | ss ->
-      let count = Hfrag.item_count (List.length ss) in
+      let count = Html_kit.item_count (List.length ss) in
       let h2 =
         El.h2 ~at:At.[id pending_anchor]
-          [ Hfrag.anchor_a pending_anchor;
+          [ Html_kit.anchor_a pending_anchor;
             El.txt Uimsg.pending_suggestions; El.sp; count];
       in
       let suggestions =

@@ -3,7 +3,7 @@
    SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
-open Hyperbib.Std
+open Hyperbib_std
 
 let ui_ext g ~self =
   if not (Page.Gen.editable g) then El.void else
@@ -12,19 +12,19 @@ let ui_ext g ~self =
     let cancel = Some (Kurl.Fmt.url uf self) in
     let dst = Container.Url.v (New_form { cancel }) in
     let href = Kurl.Fmt.rel_url uf ~src:self ~dst in
-    Hfrag.new_entity_button ~href ~label:Uimsg.new_container
+    Html_kit.new_entity_button ~href ~label:Uimsg.new_container
   in
   Hui.group ~at:At.[Hclass.entity_menu] ~dir:`H [new_button]
 
 let entity_cancel_button uf c =
   let cancel = Container.Url.v (View_fields (Container.id c)) in
-  Hfrag.htmlact_cancel_button uf cancel
+  Html_kit.htmlact_cancel_button uf cancel
 
 let h1_container ?title uf ~self c =
   let viz = if Container.public c then At.void else Hclass.private' in
   let entity_kind =
     let kind = Uimsg.containers in
-    Hfrag.entity_kind_index uf ~self ~kind (Container.Url.v Index)
+    Html_kit.entity_kind_index uf ~self ~kind (Container.Url.v Index)
   in
   let title = match title with
   | None -> El.span ~at:[viz; Hclass.container] [El.txt_of Container.title c]
@@ -39,8 +39,8 @@ let confirm_delete g c ~ref_count =
   let cancel_button = entity_cancel_button uf c in
   let delete_button =
     let confirm = Container.Url.v (Delete (Container.id c)) in
-    let target = Hfrag.target_entity_up in
-    Hfrag.htmlact_delete uf confirm ~target (El.txt Uimsg.confirm_delete)
+    let target = Html_kit.target_entity_up in
+    Html_kit.htmlact_delete uf confirm ~target (El.txt Uimsg.confirm_delete)
   in
   let bs = Hui.group ~align:`Justify ~dir:`H [delete_button; cancel_button] in
   let really =
@@ -49,7 +49,7 @@ let confirm_delete g c ~ref_count =
   let used = match ref_count with
   | 0 -> El.void
   | n ->
-      let href = Hfrag.anchor_href Uimsg.references_anchor in
+      let href = Html_kit.anchor_href Uimsg.references_anchor in
       let refs = El.a ~at:[href] [El.txt_of Uimsg.these_n_references n] in
       let at = [Hclass.message; Hclass.error] in
       El.p ~at [El.txt Uimsg.this_will_also_delete; El.sp; refs; El.txt "."]
@@ -61,10 +61,10 @@ let confirm_delete g c ~ref_count =
   El.section ~at [ h1; really; used; no_undo_warn;  bs; ]
 
 let deleted g c =
-  let cont = Hfrag.uncapitalize Uimsg.container in
+  let cont = Html_kit.uncapitalize Uimsg.container in
   let goto = Container.Url.v Index in
   let goto = Kurl.Fmt.url (Page.Gen.url_fmt g) goto in
-  let goto = Hfrag.link ~href:goto (El.txt_of Uimsg.goto_kind_index cont) in
+  let goto = Html_kit.link ~href:goto (El.txt_of Uimsg.goto_kind_index cont) in
   let msg = El.txt_of Uimsg.container_deleted (Container.title c) in
   El.section [ El.h1 [El.txt Uimsg.deleted]; El.p [msg]; El.p [goto]]
 
@@ -92,7 +92,7 @@ let edit_submit uf ~submit c =
   | `Duplicate ->
       Container.Url.v (Duplicate (Container.id c)), Uimsg.create_duplicate
   in
-  let r = Hfrag.htmlact_request uf url and e = Htmlact.effect `Element in
+  let r = Html_kit.htmlact_request uf url and e = Htmlact.effect `Element in
   let q = Htmlact.query "form:up" in
   let rescue = Htmlact.query_rescue (`Bool true) in
   let t = Htmlact.target ":up :up :up" in
@@ -122,7 +122,7 @@ let edit_container ?(msg = El.void) g ~self ~submit c =
   let private_note = edit_private_note c in
   let public = edit_public c in
   let buttons = edit_buttons uf ~submit c in
-  Hfrag.entity_form_no_submit
+  Html_kit.entity_form_no_submit
     [h1; title; ids; note; private_note; public; msg; buttons]
 
 let edit_form g c =
@@ -131,7 +131,7 @@ let edit_form g c =
 
 let new_form g c ~cancel =
   let self = Container.Url.v (New_form { cancel }) in
-  let title = Hfrag.title ~sub:Uimsg.new_container ~sup:Uimsg.container in
+  let title = Html_kit.title ~sub:Uimsg.new_container ~sup:Uimsg.container in
   let content =
     let at = At.[Hclass.entity; Hclass.editing] in
     El.section ~at [edit_container g ~self ~submit:(`New cancel) c]
@@ -160,14 +160,16 @@ let replace_form g c ~ref_count =
   let msg = match ref_count with
   | 0 -> El.void
   | n ->
-      let href = Hfrag.anchor_href Uimsg.references_anchor in
+      let href = Html_kit.anchor_href Uimsg.references_anchor in
       let refs = El.a ~at:[href] [El.txt_of Uimsg.these_n_references n] in
       let at = [Hclass.message; Hclass.info] in
       El.p ~at [El.txt Uimsg.replacement_container_will_become_container_of;
                 El.sp; refs; El.txt "."]
   in
   let at =
-    let r = Hfrag.htmlact_request uf (Container.Url.v (Replace (Container.id c))) in
+    let r =
+      Html_kit.htmlact_request uf (Container.Url.v (Replace (Container.id c)))
+    in
     let e = Htmlact.effect `Element in
     At.[Hclass.entity; Hclass.editing; r; e]
   in
@@ -180,12 +182,16 @@ let view_private_note = Entity_html.view_private_note (module Container)
 let edit_ui g uf c =
   if not (Page.Gen.editable g) then El.void else
   let cid = Container.id c in
-  let edit = Hfrag.htmlact_edit_button uf (Container.Url.v (Edit_form cid)) in
-  let rep = Hfrag.htmlact_replace_button uf (Container.Url.v (Replace_form cid)) in
+  let edit =
+    Html_kit.htmlact_edit_button uf (Container.Url.v (Edit_form cid)) in
+  let rep =
+    Html_kit.htmlact_replace_button uf (Container.Url.v (Replace_form cid)) in
   let dup =
-    Hfrag.htmlact_duplicate_button uf (Container.Url.v (Duplicate_form cid))
+    Html_kit.htmlact_duplicate_button uf (Container.Url.v (Duplicate_form cid))
   in
-  let del = Hfrag.htmlact_delete_button uf (Container.Url.v (Confirm_delete cid)) in
+  let del =
+    Html_kit.htmlact_delete_button uf (Container.Url.v (Confirm_delete cid))
+  in
   let left = Hui.group ~dir:`H [edit; rep; dup] in
   Hui.group ~at:[Hclass.entity_ui] ~align:`Justify ~dir:`H [left; del]
 
@@ -211,7 +217,7 @@ let page_404 g ~self =
   let consult = Container.Url.v Index in
   Page.for_404 ~ui_ext g ~kind:Uimsg.container ~self ~consult
 
-let page_title c = Hfrag.title ~sub:(Container.title c) ~sup:Uimsg.container
+let page_title c = Html_kit.title ~sub:(Container.title c) ~sup:Uimsg.container
 let page_full_title g s = Page.full_title g ~title:(page_title s)
 let page g c refs =
   let self = Container.Url.page c in
@@ -226,26 +232,26 @@ let index_html g ~self cs ~ref_count =
   in
   let container_li p =
     let cid = Fmt.str "%d" (Container.id p) in
-    let cont = Hfrag.link_container uf ~self p in
-    let count = Hfrag.item_count (ref_count p) in
-    let container = [Hfrag.anchor_a cid; cont; El.sp; count] in
+    let cont = Html_kit.link_container uf ~self p in
+    let count = Html_kit.item_count (ref_count p) in
+    let container = [Html_kit.anchor_a cid; cont; El.sp; count] in
     El.li ~at:At.[id cid] container
   in
   let letter_section (l, cs) =
     let cs = List.sort Container.order_by_title cs in
-    El.splice [Hfrag.h2_letter l; El.ol (List.map container_li cs)]
+    El.splice [Html_kit.h2_letter l; El.ol (List.map container_li cs)]
   in
   let h1 =
-    let count = Hfrag.item_count (List.length cs) in
-    El.h1 [Hfrag.uppercase_span Uimsg.containers; El.sp; count ]
+    let count = Html_kit.item_count (List.length cs) in
+    El.h1 [Html_kit.uppercase_span Uimsg.containers; El.sp; count ]
   in
-  let descr = Hfrag.description (El.txt Uimsg.container_list_descr) in
+  let descr = Html_kit.description (El.txt Uimsg.container_list_descr) in
   let index =
     let classes p = match Container.index_letter p with
     | None -> ["\u{2300}"] | Some c -> [String.of_char c]
     in
     let letters = List.classify ~classes cs in
-    let letters_nav = Hfrag.letters_nav (List.map fst letters) in
+    let letters_nav = Html_kit.letters_nav (List.map fst letters) in
     let letter_sections = El.splice (List.map letter_section letters) in
     let at = [Hclass.container; Hclass.index ] in
     El.nav ~at [letters_nav; letter_sections]

@@ -5,12 +5,12 @@
 
 (** Application users. *)
 
-open Hyperbib.Std
-open B0_json
+open Hyperbib_std
 
 (** {1:user User} *)
 
 type t
+(** The type for a single user. *)
 
 val name : t -> string
 (** [name u] is the name of [u]. *)
@@ -34,6 +34,9 @@ val add : name:string -> password:string -> s -> s
     to [us]. If [name] already exists this override the previous
     definition. *)
 
+val remove : name:string -> s -> s
+(** [remove name us] is [us] without a user named [us]. *)
+
 val check : name:string -> password:string -> s -> bool
 (** [check ~name ~password us] is [true] iff [name] exists and its
     password matches [pass]. *)
@@ -43,8 +46,9 @@ val fold : (t -> 'a -> 'a) -> s -> 'a -> 'a
 
 (** {1:serial Serialiazing} *)
 
-val of_json : s B0_json.Jsonq.t
-(** [of_json] queries a JSON array of objects of the form
+val jsont : s Jsont.t
+(** [jsont] is a JSON serializer for users. A JSON array
+    of objects of this form:
 {v
    {
      "username": "name",
@@ -57,9 +61,6 @@ val of_json : s B0_json.Jsonq.t
      }
    }
 v} *)
-
-val to_json : s -> Jsong.t
-(** [to_json us] serializes users [us] to JSON. *)
 
 (** {1:persist Persisting} *)
 

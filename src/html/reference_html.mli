@@ -5,7 +5,7 @@
 
 (** Reference HTML parts. *)
 
-open Hyperbib.Std
+open Hyperbib_std
 
 (** {1:lists Lists} *)
 

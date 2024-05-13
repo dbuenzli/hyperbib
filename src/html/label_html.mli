@@ -5,7 +5,7 @@
 
 (** Label HTML parts. *)
 
-open Hyperbib.Std
+open Hyperbib_std
 
 
 val form : edit:bool -> Kurl.fmt -> Label.t -> El.html

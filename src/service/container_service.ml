@@ -3,7 +3,7 @@
    SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
-open Hyperbib.Std
+open Hyperbib_std
 open Result.Syntax
 open Rel
 
@@ -43,7 +43,7 @@ let get_container_for_page_ref =
 let view_fields_resp env db req id =
   let* c = get_container db id in
   let g = Service_env.page_gen env in
-  let* self = Hfrag.url_of_req_referer req in
+  let* self = Html_kit.url_of_req_referer req in
   Ok (Page.part_response (Container_html.view_fields g c ~self))
 
 (* Responses *)
@@ -74,7 +74,7 @@ let duplicate env req src =
   let* () = Db.exec' db (Container.Label.copy_applications_stmt ~src ~dst) in
   let uf = Service_env.url_fmt env in
   let headers =
-    Hfrag.htmlact_redirect uf (Container.Url.v (Page (None, dst)))
+    Html_kit.htmlact_redirect uf (Container.Url.v (Page (None, dst)))
   in
   Ok (Http.Response.empty ~headers Http.Status.ok_200)
 
@@ -157,7 +157,7 @@ let replace env req this =
       let* () = Db.exec' db rep in
       let* () = Db.exec' db (Container.delete this) in
       let uf = Service_env.url_fmt env in
-      let headers = Hfrag.htmlact_redirect uf (Container.Url.v (Page (None, by))) in
+      let headers = Html_kit.htmlact_redirect uf (Container.Url.v (Page (None, by))) in
       Ok (Http.Response.empty ~headers Http.Status.ok_200)
 
 let input env ~input_name id =
@@ -213,10 +213,10 @@ let update env req id =
   let g = Service_env.page_gen env in
   let uf = Page.Gen.url_fmt g in
   let* refs = get_page_data db g c in
-  let* self = Hfrag.url_of_req_referer req in
+  let* self = Html_kit.url_of_req_referer req in
   let html = Container_html.view_full g c ~self refs in
   let title = Container_html.page_full_title g c in
-  let headers = Hfrag.htmlact_page_location_update uf self ~title () in
+  let headers = Html_kit.htmlact_page_location_update uf self ~title () in
   Ok (Page.part_response ~headers html)
 
 let view_fields env req id =

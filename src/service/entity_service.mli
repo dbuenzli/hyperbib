@@ -5,7 +5,7 @@
 
 (** Database entities service commonalities. *)
 
-open Hyperbib.Std
+open Hyperbib_std
 
 (** {1:misc Miscellaneous} *)
 

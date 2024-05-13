@@ -1,5 +1,7 @@
 {0 hyperbib}
 
+{!modules: Hyperbib_std}
+
 {1:service Service}
 
 {!modules:
@@ -14,9 +16,9 @@ Entity_html
 Entity_service
 Hclass
 Help_html
-Hfrag
 Home_html
 Hquery
+Html_kit
 Icon
 Label
 Label_html
@@ -28,10 +30,11 @@ Person_service
 Reference
 Reference_html
 Reference_service
+Schema_kit
 Schema
 Static_file
 Static_file_service
-Static_file_stamp
+Stamp
 Subject
 Subject_html
 Subject_service
@@ -47,22 +50,23 @@ Year_service}
 
 {!modules:
 Bibtex
-Cmd_add_user
 Cmd_db
 Cmd_html
+Cmd_import
 Cmd_serve
+Cmd_user
 Crossref
 Date
 Db
 Doi
 Export
 Hui
-Hyperbib
+Hyperbib_app
 Id
 Import
 Service
-Webapp
-}
+Service_kit
+Service_env}
 
 {1:doc Md documentation}
 

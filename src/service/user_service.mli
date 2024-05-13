@@ -3,6 +3,6 @@
    SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
-open Hyperbib.Std
+open Hyperbib_std
 
 val v : Service.sub Kurl.service

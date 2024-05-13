@@ -3,7 +3,7 @@
    SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
-open Hyperbib.Std
+open Hyperbib_std
 open Result.Syntax
 
 let immutable_session s = Kurl.map_service Service.sub_with_immutable_session s

@@ -7,7 +7,7 @@
 
     Classifies references. *)
 
-open Hyperbib.Std
+open Hyperbib_std
 
 (** {1:subjects Subjects} *)
 
@@ -57,7 +57,7 @@ val public : t -> bool
 
 val duplicate_data : t -> t
 (** [duplicate_data s] is [s] with its name altered and {!public} set to
-    none. The {!id} is the one of [s]. *)
+    none. The {!val-id} is the one of [s]. *)
 
 (** {1:predcomp Predicates and comparisons} *)
 

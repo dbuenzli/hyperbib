@@ -5,7 +5,7 @@
 
 (** Reference suggestions. *)
 
-open Hyperbib.Std
+open Hyperbib_std
 
 type id = Id.t
 (** The type for suggestion ids. These are allocated by the database. *)

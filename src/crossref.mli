@@ -9,7 +9,6 @@
     {{:https://github.com/Crossref/rest-api-doc/blob/master/api_format.md}
     here}. This a partial modelling of the format. *)
 
-open Hyperbib.Std
 open B0_json
 
 type partial_date = int * (int * int option) option
@@ -51,8 +50,8 @@ module Work : sig
 end
 
 val for_doi :
-  B0_http.Http_client.t option ->
-  cache:Fpath.t -> Doi.t -> (B0_json.Json.t option, string) result
+  Webs.Http_client.t option ->
+  cache:B0_std.Fpath.t -> Doi.t -> (B0_json.Json.t option, string) result
 (** [for_doi httpr cache doi] looks up crossref metadata for doi [doi].
     Looks up in the local [cache] first. [None] is returned if the
     doi cannot be resolved (404). *)

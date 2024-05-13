@@ -7,7 +7,7 @@
 
     Contributors to references, either in author or editor position. *)
 
-open Hyperbib.Std
+open Hyperbib_std
 
 (** {1:roles Person roles} *)
 
@@ -70,7 +70,7 @@ val public : t -> bool
 
 val duplicate_data : t -> t
 (** [duplicate_data s] is [s] with its last name altered and {!public} set to
-    none. The {!id} is the one of [s]. *)
+    none. The {!val-id} is the one of [s]. *)
 
 val created_equal : t -> t -> bool
 
@@ -185,5 +185,5 @@ module Url : sig
   (** [res_name p] an URL path segment for naming [p]. *)
 
   val page : person -> Kurl.t
-  (** [page p] is a {!type-Url.t.Page} URL request for [p]. *)
+  (** [page p] is a {!type-t.Page} URL request for [p]. *)
 end

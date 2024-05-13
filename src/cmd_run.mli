@@ -3,9 +3,9 @@
    SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
-(** Database managment *)
+(** Run maintenance tasks.  *)
 
 open Hyperbib_std
 
 val cmd : Os.Exit.t Cmdliner.Cmd.t
-(** [cmd] is the command line for [db]. *)
+(** [cmd] is the command line for [run]. *)

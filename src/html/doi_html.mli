@@ -5,7 +5,7 @@
 
 (** DOI resolution UI fragments *)
 
-open Hyperbib.Std
+open Hyperbib_std
 
 val warn_doi_exists :
   Page.Gen.t -> self:Kurl.t -> string -> Reference.t -> El.html

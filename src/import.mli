@@ -5,7 +5,7 @@
 
 (** Data import functions. *)
 
-open Hyperbib.Std
+open Hyperbib_std
 
 type 'a entity = [ `Exists of 'a | `To_create of 'a ]
 (** The type for importing entities. Indicates whether it already
@@ -19,7 +19,7 @@ module Doi : sig
   val ref_to_short_text_citation : ref -> string
 
   val get_ref :
-    B0_http.Http_client.t option -> cache:Fpath.t -> Doi.t ->
+    Http_client.t option -> cache:Fpath.t -> Doi.t ->
     (ref option, string) result
 
   val cites_of_ref : ref -> Doi.t list
@@ -38,4 +38,4 @@ module Doi : sig
 end
 
 val legacy :
-  Db.t -> Hyperbib.Conf.t -> ((unit, string) result, Db.error) result
+  Db.t -> Hyperbib_app.Conf.t -> ((unit, string) result, Db.error) result

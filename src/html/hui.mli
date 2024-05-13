@@ -71,7 +71,7 @@ end
 
 (** {1:group Groups}
 
-    {b FIXME.} This was ripped of {!Brr_note_kit.Ui}.
+    {b FIXME.} This was ripped of {!Note_brr_kit.Ui}.
     Once we should seriously absorb {{:https://www.w3.org/TR/css-align/}
     the box alignment module} and
     {{:https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Grid_Layout/Box_Alignment_in_CSS_Grid_Layout}this} and try to devise a good system. *)

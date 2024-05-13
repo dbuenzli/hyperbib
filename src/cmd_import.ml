@@ -3,25 +3,25 @@
    SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
-open Hyperbib.Std
+open Hyperbib_std
 open Result.Syntax
 
 let import_legacy conf reset =
   (* FIXME remove that *)
-  Log.if_error ~use:Hyperbib.Exit.some_error @@
+  Log.if_error ~use:Hyperbib_app.Exit.some_error @@
   match reset with
   | false ->
       Fmt.error "Cannot import without clearing the database use %a option"
         Fmt.code "--reset"
   | true ->
-      let db_file = Hyperbib.Conf.db_file conf in
+      let db_file = Hyperbib_app.Conf.db_file conf in
       let file_error e = Fmt.str "%a: %s" Fpath.pp_unquoted db_file e in
       Result.map_error file_error @@ Result.join @@ Db.string_error @@
       Db.with_open ~foreign_keys:false db_file @@ fun db ->
       let* () = Db.clear db |> Db.string_error in
       let* () = Db.ensure_schema Schema.v db in
       let* () = Import.legacy db conf |> Db.string_error |> Result.join in
-      Ok Hyperbib.Exit.ok
+      Ok Hyperbib_app.Exit.ok
 
 let db conf action reset = match action with
 | `Legacy -> import_legacy conf reset
@@ -31,7 +31,7 @@ let db conf action reset = match action with
 open Cmdliner
 
 let doc = "Import data in the database"
-let exits = Hyperbib.Exit.Info.base_cmd
+let exits = Hyperbib_app.Exit.Info.base_cmd
 let man = [
   `S Manpage.s_description;
   `P "The $(tname) imports data in the database."; ]
@@ -51,4 +51,4 @@ let action =
 
 let cmd =
   Cmd.v (Cmd.info "import" ~doc ~exits ~man)
-    Term.(const db $ Hyperbib.Cli.conf $ action $ reset)
+    Term.(const db $ Hyperbib_app.Cli.conf $ action $ reset)

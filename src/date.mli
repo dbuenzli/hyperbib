@@ -3,7 +3,7 @@
    SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
-open Hyperbib.Std
+open Hyperbib_std
 
 type day = int
 type month = int
@@ -13,9 +13,8 @@ type year = int
 
 type md_partial = month * day option
 val md_partial_of_string : string -> (md_partial, string) result
+val md_partial_to_string : md_partial -> string
 val pp_md_partial : Format.formatter -> md_partial -> unit
-
-val ask_md_partial_type : md_partial Rel.Type.t
 
 (** {1:partial Partial date} *)
 
@@ -29,6 +28,3 @@ val partial_to_string : partial -> string
 
 val pp_partial : Format.formatter -> partial -> unit
 (** [pp] is a formatter for partial dates. *)
-
-val ask_partial_type : partial Rel.Type.t
-(** N.B. no longer used. *)

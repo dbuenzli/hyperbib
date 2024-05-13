@@ -5,7 +5,7 @@
 
 (** Database schema. *)
 
-open Hyperbib.Std
+open Hyperbib_std
 
 type conf = string * string
 val conf : conf Rel.Table.t

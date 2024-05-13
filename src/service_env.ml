@@ -5,12 +5,12 @@
 
 (** Service environment *)
 
-open Hyperbib.Std
+open Hyperbib_std
 open Result.Syntax
 
 type editable = [ `No | `With_login | `Unsafe ]
 type t =
-  { conf : Hyperbib.Conf.t;
+  { conf : Hyperbib_app.Conf.t;
     caps : User.Caps.t;
     db_pool : Db.pool;
     editable : editable;
@@ -40,7 +40,7 @@ let v ~conf ~caps ~db_pool ~editable ~page_gen () =
   let email_sender = "vps@erratique.ch" in
   let notification_email = "bib@philoclimate.ch" in
   let suggestion_notification = true in
-  let static_dir = Hyperbib.Conf.static_dir conf in
+  let static_dir = Hyperbib_app.Conf.static_dir conf in
   { conf; caps; db_pool; editable; email_sender; max_pending_suggestions;
     notification_email; page_gen; static_dir; suggestion_notification }
 

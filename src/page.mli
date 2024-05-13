@@ -5,7 +5,7 @@
 
 (** Page render and content. *)
 
-open Hyperbib.Std
+open Hyperbib_std
 
 (** {1:params Page rendering parameters} *)
 

@@ -5,7 +5,7 @@
 
 (** HTTP serving *)
 
-open Hyperbib.Std
+open Hyperbib_std
 
 val cmd : Os.Exit.t Cmdliner.Cmd.t
 (** [cmd] is the command line for [serve]. *)

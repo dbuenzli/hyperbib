@@ -3,7 +3,7 @@
    SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
-open Hyperbib.Std
+open Hyperbib_std
 open Result.Syntax
 open Rel
 
@@ -38,7 +38,7 @@ let create
   let* vs = Hquery.careless_find_table_cols ~ignore:[Col.V E.id'] E.table q in
   let* id = Db.insert' db (E.create_cols ~ignore_id:true vs) in
   let uf = Service_env.url_fmt env in
-  let headers = Hfrag.htmlact_redirect uf (entity_page_url id) in
+  let headers = Html_kit.htmlact_redirect uf (entity_page_url id) in
   Ok (Http.Response.empty ~headers Http.Status.ok_200)
 
 let delete

@@ -3,7 +3,7 @@
    SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
-open Hyperbib.Std
+open Hyperbib_std
 open Result.Syntax
 open Rel
 
@@ -44,7 +44,7 @@ let select_persons db ~only_public sel =
 let view_fields_resp app db req id =
   let* p = get_person db id in
   let g = Service_env.page_gen app in
-  let* self = Hfrag.url_of_req_referer req in
+  let* self = Html_kit.url_of_req_referer req in
   Ok (Page.part_response (Person_html.view_fields g p ~self))
 
 (* Responses *)
@@ -76,7 +76,7 @@ let duplicate env req src =
   let* () = Db.exec' db copy_contribs in
   let* () = Db.exec' db (Person.Label.copy_applications_stmt ~src ~dst) in
   let uf = Service_env.url_fmt env in
-  let headers = Hfrag.htmlact_redirect uf (Person.Url.v (Page (None, dst))) in
+  let headers = Html_kit.htmlact_redirect uf (Person.Url.v (Page (None, dst))) in
   Ok (Http.Response.empty ~headers Http.Status.ok_200)
 
 let duplicate_form env req id =
@@ -219,7 +219,7 @@ let replace env req this =
       let* () = Db.exec' db copy in
       let* () = Db.exec' db (Person.delete this) in
       let uf = Service_env.url_fmt env in
-      let headers = Hfrag.htmlact_redirect uf (Person.Url.v (Page (None, by))) in
+      let headers = Html_kit.htmlact_redirect uf (Person.Url.v (Page (None, by))) in
       Ok (Http.Response.empty ~headers Http.Status.ok_200)
 
 let replace_form env req this =
@@ -237,10 +237,10 @@ let update env req id =
   let g = Service_env.page_gen env in
   let uf = Page.Gen.url_fmt g in
   let* refs = get_page_data db g p in
-  let* self = Hfrag.url_of_req_referer req in
+  let* self = Html_kit.url_of_req_referer req in
   let html = Person_html.view_full g p ~self refs in
   let title = Person_html.page_full_title g p in
-  let headers = Hfrag.htmlact_page_location_update uf self ~title () in
+  let headers = Html_kit.htmlact_page_location_update uf self ~title () in
   Ok (Page.part_response ~headers html)
 
 let view_fields env req id =

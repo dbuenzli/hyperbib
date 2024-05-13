@@ -3,7 +3,7 @@
    SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
-open Hyperbib.Std
+open Hyperbib_std
 
 (* TODO eventually this should simply be markdown
    rendered from user data.  *)
@@ -12,13 +12,13 @@ let page_html g =
   let doi_resolution_id = "doi-resolution" in
   El.section [
     El.h2 ~at:At.[id doi_resolution_id] [
-      Hfrag.anchor_a doi_resolution_id;
+      Html_kit.anchor_a doi_resolution_id;
       El.txt "Full text resolution"];
     El.p
       [El.txt
          "References are resolved to their full text by linking their DOI \
           to the root address ";
-       Hfrag.link
+       Html_kit.link
          ~href:Doi.default_resolver (El.txt Doi.default_resolver);
        El.txt ". Another link root for the resolution can be specified \
                here:"];

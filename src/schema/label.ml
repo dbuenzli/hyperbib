@@ -3,7 +3,7 @@
    SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
-open Hyperbib.Std
+open Hyperbib_std
 open Rel
 
 (* Labels *)
@@ -129,7 +129,7 @@ module For_entity (E : Entity.IDENTIFIABLE) = struct
     Bag.where select (Bag.yield label)
 
   let copy_applications_stmt =
-    (* FIXME ask *)
+    (* FIXME rel *)
     let sql =
       Fmt.str
         "INSERT OR REPLACE INTO %s (entity, label)

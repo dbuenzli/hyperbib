@@ -3,7 +3,7 @@
    SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
-open Hyperbib.Std
+open Hyperbib_std
 
 val url_fmt : init:Kurl.fmt -> Kurl.fmt
 val v : Service.sub Kurl.tree

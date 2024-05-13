@@ -3,7 +3,7 @@
    SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
-open Hyperbib.Std
+open Hyperbib_std
 
 type 'a entity = [ `Exists of 'a | `To_create of 'a ]
 
@@ -418,15 +418,15 @@ module Legacy = struct
 
   let import db conf =
     Db.with_transaction `Immediate db @@ fun db ->
-    let app_dir = Hyperbib.Conf.app_dir conf in
+    let app_dir = Hyperbib_app.Conf.app_dir conf in
     let tables_dir = Fpath.(app_dir / "tables") in
     let* nmap, imap = subjects ~file:Fpath.(tables_dir / "subjects.json") in
     let ss = make_subjects nmap imap in
     let* () = List.iter_stop_on_error (insert_subject db) ss in
     let* refs = refs ~file:Fpath.(tables_dir / "refs.json") in
     let refs = List.filter_map Fun.id refs in
-    let* httpc = Result.map Option.some (B0_http.Http_client.get ()) in
-    let cache = Hyperbib.Conf.doi_cache_dir conf in
+    let* httpc = Result.map Option.some (Hyperbib_app.Conf.http_client conf) in
+    let cache = Hyperbib_app.Conf.doi_cache_dir conf in
     let get_doi_ref = Doi.get_ref httpc ~cache in
     Ok (make_refs get_doi_ref db nmap refs)
 end

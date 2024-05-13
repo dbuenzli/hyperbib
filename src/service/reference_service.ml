@@ -3,7 +3,7 @@
    SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
-open Hyperbib.Std
+open Hyperbib_std
 open Result.Syntax
 open Rel
 
@@ -47,7 +47,7 @@ let get_page_data db g r =
 let view_fields_resp ?authors_ui env db req id =
   let* r = get_reference db id in
   let g = Service_env.page_gen env in
-  let* self = Hfrag.url_of_req_referer req in
+  let* self = Html_kit.url_of_req_referer req in
   let rid = Rel_query.Int.v (Reference.id r) in
   let ref = Reference.find_id rid in
   let only_public = Page.Gen.only_public g in
@@ -109,7 +109,7 @@ let fill_in_form env req doi =
   (* FIXME replace by let* self = Hfrag.url_of_req_referer req in *)
   let self (* XXX *) = Reference.Url.v (New_form { cancel }) in
   let* explain, part =
-    Service_block.fill_in_reference_form env db ~self ~cancel doi
+    Service_kit.fill_in_reference_form env db ~self ~cancel doi
   in
   Ok (Page.part_response ?explain part)
 
@@ -216,7 +216,7 @@ let create app req = (* create and update are very similar factor out a bit. *)
     |> Db.http_resp_error
   in
   let uf = Service_env.url_fmt app in
-  let headers = Hfrag.htmlact_redirect uf (entity_page_url id) in
+  let headers = Html_kit.htmlact_redirect uf (entity_page_url id) in
   Ok (Http.Response.empty ~headers Http.Status.ok_200)
 
 let update env req id =
@@ -250,10 +250,10 @@ let update env req id =
   let g = Service_env.page_gen env in
   let* render_data, cites, cited_by = get_page_data db g r in
   let uf = Page.Gen.url_fmt g in
-  let* self = Hfrag.url_of_req_referer req in
+  let* self = Html_kit.url_of_req_referer req in
   let title = Reference_html.page_full_title g r in
   let html = Reference_html.view_full g ~self r ~render_data ~cites ~cited_by in
-  let headers = Hfrag.htmlact_page_location_update uf self ~title () in
+  let headers = Html_kit.htmlact_page_location_update uf self ~title () in
   Ok (Page.part_response ~headers html)
 
 let view_fields app req id =

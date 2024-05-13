@@ -5,7 +5,7 @@
 
 (** Labels. *)
 
-open Hyperbib.Std
+open Hyperbib_std
 open Rel
 
 (** {1:labels Labels} *)

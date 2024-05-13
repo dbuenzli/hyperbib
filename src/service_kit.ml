@@ -3,7 +3,7 @@
    SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
-open Hyperbib.Std
+open Hyperbib_std
 open Result.Syntax
 
 let find_doi db doi =
@@ -28,16 +28,17 @@ let find_dupe_doi ?(no_suggestion_dupe_check = false) g ~self db doi =
   | Some r -> Ok (Some (Doi_html.warn_doi_exists g ~self doi r))
 
 let lookup_doi env doi =
-  let doi_cache = Hyperbib.Conf.doi_cache_dir (Service_env.conf env) in
+  let doi_cache = Hyperbib_app.Conf.doi_cache_dir (Service_env.conf env) in
   let doi = Doi.extract doi in
-  let* httpr =
+  let* httpc =
     Result.map_error
       (* Bof *)
       (fun e ->
          Result.get_error (Http.Response.server_error_500 ~explain:e ())) @@
-    Result.map Option.some (B0_http.Http_client.get ())
+    Result.map Option.some
+      (Hyperbib_app.Conf.http_client (Service_env.conf env))
   in
-  Ok (doi, Import.Doi.get_ref httpr ~cache:doi_cache doi)
+  Ok (doi, Import.Doi.get_ref httpc ~cache:doi_cache doi)
 
 let resp_err_doi_not_found g ~self ~cancel doi = (* move to reference_html *)
   (* FIXME it would nice to preserve the form user input here *)

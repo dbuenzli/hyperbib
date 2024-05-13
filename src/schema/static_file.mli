@@ -5,7 +5,7 @@
 
 (** Static files mentioned in HTML. *)
 
-open Hyperbib.Std
+open Hyperbib_std
 
 module Url : sig
   type t =

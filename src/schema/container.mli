@@ -8,7 +8,7 @@
     Containers of references. N.B. in a more serious system like an
     ILS that would be a reference itself. *)
 
-open Hyperbib.Std
+open Hyperbib_std
 
 (** {1 Containers} *)
 

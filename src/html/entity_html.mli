@@ -5,7 +5,7 @@
 
 (** Entity HTML commonalities. *)
 
-open Hyperbib.Std
+open Hyperbib_std
 
 (** {1:description_field Description field} *)
 

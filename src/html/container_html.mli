@@ -3,7 +3,7 @@
    SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
-open Hyperbib.Std
+open Hyperbib_std
 
 val confirm_delete : Page.Gen.t -> Container.t -> ref_count:int -> El.html
 val deleted : Page.Gen.t -> Container.t -> El.html

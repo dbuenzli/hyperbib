@@ -3,7 +3,7 @@
    SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
-open Hyperbib.Std
+open Hyperbib_std
 open Result.Syntax
 
 let get_suggestion = Entity_service.get_entity (module Suggestion)
@@ -18,18 +18,17 @@ let err_doi_not_found_msg doi =
   El.div ~at:[Hclass.message; Hclass.error] [El.txt (Uimsg.doi_not_found doi)]
 
 let lookup_doi db env req s =
-  let* self = Hfrag.url_of_req_referer req in
-  let* doi, ref = Service_block.lookup_doi env (Suggestion.doi s) in
-  let g = Service_env.page_gen env in
-  match ref with
-  | Error e ->
-      let msg = err_doi_error_msg in
+  let* self = Html_kit.url_of_req_referer req in
+  match Doi.extract (Suggestion.doi s) with
+  | None ->
+      let msg = err_doi_extract_error_msg (Suggestion.doi s) in
+      let e = "Could not extract DOI" in
       Ok (Suggestion.doi s, Suggestion.suggestion s, Some msg, Some e)
   | Ok None ->
       Ok (doi, Suggestion.suggestion s, Some (err_doi_not_found_msg doi), None)
   | Ok (Some ref) ->
       let suggestion = Import.Doi.ref_to_short_text_citation ref in
-      let* msg = Service_block.find_dupe_doi g ~self db doi in
+      let* msg = Service_kit.find_dupe_doi g ~self db doi in
       Ok (doi, suggestion, msg, None)
 
 let honeypot_error fill =
@@ -112,7 +111,7 @@ let create env req =
       let uf = Service_env.url_fmt env in
       let () = suggestion_notification env id |> Log.if_error ~use:() in
       let redirect = Suggestion.Url.v (Page {id; created = true}) in
-      let headers = Hfrag.htmlact_redirect uf redirect in
+      let headers = Html_kit.htmlact_redirect uf redirect in
       Ok (Http.Response.empty ~headers Http.Status.ok_200)
 
 let delete env id =
@@ -144,7 +143,7 @@ let view_fields env req id =
   Service_env.with_db_transaction' `Deferred env @@ fun db ->
   let* s = get_suggestion db id in
   let g = Service_env.page_gen env in
-  let* self = Hfrag.url_of_req_referer req in
+  let* self = Html_kit.url_of_req_referer req in
   Ok (Page.part_response (Suggestion_html.view_fields g s ~self))
 
 let integrate env req id =
@@ -157,9 +156,9 @@ let integrate env req id =
   let* explain, form = match Suggestion.doi s with
   | "" ->
       let g = Service_env.page_gen env in
-      Ok (None, Service_block.empty_reference_form g ~self ~cancel)
+      Ok (None, Service_kit.empty_reference_form g ~self ~cancel)
   | doi ->
-      Service_block.fill_in_reference_form ~no_suggestion_dupe_check:true
+      Service_kit.fill_in_reference_form ~no_suggestion_dupe_check:true
         env db ~self ~cancel doi
   in
   let g = Service_env.page_gen env in
@@ -190,7 +189,7 @@ let index env =
 let resp r env user req = match (r : Suggestion.Url.t) with
 | Create -> create env req
 | Delete id -> delete env id
-| Fill_in ->  fill_in env req
+| Fill_in -> fill_in env req
 | Index -> index env
 | Page {id; created = true} -> created env req id
 | Page {id; created = false} -> integrate env req id

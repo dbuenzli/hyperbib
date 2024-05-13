@@ -5,7 +5,7 @@
 
 (** Database abstraction. *)
 
-open Hyperbib.Std
+open Hyperbib_std
 
 (** {1:db Database} *)
 
@@ -31,6 +31,11 @@ val with_open :
     [read_only] is [true] (defaults to [false]), no writes are
     allowed. This sets the database in WAL mode. See also
     {!with_open_schema}. *)
+
+val ensure_db_path : Fpath.t -> (unit, string) result
+(** [ensures_db_path db_file] the parent of [db_file] exists. It's a
+    bit annoying to not have that as a [make_path] flag in
+    [with_open], but we are not in the right error monad. *)
 
 (** {1:pool Connection pool} *)
 

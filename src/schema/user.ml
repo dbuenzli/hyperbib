@@ -3,14 +3,14 @@
    SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
-open Hyperbib.Std
+open Hyperbib_std
 open Result.Syntax
-open B0_json
 
 (* Passwords *)
 
+type algo = [ `Pbkdf2_hmac_sha_256 ]
 type password =
-  { algo : [ `Pbkdf2_hmac_sha_256 ];
+  { algo : algo;
     iterations : int;
     salt : string; (* bytes *)
     key : string; (* bytes *) }
@@ -36,7 +36,7 @@ type s = t String.Map.t
 let empty = String.Map.empty
 let is_empty = String.Map.is_empty
 let mem ~name us = String.Map.mem name us
-
+let remove ~name us = String.Map.remove name us
 let add ~name ~password us =
   let password = make_password password in
   let user = user name password in
@@ -55,66 +55,42 @@ let check ~name ~password us = match String.Map.find_opt name us with
 
 let fold f us acc = String.Map.fold (fun _ u -> f u) us acc
 
-(* Serialising
+(* Serialising *)
 
-   That's a bit too much code :-) *)
+let algo_jsont =
+  let assoc = ["pbkdf2-hmac-sha-256", `Pbkdf2_hmac_sha_256 ] in
+  Jsont.enum ~kind:"algo" ~doc:"Password hashing algorithm" assoc
 
-let json_hex ~kind = Jsonq.string_to ~kind String.Ascii.of_hex
-let json_algo =
-  let kind = "password hashing algorithm" in
-  let algo a = match String.Ascii.lowercase a with
-  | "pbkdf2-hmac-sha-256" -> Ok `Pbkdf2_hmac_sha_256
-  | _ -> Fmt.error "%S: unknown %s" a kind
-  in
-  Jsonq.string_to ~kind:"hashing algorithm" algo
+let password_jsont =
+  Jsont.Obj.map ~kind:"password" password
+  |> Jsont.Obj.mem "algo" algo_jsont ~enc:(fun p -> p.algo)
+  |> Jsont.Obj.mem "iterations" Jsont.int ~enc:(fun p -> p.iterations)
+  |> Jsont.Obj.mem "salt" Jsont.binary_string ~enc:(fun p -> p.salt)
+  |> Jsont.Obj.mem "key" Jsont.binary_string ~enc:(fun p -> p.key)
+  |> Jsont.Obj.finish
 
-let json_password =
-  let algo = Jsonq.(mem "algo" json_algo) in
-  let iterations = Jsonq.(mem "iterations" int) in
-  let salt = Jsonq.(mem "salt" (json_hex ~kind:"salt")) in
-  let key = Jsonq.(mem "key" (json_hex ~kind:"key")) in
-  Jsonq.(succeed password $ algo $ iterations $ salt $ key)
+let user_jsont =
+  Jsont.Obj.map ~kind:"user" user
+  |> Jsont.Obj.mem "username" Jsont.string ~enc:(fun u -> u.name)
+  |> Jsont.Obj.mem "password" password_jsont ~enc:(fun u -> u.password)
+  |> Jsont.Obj.finish
 
-let json_user =
-  let name = Jsonq.(mem "username" string) in
-  let password = Jsonq.(mem "password" json_password) in
-  Jsonq.(succeed user $ name $ password)
-
-let of_json =
-  let add_user u acc = String.Map.add u.name u acc in
-  Jsonq.fold_array add_user json_user String.Map.empty
-
-let to_json us =
-  let algo = function `Pbkdf2_hmac_sha_256 -> "pbkdf2-hmac-sha-256" in
-  let password p =
-    Jsong.obj
-    |> Jsong.mem "algo" (Jsong.string (algo p.algo))
-    |> Jsong.mem "iterations" (Jsong.int p.iterations)
-    |> Jsong.mem "salt" (Jsong.string (String.Ascii.to_hex p.salt))
-    |> Jsong.mem "key" (Jsong.string (String.Ascii.to_hex p.key))
-    |> Jsong.obj_end
-  in
-  let user u =
-    Jsong.obj
-    |> Jsong.mem "username" (Jsong.string u.name)
-    |> Jsong.mem "password" (password u.password)
-    |> Jsong.obj_end
-  in
-  let add_user _ u acc = Jsong.el (user u) acc in
-  String.Map.fold add_user us Jsong.array |> Jsong.array_end
+let jsont =
+  let kind = "users" and key u = u.name in
+  Jsont.array_as_string_map ~kind ~key user_jsont
 
 (* Persist *)
 
 let save file us =
   let force = true and make_path = false in
-  Os.File.write ~force ~make_path file (Jsong.to_string (to_json us))
+  let* json = Jsont_codec.encode_string ~format:Jsont.Indent jsont us in
+  Os.File.write ~force ~make_path file json
 
 let load file =
   let* exists = Os.File.exists file in
   if not exists then Ok empty else
-  let* contents = Os.File.read file in
-  let* json = Json.of_string ~file:(Fpath.to_string file) contents in
-  Jsonq.query of_json json
+  let* json = Os.File.read file in
+  Jsont_codec.decode_string jsont json
 
 (* User capabilities *)
 

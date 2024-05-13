@@ -3,7 +3,7 @@
    SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
-open Hyperbib.Std
+open Hyperbib_std
 
 let ui_ext g ~self =
   if not (Page.Gen.editable g) then El.void else
@@ -12,26 +12,26 @@ let ui_ext g ~self =
     let cancel = Some (Kurl.Fmt.url uf self) in
     let dst = Person.Url.v (New_form { cancel }) in
     let href = Kurl.Fmt.rel_url uf ~src:self ~dst in
-    Hfrag.new_entity_button ~href ~label:Uimsg.new_person
+    Html_kit.new_entity_button ~href ~label:Uimsg.new_person
   in
   Hui.group ~at:At.[Hclass.entity_menu] ~dir:`H [new_button]
 
 let entity_cancel_button uf p =
   let cancel = Person.Url.v (View_fields (Person.id p)) in
-  Hfrag.htmlact_cancel_button uf cancel
+  Html_kit.htmlact_cancel_button uf cancel
 
 let orcid_html p = match Person.orcid p with
 | "" -> El.void
 | href ->
     let viz = if Person.public p then At.void else Hclass.private' in
     let cl = Hui.Class.for_col Person.orcid' in
-    Hfrag.link ~at:[Hclass.value; cl; viz] ~href (El.txt Uimsg.orcid)
+    Html_kit.link ~at:[Hclass.value; cl; viz] ~href (El.txt Uimsg.orcid)
 
 let h1_person uf ~self ?names ~orcid p =
   let viz = if Person.public p then At.void else Hclass.private' in
   let entity_kind =
     let kind = Uimsg.persons in
-    Hfrag.entity_kind_index uf ~self ~kind (Person.Url.v Index)
+    Html_kit.entity_kind_index uf ~self ~kind (Person.Url.v Index)
   in
   let names = match names with
   | None -> El.span ~at:[viz; Hclass.person] [El.txt_of Person.names_fl p]
@@ -46,8 +46,8 @@ let confirm_delete g p ~ref_count =
   let cancel_button = entity_cancel_button uf p in
   let delete_button =
     let confirm = Person.Url.v (Delete (Person.id p)) in
-    let target = Hfrag.target_entity_up in
-    Hfrag.htmlact_delete uf confirm ~target (El.txt Uimsg.confirm_delete)
+    let target = Html_kit.target_entity_up in
+    Html_kit.htmlact_delete uf confirm ~target (El.txt Uimsg.confirm_delete)
   in
   let bs = Hui.group ~align:`Justify ~dir:`H [delete_button; cancel_button] in
   let really =
@@ -56,7 +56,7 @@ let confirm_delete g p ~ref_count =
   let used = match ref_count with
   | 0 -> El.void
   | n ->
-      let href = Hfrag.anchor_href Uimsg.references_anchor in
+      let href = Html_kit.anchor_href Uimsg.references_anchor in
       let refs = El.a ~at:[href] [El.txt_of Uimsg.these_n_references n] in
       let at = [Hclass.message; Hclass.info] in
       El.p ~at [El.txt Uimsg.it_will_be_removed_from; El.sp; refs;
@@ -70,10 +70,10 @@ let confirm_delete g p ~ref_count =
     [ h1_person uf ~self ~orcid:true p; really; used; no_undo_warn; bs; ]
 
 let deleted g p =
-  let person = Hfrag.uncapitalize Uimsg.person in
+  let person = Html_kit.uncapitalize Uimsg.person in
   let goto = Person.Url.v Index in
   let goto = Kurl.Fmt.url (Page.Gen.url_fmt g) goto in
-  let goto = Hfrag.link ~href:goto (El.txt_of Uimsg.goto_kind_index person) in
+  let goto = Html_kit.link ~href:goto (El.txt_of Uimsg.goto_kind_index person) in
   let msg = El.txt_of Uimsg.person_deleted (Person.names_fl p) in
   El.section [ El.h1 [El.txt Uimsg.deleted]; El.p [msg]; El.p [goto]]
 
@@ -103,7 +103,7 @@ let edit_submit uf ~submit p =
   | `Edit -> Person.Url.v (Update (Person.id p)), Uimsg.save_person
   | `Duplicate -> Person.Url.v (Duplicate (Person.id p)), Uimsg.create_duplicate
   in
-  let r = Hfrag.htmlact_request uf url and e = Htmlact.effect `Element in
+  let r = Html_kit.htmlact_request uf url and e = Htmlact.effect `Element in
   let q = Htmlact.query "form:up" and rescue = Htmlact.query_rescue (`Bool true) in
   let t = Htmlact.target ":up :up :up" in
   let at = At.[t; r; e; q; rescue; Hui.Class.submit] in
@@ -127,7 +127,7 @@ let edit_person ?(msg = El.void) g ~self ~submit p =
   let private_note = edit_private_note p in
   let public = edit_public p in
   let buttons = edit_buttons uf ~submit p in
-  Hfrag.entity_form_no_submit
+  Html_kit.entity_form_no_submit
     [h1; orcid; note; private_note; public; msg; buttons]
 
 let edit_form g p =
@@ -136,7 +136,7 @@ let edit_form g p =
 
 let new_form g p ~cancel =
   let self = Person.Url.v (New_form { cancel }) in
-  let title = Hfrag.title ~sub:Uimsg.new_person ~sup:Uimsg.person in
+  let title = Html_kit.title ~sub:Uimsg.new_person ~sup:Uimsg.person in
   let content =
     let at = At.[Hclass.entity; Hclass.editing] in
     El.section ~at [ edit_person g ~self ~submit:(`New cancel) p ]
@@ -148,7 +148,7 @@ let duplicate_form g p ~ref_count =
   let msg = match ref_count with
   | 0 -> El.void
   | n ->
-      let href = Hfrag.anchor_href Uimsg.references_anchor in
+      let href = Html_kit.anchor_href Uimsg.references_anchor in
       let refs = El.a ~at:[href] [El.txt_of Uimsg.these_n_references n] in
       let at = [Hclass.message; Hclass.info] in
       El.p ~at [El.txt Uimsg.person_duplicate_will_be_added_to; El.sp;
@@ -175,14 +175,14 @@ let replace_form g p ~ref_count =
   let msg = match ref_count with
   | 0 -> El.void
   | n ->
-      let href = Hfrag.anchor_href Uimsg.references_anchor in
+      let href = Html_kit.anchor_href Uimsg.references_anchor in
       let refs = El.a ~at:[href] [El.txt_of Uimsg.these_n_references n] in
       let at = [Hclass.message; Hclass.info] in
       El.p ~at [El.txt Uimsg.replacement_person_will_be_added_to; El.sp;
                 refs; El.txt "."]
   in
   let at =
-    let r = Hfrag.htmlact_request uf (Person.Url.v (Replace (Person.id p))) in
+    let r = Html_kit.htmlact_request uf (Person.Url.v (Replace (Person.id p))) in
     let e = Htmlact.effect `Element in
     At.[Hclass.entity; Hclass.editing; r; e]
   in
@@ -196,13 +196,13 @@ let view_private_note = Entity_html.view_private_note (module Person)
 let edit_ui g uf s =
   if not (Page.Gen.editable g) then El.void else
   let pid = Person.id s in
-  let edit = Hfrag.htmlact_edit_button uf (Person.Url.v (Edit_form pid)) in
-  let rep = Hfrag.htmlact_replace_button uf (Person.Url.v (Replace_form pid)) in
+  let edit = Html_kit.htmlact_edit_button uf (Person.Url.v (Edit_form pid)) in
+  let rep = Html_kit.htmlact_replace_button uf (Person.Url.v (Replace_form pid)) in
   let dup =
-    Hfrag.htmlact_duplicate_button uf (Person.Url.v (Duplicate_form pid))
+    Html_kit.htmlact_duplicate_button uf (Person.Url.v (Duplicate_form pid))
   in
   let del =
-    Hfrag.htmlact_delete_button uf (Person.Url.v (Confirm_delete pid))
+    Html_kit.htmlact_delete_button uf (Person.Url.v (Confirm_delete pid))
   in
   let left = Hui.group ~dir:`H [edit; rep; dup] in
   Hui.group ~at:[Hclass.entity_ui] ~align:`Justify ~dir:`H [left; del]
@@ -229,7 +229,7 @@ let page_404 g ~self =
   let consult = Person.Url.v Index in
   Page.for_404 ~ui_ext g ~kind:Uimsg.person ~self ~consult
 
-let page_title s = Hfrag.title ~sub:(Person.names_fl s) ~sup:Uimsg.person
+let page_title s = Html_kit.title ~sub:(Person.names_fl s) ~sup:Uimsg.person
 let page_full_title g s = Page.full_title g ~title:(page_title s)
 let page g p refs =
   let self = Person.Url.page p in
@@ -244,26 +244,26 @@ let index_html g ~self ps ~ref_count =
   in
   let person_li p =
     let pid = Fmt.str "%d" (Person.id p) in
-    let names = Hfrag.link_person uf ~self p in
-    let count = Hfrag.item_count (ref_count p) and orcid = orcid_html p in
-    let person = [Hfrag.anchor_a pid; names; El.sp; count; El.sp; orcid] in
+    let names = Html_kit.link_person uf ~self p in
+    let count = Html_kit.item_count (ref_count p) and orcid = orcid_html p in
+    let person = [Html_kit.anchor_a pid; names; El.sp; count; El.sp; orcid] in
     El.li ~at:At.[id pid] person
   in
   let letter_section (l, ps) =
     let ps = List.sort Person.order_by_last_name ps in
-    El.splice [Hfrag.h2_letter l; El.ol (List.map person_li ps)]
+    El.splice [Html_kit.h2_letter l; El.ol (List.map person_li ps)]
   in
   let h1 =
-    let count = Hfrag.item_count (List.length ps) in
-    El.h1 [Hfrag.uppercase_span Uimsg.persons; El.sp; count ]
+    let count = Html_kit.item_count (List.length ps) in
+    El.h1 [Html_kit.uppercase_span Uimsg.persons; El.sp; count ]
   in
-  let descr = Hfrag.description (El.txt Uimsg.person_list_descr) in
+  let descr = Html_kit.description (El.txt Uimsg.person_list_descr) in
   let index =
     let classes p = match Person.index_letter p with
     | None -> ["\u{2300}"] | Some c -> [String.of_char c]
     in
     let letters = List.classify ~classes ps in
-    let letters_nav = Hfrag.letters_nav (List.map fst letters) in
+    let letters_nav = Html_kit.letters_nav (List.map fst letters) in
     let letter_sections = El.splice (List.map letter_section letters) in
     El.nav ~at:At.[Hclass.index; Hclass.person] [letters_nav; letter_sections]
   in

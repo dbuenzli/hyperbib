@@ -1,11 +1,11 @@
 (*---------------------------------------------------------------------------
-   Copyright (c) 2021 University of Bern. All rights reserved.
+   Copyright (c) 2024 The hyperbib programmers. All rights reserved.
    SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
-(** HTML fragments used everywhere. *)
+(** HTML generation commonalities. *)
 
-open Hyperbib.Std
+open Hyperbib_std
 
 (** {1:string String functions} *)
 
@@ -85,8 +85,8 @@ val mailto_link :
 
 type letter = string
 
-val h2_letter : letter -> Hyperbib.Std.El.html
-val letters_nav : letter list -> Hyperbib.Std.El.html
+val h2_letter : letter -> Hyperbib_std.El.html
+val letters_nav : letter list -> Hyperbib_std.El.html
 
 (** {1:entity Entities}
 

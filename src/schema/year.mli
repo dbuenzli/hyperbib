@@ -5,7 +5,7 @@
 
 (** References by year pages. *)
 
-open Hyperbib.Std
+open Hyperbib_std
 
 val filter :
   year:Date.year Rel_query.value -> (Reference.t, 'a) Bag.t ->

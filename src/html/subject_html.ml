@@ -3,7 +3,7 @@
    SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
-open Hyperbib.Std
+open Hyperbib_std
 
 let viz = Entity_html.viz (module Subject)
 
@@ -14,18 +14,18 @@ let ui_ext g ~self =
     let cancel = Some (Kurl.Fmt.url uf self) in
     let dst = Subject.Url.v (New_form { cancel }) in
     let href = Kurl.Fmt.rel_url uf ~src:self ~dst in
-    Hfrag.new_entity_button ~href ~label:Uimsg.new_subject
+    Html_kit.new_entity_button ~href ~label:Uimsg.new_subject
   in
   Hui.group ~at:At.[Hclass.entity_menu] ~dir:`H [new_button]
 
 let entity_cancel_button uf s =
   let cancel = Subject.Url.v (View_fields (Subject.id s)) in
-  Hfrag.htmlact_cancel_button uf cancel
+  Html_kit.htmlact_cancel_button uf cancel
 
 let h1_subject uf ~self ?name s =
   let entity_kind =
     let kind = Uimsg.subjects in
-    Hfrag.entity_kind_index uf ~self ~kind (Subject.Url.v Index)
+    Html_kit.entity_kind_index uf ~self ~kind (Subject.Url.v Index)
   in
   let name = match name with
   | Some name -> name s
@@ -43,15 +43,15 @@ let confirm_delete g s ~ref_count =
   let cancel_button = entity_cancel_button uf s in
   let delete_button =
     let confirm = Subject.Url.v (Delete (Subject.id s)) in
-    let target = Hfrag.target_entity_up in
-    Hfrag.htmlact_delete uf confirm ~target (El.txt Uimsg.confirm_delete)
+    let target = Html_kit.target_entity_up in
+    Html_kit.htmlact_delete uf confirm ~target (El.txt Uimsg.confirm_delete)
   in
   let bs = Hui.group ~align:`Justify ~dir:`H [delete_button; cancel_button] in
   let really = El.p [El.txt_of Uimsg.really_delete_subject (Subject.name s)] in
   let used = match ref_count with
   | 0 -> El.void
   | n ->
-      let href = Hfrag.anchor_href Uimsg.references_anchor in
+      let href = Html_kit.anchor_href Uimsg.references_anchor in
       let refs = El.a ~at:[href] [El.txt_of Uimsg.these_n_references n] in
       let at = [Hclass.message; Hclass.info] in
       El.p ~at [El.txt Uimsg.it_is_still_applied_to; El.sp; refs; El.txt "."]
@@ -90,7 +90,7 @@ let edit_submit uf ~submit s =
   | `Duplicate ->
       Subject.Url.v (Duplicate (Subject.id s)), Uimsg.create_duplicate
   in
-  let r = Hfrag.htmlact_request uf url and e = Htmlact.effect `Element in
+  let r = Html_kit.htmlact_request uf url and e = Htmlact.effect `Element in
   let q = Htmlact.query "form:up" in
   let rescue = Htmlact.query_rescue (`Bool true) in
   let t = Htmlact.target ":up :up" in
@@ -115,7 +115,7 @@ let edit_subject ?(msg = El.void) g ~self ~submit s ~parents =
   let private_note = edit_private_note s in
   let public = edit_public s in
   let buttons = edit_buttons uf ~submit s in
-  Hfrag.entity_form_no_submit
+  Html_kit.entity_form_no_submit
     [h1; parent; description; private_note; public; msg; buttons]
 
 let edit_form g s ~parents =
@@ -127,7 +127,7 @@ let duplicate_form g s ~ref_count ~parents =
   let msg = match ref_count with
   | 0 -> El.void
   | n ->
-      let href = Hfrag.anchor_href Uimsg.references_anchor in
+      let href = Html_kit.anchor_href Uimsg.references_anchor in
       let refs = El.a ~at:[href] [El.txt_of Uimsg.these_n_references n] in
       let at = [Hclass.message; Hclass.info] in
       El.p ~at [El.txt Uimsg.subject_duplicate_will_be_applied_to; El.sp;
@@ -137,7 +137,7 @@ let duplicate_form g s ~ref_count ~parents =
 
 let new_form g s ~parents ~cancel =
   let self = Subject.Url.v (New_form { cancel }) in
-  let title = Hfrag.title ~sub:Uimsg.new_subject ~sup:Uimsg.subject in
+  let title = Html_kit.title ~sub:Uimsg.new_subject ~sup:Uimsg.subject in
   let content =
     let at = At.[Hclass.entity; Hclass.editing] in
     El.section ~at [ edit_subject g ~self ~submit:(`New cancel) s ~parents ]
@@ -161,14 +161,14 @@ let replace_form g s ~ref_count =
   let msg = match ref_count with
   | 0 -> El.void
   | n ->
-      let href = Hfrag.anchor_href Uimsg.references_anchor in
+      let href = Html_kit.anchor_href Uimsg.references_anchor in
       let refs = El.a ~at:[href] [El.txt_of Uimsg.these_n_references n] in
       let at = [Hclass.message; Hclass.info] in
       El.p ~at [El.txt Uimsg.replacement_subject_will_be_applied_to; El.sp;
                 refs; El.txt "."]
   in
   let at =
-    let r = Hfrag.htmlact_request uf (Subject.Url.v (Replace (Subject.id s))) in
+    let r = Html_kit.htmlact_request uf (Subject.Url.v (Replace (Subject.id s))) in
     let e = Htmlact.effect `Element in
     At.[Hclass.entity; Hclass.editing; r; e]
   in
@@ -178,7 +178,7 @@ let replace_form g s ~ref_count =
 let view_parent uf ~self = function
 | None -> El.void
 | Some p ->
-    let link = Hfrag.link_subject uf ~self p in
+    let link = Html_kit.link_subject uf ~self p in
     let at = [Hclass.value; Hui.Class.for_col Subject.parent'] in
     El.p ~at [El.txt Uimsg.parent; El.sp; link]
 
@@ -188,15 +188,15 @@ let view_private_note = Entity_html.view_private_note (module Subject)
 let edit_ui g uf s =
   if not (Page.Gen.editable g) then El.void else
   let sid = Subject.id s in
-  let edit = Hfrag.htmlact_edit_button uf (Subject.Url.v (Edit_form sid)) in
+  let edit = Html_kit.htmlact_edit_button uf (Subject.Url.v (Edit_form sid)) in
   let rep =
-    Hfrag.htmlact_replace_button uf (Subject.Url.v (Replace_form sid))
+    Html_kit.htmlact_replace_button uf (Subject.Url.v (Replace_form sid))
   in
   let dup =
-    Hfrag.htmlact_duplicate_button uf (Subject.Url.v (Duplicate_form sid))
+    Html_kit.htmlact_duplicate_button uf (Subject.Url.v (Duplicate_form sid))
   in
   let del =
-    Hfrag.htmlact_delete_button uf (Subject.Url.v (Confirm_delete sid))
+    Html_kit.htmlact_delete_button uf (Subject.Url.v (Confirm_delete sid))
   in
   let left = Hui.group ~dir:`H [edit; rep; dup] in
   Hui.group ~at:[Hclass.entity_ui] ~align:`Justify ~dir:`H [left; del]
@@ -221,14 +221,14 @@ let view_full g ~self s ~parent refs =
   El.section [ view_fields g s ~self ~parent; refs ]
 
 let deleted g s =
-  let subject = Hfrag.uncapitalize Uimsg.subject in
+  let subject = Html_kit.uncapitalize Uimsg.subject in
   let goto = Subject.Url.v Subject.Url.Index in
   let goto = Kurl.Fmt.url (Page.Gen.url_fmt g) goto in
-  let goto = Hfrag.link ~href:goto (El.txt_of Uimsg.goto_kind_index subject) in
+  let goto = Html_kit.link ~href:goto (El.txt_of Uimsg.goto_kind_index subject) in
   let msg = El.txt_of Uimsg.subject_deleted (Subject.name s) in
   El.section [ El.h1 [El.txt Uimsg.deleted]; El.p [msg]; El.p [goto]]
 
-let page_title s = Hfrag.title ~sub:(Subject.name s) ~sup:Uimsg.subject
+let page_title s = Html_kit.title ~sub:(Subject.name s) ~sup:Uimsg.subject
 let page_full_title g s = Page.full_title g ~title:(page_title s)
 let page g s ~parent refs =
   let self = Subject.Url.page s in
@@ -243,20 +243,20 @@ let page_404 g ~self =
 let index_html g ~self ss ~ref_count =
   let uf = Page.Gen.url_fmt g in
   let anchor_id s = Fmt.str "%d" (Subject.id s) in
-  let subject s = Hfrag.link_subject uf ~self s in
+  let subject s = Html_kit.link_subject uf ~self s in
   let ref_count s = match Id.Map.find_opt (Subject.id s) ref_count with
   | None -> 0 | Some (_, c) -> c
   in
   let child s =
     let sid = anchor_id s in
-    let count = Hfrag.item_count (ref_count s) in
-    El.li ~at:At.[id sid] [Hfrag.anchor_a sid; subject s; El.sp; count]
+    let count = Html_kit.item_count (ref_count s) in
+    El.li ~at:At.[id sid] [Html_kit.anchor_a sid; subject s; El.sp; count]
   in
   let parent children r =
     let h2 =
       let sid = anchor_id r in
-      let count = Hfrag.item_count (ref_count r) in
-      El.h2 ~at:At.[id sid] [Hfrag.anchor_a sid; subject r; El.sp; count]
+      let count = Html_kit.item_count (ref_count r) in
+      El.h2 ~at:At.[id sid] [Html_kit.anchor_a sid; subject r; El.sp; count]
     in
     let children = match Id.Map.find_opt (Subject.id r) children with
     | None | Some [] -> El.void
@@ -268,8 +268,8 @@ let index_html g ~self ss ~ref_count =
     El.splice [ h2; subject_descr; children]
   in
   let h1 =
-    let count = Hfrag.item_count (List.length ss) in
-    El.h1 [Hfrag.uppercase_span Uimsg.subjects; El.sp; count ]
+    let count = Html_kit.item_count (List.length ss) in
+    El.h1 [Html_kit.uppercase_span Uimsg.subjects; El.sp; count ]
   in
   let tree =
     let parents, children = Subject.hierarchy ss in

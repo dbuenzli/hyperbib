@@ -13,6 +13,7 @@ let b0_std = B0_ocaml.libname "b0.std"
 let b0 = B0_ocaml.libname "b0"
 let b0_file = B0_ocaml.libname "b0.file"
 let b0_kit = B0_ocaml.libname "b0.kit"
+let jsont = B0_ocaml.libname "jsont"
 let brr = B0_ocaml.libname "brr"
 let note = B0_ocaml.libname "note"
 let note_brr = B0_ocaml.libname "note.brr"
@@ -30,8 +31,8 @@ let webs_unix = B0_ocaml.libname "webs.unix"
 
 (* Front end (and copy to app/static) *)
 
-let static_dir = Fpath.v "app/static"
-let src_front_dir = Fpath.v "src/front"
+let static_dir = ~/"app/static"
+let src_front_dir = ~/"src/front"
 
 let assets_to_static_dir b =
   let open Fut.Syntax in
@@ -39,7 +40,7 @@ let assets_to_static_dir b =
   B0_memo.run_proc m @@ fun () ->
   let dir = B0_build.in_scope_dir b src_front_dir in
   let dst = B0_build.in_scope_dir b static_dir in
-  let* assets = B0_srcs.select b Fpath.[ `Dir_rec dir ] in
+  let* assets = B0_srcs.select b [`Dir_rec dir] in
   let assets = B0_srcs.by_ext assets in
   let exts = B0_file_exts.www in
   let _ = B0_jsoo.copy_assets m assets ~exts ~assets_root:(Some dir) ~dst in
@@ -73,9 +74,9 @@ let hyperbib_js =
 (* Backend *)
 
 let static_files = ["hyperbib.css"; "hyperbib.js" ]
-let stamp_ml b = B0_build.in_current_dir b Fpath.(v "stamp.ml")
-let stamp_mli b = B0_build.in_current_dir b Fpath.(v "stamp.mli")
-let stamp_mli_src = Fpath.v "src/stamp.mli"
+let stamp_ml b = B0_build.in_current_dir b ~/"stamp.ml"
+let stamp_mli b = B0_build.in_current_dir b ~/"stamp.mli"
+let stamp_mli_src = ~/"src/stamp.mli"
 
 let vcs_describe b =
   (* TODO b0: that wouldn't work in a release. Implement B0 watermarks. *)
@@ -111,7 +112,7 @@ let hyperbib =
   let doc = "hyperbib tool" in
   let requires =
     [ unix; threads; cmdliner; ptime; ptime_clock; b0_std; b0; b0_file;
-      b0_kit; htmlit; htmlact;
+      b0_kit; jsont; htmlit; htmlact;
       rel; rel_kit; rel_cli; rel_sqlite3; rel_pool;
       webs; webs_kit; webs_unix; webs_cli; ]
   in
@@ -122,18 +123,18 @@ let hyperbib =
     let stamp b =
       Fut.return (Fpath.Set.(singleton (stamp_ml b) |> add (stamp_mli b)))
     in
-    Fpath.[`Dir (v "src");
-           `Dir (v "src/service");
-           `Dir (v "src/schema");
-           `Dir (v "src/html");
-           `X stamp_mli_src;
-           `Fut stamp]
+    [`Dir ~/"src";
+     `Dir ~/"src/service";
+     `Dir ~/"src/schema";
+     `Dir ~/"src/html";
+     `X stamp_mli_src;
+     `Fut stamp]
   in
   let meta =
     B0_meta.empty
     (* TODO b0: supported_code doesn't work. *)
     |> ~~ B0_ocaml.Code.needs `Native
-    |> ~~ B0_unit.Action.cwd (`In (`Scope_dir, Fpath.v "app"))
+    |> ~~ B0_unit.Action.cwd (`In (`Scope_dir, ~/"app"))
   in
   let wrap proc b =
     B0_build.require_unit b hyperbib_js;
@@ -149,8 +150,8 @@ let pull_data =
   B0_unit.of_action "pull-data" ~doc:"Pull live data" @@
   fun env _ ~args ->
   let* rsync = B0_rsync.get () in
-  let src = Fpath.v "hyperbib/app/data/bib.sqlite3.backup" in
-  let dst = B0_env.in_scope_dir env (Fpath.v "app/data/bib.sqlite3") in
+  let src = ~/"hyperbib/app/data/bib.sqlite3.backup" in
+  let dst = B0_env.in_scope_dir env ~/"app/data/bib.sqlite3" in
   B0_rsync.copy rsync ~delete:true ~src_host:deploy_remote src ~dst
 
 let exec_remote cmd = Cmd.(arg "ssh" % "-t" % "philo" % cmd)
@@ -196,7 +197,8 @@ let default =
       [ "ocaml", {|>= "4.12"|};
         "ocamlfind", {|build|};
         "b0", {|build|};
-        "cmdliner", {|>= "1.0.4"|};
+        "cmdliner", {|>= "1.3.0"|};
+        "bytesrw", {||};
         "ptime", {||};
         "webs", {||};
         "htmlit", {||};
@@ -206,9 +208,11 @@ let default =
         "brr", {||};
         "js_of_ocaml", {||};]
     |> ~~ B0_opam.pin_depends
-      ["htmlact.~dev", "git+https://erratique.ch/repos/htmlact.git#master";
-       "rel.~dev", "git+https://erratique.ch/repos/rel.git#master";
-       "webs.~dev", "git+https://erratique.ch/repos/webs.git#master"]
+      [ "bytesrw.~dev", "git+https://erratique.ch/repos/bytesrw.git#master";
+        "jsont.~dev", "git+https://erratique.ch/repos/jsont.git#master";
+        "htmlact.~dev", "git+https://erratique.ch/repos/htmlact.git#master";
+        "rel.~dev", "git+https://erratique.ch/repos/rel.git#master";
+        "webs.~dev", "git+https://erratique.ch/repos/webs.git#master"]
     |> ~~ B0_opam.build {|[["b0"]]|}
     |> B0_meta.tag B0_opam.tag
     |> B0_meta.tag B0_release.tag

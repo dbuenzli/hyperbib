@@ -5,7 +5,7 @@
 
 (** References. *)
 
-open Hyperbib.Std
+open Hyperbib_std
 
 (** {1:refs References} *)
 
@@ -101,7 +101,7 @@ type render_data =
     editors : Person.t list Id.Map.t;
     subjects : Subject.t list Id.Map.t; }
 (** The type for a references render data. A list of references and their
-    {{!relation}relations} sorted on reference ids. This needs to be defined
+    {{!relations}relations} sorted on reference ids. This needs to be defined
     here to avoid module name mixups. See {!val-render_data}. *)
 
 (** {1:tables Tables and queries} *)

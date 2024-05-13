@@ -3,7 +3,7 @@
    SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
-open Hyperbib.Std
+open Hyperbib_std
 open Result.Syntax
 open Rel
 
@@ -51,7 +51,7 @@ let view_fields_resp env db req id =
   let* s = get_subject db id in
   let* parent = get_subject_parent db s in
   let g = Service_env.page_gen env in
-  let* self = Hfrag.url_of_req_referer req in
+  let* self = Html_kit.url_of_req_referer req in
   Ok (Page.part_response (Subject_html.view_fields g s ~self ~parent))
 
 (* Responses *)
@@ -82,7 +82,7 @@ let duplicate env req src =
   let* () = Db.exec' db (Reference.Subject.copy_applications_stmt ~src ~dst) in
   let* () = Db.exec' db (Subject.Label.copy_applications_stmt ~src ~dst) in
   let uf = Service_env.url_fmt env in
-  let headers = Hfrag.htmlact_redirect uf (Subject.Url.v (Page (None, dst))) in
+  let headers = Html_kit.htmlact_redirect uf (Subject.Url.v (Page (None, dst))) in
   Ok (Http.Response.empty ~headers Http.Status.ok_200)
 
 let duplicate_form env req id =
@@ -142,7 +142,7 @@ let replace env req this =
   let* () = Db.exec' db copy in
   let* () = Db.exec' db (Subject.delete this) in
   let uf = Service_env.url_fmt env in
-  let headers = Hfrag.htmlact_redirect uf (Subject.Url.v (Page (None, by))) in
+  let headers = Html_kit.htmlact_redirect uf (Subject.Url.v (Page (None, by))) in
   Ok (Http.Response.empty ~headers Http.Status.ok_200)
 
 let replace_form env req this =
@@ -200,10 +200,10 @@ let update env req id =
   let g = Service_env.page_gen env in
   let uf = Page.Gen.url_fmt g in
   let* parent, refs = get_page_data db g s in
-  let* self = Hfrag.url_of_req_referer req in
+  let* self = Html_kit.url_of_req_referer req in
   let title = Subject_html.page_full_title g s in
   let html = Subject_html.view_full g s ~self ~parent refs in
-  let headers = Hfrag.htmlact_page_location_update uf self ~title () in
+  let headers = Html_kit.htmlact_page_location_update uf self ~title () in
   Ok (Page.part_response ~headers html)
 
 let view_fields env req id =

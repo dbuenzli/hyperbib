@@ -3,7 +3,7 @@
    SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
-open Hyperbib.Std
+open Hyperbib_std
 open Result.Syntax
 
 let ui_ext g ~self = match Page.Gen.editable g with
@@ -19,7 +19,7 @@ let ui_ext g ~self = match Page.Gen.editable g with
     Hui.group ~at:At.[Hclass.entity_ui] ~dir:`H [new_button]
 
 (*
-let htmlact_request rf r = Hfrag.htmlact_request rf (Kurl.v Label.Url.kind r)
+let htmlact_request rf r = Html_kit.htmlact_request rf (Kurl.v Label.Url.kind r)
 let buttons_view rf l =
   let edit_button =
     let r = htmlact_request rf @@ Edit (Label.id l) in
@@ -74,15 +74,15 @@ let index_html g ~self ls =
   let anchor_id s = Fmt.str "%d" (Label.id s) in
   let label l =
     let viz = if Label.public l then At.void else Hclass.private' in
-    let label = Hfrag.link_label uf ~self l in
+    let label = Html_kit.link_label uf ~self l in
     let label_descr = match Label.note l with
     | "" -> El.void
     | d -> El.p ~at:At.[Hclass.field; Hclass.description; viz] [El.txt d]
     in
     let lid = anchor_id l in
-    El.li ~at:At.[id lid] [Hfrag.anchor_a lid; label; El.sp; label_descr]
+    El.li ~at:At.[id lid] [Html_kit.anchor_a lid; label; El.sp; label_descr]
   in
-  let title = [Hfrag.uppercase_span Uimsg.labels ] in
+  let title = [Html_kit.uppercase_span Uimsg.labels ] in
   let labels = List.map label ls in
   let labels = El.nav ~at:At.[Hclass.index; Hui.Class.label] labels in
   El.section [ El.h1 title; labels ]

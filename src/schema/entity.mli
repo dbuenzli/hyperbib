@@ -5,7 +5,7 @@
 
 (** Database entities model commonalities. *)
 
-open Hyperbib.Std
+open Hyperbib_std
 open Rel
 
 (** {1:sigs Entity signatures} *)

@@ -1,11 +1,8 @@
 (*---------------------------------------------------------------------------
-   Copyright (c) 2021 University of Bern. All rights reserved.
+   Copyright (c) 2024 The hyperbib programmers. All rights reserved.
    SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
-(** Database managment *)
+(** Schema definition commonalities. *)
 
-open Hyperbib_std
-
-val cmd : Os.Exit.t Cmdliner.Cmd.t
-(** [cmd] is the command line for [db]. *)
+val date_md_partial_type : Date.md_partial Rel.Type.t

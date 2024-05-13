@@ -3,7 +3,7 @@
    SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
-open Hyperbib.Std
+open Hyperbib_std
 
 (* Description field *)
 
@@ -88,7 +88,7 @@ let finder_result
     let at = [viz; Hui.Class.for_table E.table; Hclass.value] in
     El.span ~at [render e]
   in
-  let r = Hfrag.htmlact_request uf (action e) in
+  let r = Html_kit.htmlact_request uf (action e) in
   let t = Htmlact.target ":up :up :up" in
   let e = Htmlact.effect `Element in
   let tab_index = At.tabindex (-1) in
@@ -107,7 +107,7 @@ let input_finder_results
   El.ol ~at:[At.v "role" "listbox"] (List.map li es @ [c])
 
 let entity_input_finder ?min_size ?(at = []) uf ~kind req ~value =
-  let r = Hfrag.htmlact_request uf req in
+  let r = Html_kit.htmlact_request uf req in
   let t = Htmlact.target (":up :up ol") in
   let e = Htmlact.event ~debounce_ms:250 "input" in
   let eff = Htmlact.effect `Element in
@@ -341,7 +341,7 @@ let container_input_finder uf ~input_name =
   let input_container_id = input_entity_id ~input_name None in
   let input =
     let req = Container.Url.v (Input_finder_find (input_name, "")) in
-    let r = Hfrag.htmlact_request uf req in
+    let r = Html_kit.htmlact_request uf req in
     let t = Htmlact.target (":up :up ol") in
     let e = Htmlact.event ~debounce_ms:250 "input" in
     let eff = Htmlact.effect `Element in

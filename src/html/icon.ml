@@ -9,7 +9,7 @@
    Values are named after the icon name. The class attribute of each SVG
    is changed to 'icon'. *)
 
-open Hyperbib.Std
+open Hyperbib_std
 
 let arrow_down_on_square = El.unsafe_raw
 {|<svg xmlns="http://www.w3.org/2000/svg" class="icon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">

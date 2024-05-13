@@ -5,6 +5,6 @@
 
 (** The home page. *)
 
-open Hyperbib.Std
+open Hyperbib_std
 
 val page : Page.Gen.t -> Page.t

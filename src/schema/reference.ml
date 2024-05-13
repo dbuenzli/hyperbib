@@ -3,7 +3,7 @@
    SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
-open Hyperbib.Std
+open Hyperbib_std
 open Rel
 
 (* XXX Date modelling. Nothing really fits to get easy and efficient
@@ -102,7 +102,9 @@ module Reference = struct
   let abstract' = Col.v "abstract" Type.Text abstract
   let container' = Col.v "container" Type.(Option Int) container
   let date_year' = Col.v "date_year" Type.(Option Int) date_year
-  let date_md' = Col.v "date_md" Type.(Option Date.ask_md_partial_type) date_md
+  let date_md' =
+    Col.v "date_md" Type.(Option Schema_kit.date_md_partial_type) date_md
+
   let doi' = Col.v "doi" Type.Text doi
   let isbn' = Col.v "isbn" Type.Text isbn
   let issue' = Col.v "issue" Type.Text issue
@@ -222,7 +224,7 @@ module Contributor = struct
     Bag.where is_used (Bag.yield p)
 
   let copy_contributions_stmt =
-    (* FIXME ask *)
+    (* FIXME rel *)
     let sql =
       "INSERT OR REPLACE INTO reference_contributor
          (reference, person, role, position)
@@ -320,7 +322,7 @@ module Subject = struct
     Bag.where has_subj (Bag.yield ref)
 
   let ref_count_stmt =
-    (* FIXME ask aggregations. *)
+    (* FIXME rel aggregations. *)
     let sql =
       "SELECT COUNT(*)
        FROM reference_subject as s
@@ -329,7 +331,7 @@ module Subject = struct
     Rel_sql.Stmt.(func sql @@ int @-> ret Row.(t1 @@ int "ref_count"))
 
   let copy_applications_stmt =
-    (* FIXME ask this is insert 'r table with 'r Bag.t *)
+    (* FIXME rel this is insert 'r table with 'r Bag.t *)
     let sql =
       "INSERT OR REPLACE INTO reference_subject (reference, subject)
        SELECT s.reference, ?1
@@ -401,7 +403,7 @@ module Cites = struct
       Text.(not (ref #. ref_doi' = empty)) &&
       Text.(rel #. doi' = ref #. ref_doi')
     in
-    let pair x y = Bag.inj (fun x y -> x, y) $ x $ y in (* FIXME ask *)
+    let pair x y = Bag.inj (fun x y -> x, y) $ x $ y in (* FIXME rel *)
     let rel' = pair (rel #. reference') (ref #. id') in
     Bag.where (is_rid && is_internal_doi) (Bag.yield rel')
 
@@ -487,7 +489,7 @@ let persons_public_ref_count_stmt =
   Rel_sql.Stmt.(func sql @@ ret ref_count_row)
 
 let person_ref_count_stmt =
-  (* FIXME ask aggregations. FIXME this is wrong if multiple contrib *)
+  (* FIXME rel aggregations. FIXME this is wrong if multiple contrib *)
   let sql =
     "SELECT COUNT(*)
      FROM reference_contributor as c
@@ -580,7 +582,7 @@ let render_data ~only_public refs =
       Db.id_map_related_list
         db ref_labels_stmt ~order ~id ~related ~related_by_id
     in
-    (* Once we have sort by support with ask we can directly
+    (* Once we have sort by support with rel we can directly
        fold on ref_contributors_stmts *)
     let* contributors = Db.list db ref_contributors_stmt in
     let contributors =

@@ -5,7 +5,7 @@
 
 (** Web service. *)
 
-open Hyperbib.Std
+open Hyperbib_std
 
 (** {1:session Sessions} *)
 
@@ -34,7 +34,7 @@ end
 
 (** {1:private_key Service private key setup} *)
 
-val setup_private_key : file:Hyperbib.Std.Fpath.t ->
+val setup_private_key : file:Hyperbib_std.Fpath.t ->
   (Webs_authenticatable.Private_key.t, string) result
 
 (** {1:sub Sub services} *)

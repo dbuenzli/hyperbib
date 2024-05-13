@@ -3,7 +3,7 @@
    SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
-open Hyperbib.Std
+open Hyperbib_std
 
 let bad_val_400 ~kind k v =
   let trunc = String.sub v 0 (Int.min (String.length v) 10) in

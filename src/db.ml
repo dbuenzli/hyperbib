@@ -3,7 +3,7 @@
    SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
-open Hyperbib.Std
+open Hyperbib_std
 open Result.Syntax
 
 (* Database *)
@@ -33,6 +33,9 @@ let with_open ?foreign_keys ?read_only db_file f =
   let finally () = Log.if_error ~use:() (close db |> string_error) in
   let v = Fun.protect ~finally @@ fun () -> f db in
   Ok v
+
+let ensure_db_path db_path =
+  Result.map ignore (Os.Dir.create ~make_path:true (Fpath.parent db_path))
 
 (* Pool *)
 

@@ -5,7 +5,7 @@
 
 (** CSS classes used throughout. *)
 
-open Hyperbib.Std
+open Hyperbib_std
 
 val authors : At.t
 val container : At.t

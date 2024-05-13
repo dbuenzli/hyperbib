@@ -1,9 +1,9 @@
 (*---------------------------------------------------------------------------
-   Copyright (c) 2021 University of Bern. All rights reserved.
+   Copyright (c) 2024 The hyperbib programmers. All rights reserved.
    SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
-open Hyperbib.Std
+open Hyperbib_std
 
 (* String functions *)
 

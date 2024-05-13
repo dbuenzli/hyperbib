@@ -3,7 +3,7 @@
    SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
-open Hyperbib.Std
+open Hyperbib_std
 open Result.Syntax
 open B0_json
 
@@ -53,7 +53,7 @@ module Work = struct
   let volume = Jsonq.(opt_mem ~absent:None "volume" (some string))
 end
 
-let rec for_doi httpr ~cache doi =
+let rec for_doi httpc ~cache doi =
   let doi_to_fname doi = String.map (function '/' -> '_' | c -> c) doi in
   let doi_file = Fpath.(cache / doi_to_fname doi + ".json") in
   let* exists = Os.File.exists doi_file in
@@ -63,12 +63,12 @@ let rec for_doi httpr ~cache doi =
       Result.map Option.some @@
       Json.of_string ~file:(Fpath.to_string doi_file) contents
   | false ->
-      let* httpr = match httpr with
+      let* httpc = match httpc with
       | None -> Fmt.error "No cached metadata for %s" doi
-      | Some httpr -> Ok httpr
+      | Some httpc -> Ok httpc
       in
       let content_type = Doi.json in
-      let* json = Doi.resolve_to_content_type ~content_type httpr doi in
+      let* json = Doi.resolve_to_content_type ~content_type httpc doi in
       match json with
       | None -> Ok None
       | Some json ->

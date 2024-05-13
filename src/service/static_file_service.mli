@@ -3,6 +3,6 @@
    SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
-open Hyperbib.Std
+open Hyperbib_std
 
 val v : Service.sub_with_immutable_session

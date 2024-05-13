@@ -3,7 +3,7 @@
    SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
-open Hyperbib.Std
+open Hyperbib_std
 
 (** Service environment.
 
@@ -17,7 +17,7 @@ type t
     capbilities and database access for services. *)
 
 val v :
-  conf:Hyperbib.Conf.t -> caps:User.Caps.t -> db_pool:Db.pool ->
+  conf:Hyperbib_app.Conf.t -> caps:User.Caps.t -> db_pool:Db.pool ->
   editable:editable -> page_gen:Page.Gen.t -> unit -> t
 (** [v …] is an environment with given properties. See corresponding
     accessors for semantics. *)
@@ -26,7 +26,7 @@ val adjust : t -> User.Caps.t -> Page.Gen.t -> t
 
 (** {1:props Properties} *)
 
-val conf : t -> Hyperbib.Conf.t
+val conf : t -> Hyperbib_app.Conf.t
 (** [conf e] is the hyperbib configuration of [e]. *)
 
 val caps : t -> User.Caps.t

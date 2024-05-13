@@ -5,7 +5,7 @@
 
 (** HTTP request query helpers *)
 
-open Hyperbib.Std
+open Hyperbib_std
 open Rel
 
 
@@ -52,7 +52,7 @@ val find_col :
 val get_col :
   ('r, 'a) Col.t -> Http.Query.t -> ('a, Http.Response.t) result
 (** [get_col] is like {!find_col} except this responds with
-    {!Http.Response.bad_request_400} if the column cannot be found, except
+    {!Webs.Http.Response.bad_request_400} if the column cannot be found, except
     for [Type.Bool] columns since absence of the values denotes
     [false] for HTML checkboxes. *)
 

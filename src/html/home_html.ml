@@ -3,7 +3,7 @@
    SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
-open Hyperbib.Std
+open Hyperbib_std
 
 (* TODO eventually this should simply be markdown
    rendered from user data.  *)
@@ -17,11 +17,11 @@ let page_html g =
   let link_project =
     let href = Bibliography.project_href b in
     let t = Bibliography.project_title b in
-    Hfrag.link ~href (El.txt t)
+    Html_kit.link ~href (El.txt t)
   in
   let suggest =
     let href = Kurl.Fmt.url (Page.Gen.url_fmt g) (Suggestion.Url.v Index) in
-    Hfrag.link ~href (El.txt Uimsg.your_suggestions_for_addition)
+    Html_kit.link ~href (El.txt Uimsg.your_suggestions_for_addition)
   in
   El.section [
     El.header [
@@ -51,9 +51,9 @@ let page_html g =
       El.strong [El.txt "Warning. "];
       El.txt "The current bibliographic data \
               was automatically sourced from ";
-      Hfrag.link ~href:crossref_org_href (El.txt "Crossref");
+      Html_kit.link ~href:crossref_org_href (El.txt "Crossref");
       El.txt " as provided by the ";
-      Hfrag.link ~href:Doi.default_resolver (El.txt "DOI system");
+      Html_kit.link ~href:Doi.default_resolver (El.txt "DOI system");
       El.txt ". This means that some of the data is noisy. In
           particular authors may end up being duplicated at the moment.
           Work is in progress to cleanup the data.";

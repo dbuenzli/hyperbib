@@ -3,7 +3,7 @@
    SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
-open Hyperbib.Std
+open Hyperbib_std
 
 module Gen = struct
   type auth_ui = [ `Login | `Logout ]
@@ -55,7 +55,7 @@ let doi_resolver =
 let link_bibtex_file g uf ~self =
   let bibtex_file = Bibliography.Url.bibtex_file (Gen.bibliography g) in
   let href = Kurl.Fmt.rel_url uf ~src:self ~dst:bibtex_file in
-  Hfrag.link ~href (El.splice [El.code [El.txt ".bib"]; El.txt " file"])
+  Html_kit.link ~href (El.splice [El.code [El.txt ".bib"]; El.txt " file"])
 
 let link_suggest_page g uf ~self =
   let suggest = Suggestion.Url.v Index in
@@ -64,7 +64,7 @@ let link_suggest_page g uf ~self =
   | None | Some `Public -> Uimsg.make_a_suggestion
   | Some `Private -> Uimsg.suggestions
   in
-  Hfrag.link ~href (El.txt txt)
+  Html_kit.link ~href (El.txt txt)
 
 let menu_secondary g uf ~self =
   El.nav ~at:At.[Hclass.secondary]
@@ -105,7 +105,7 @@ let user_login uf ~self =
       let dst = User.Url.v (Login { goto }) in
       Kurl.Fmt.rel_url uf ~src:self ~dst
   in
-  El.span ~at:At.[Hclass.user_ui] [Hfrag.link ~href (El.txt Uimsg.login)]
+  El.span ~at:At.[Hclass.user_ui] [Html_kit.link ~href (El.txt Uimsg.login)]
 
 let auth_ui g uf ~self = match Gen.auth_ui g with
 | None -> El.void
@@ -118,7 +118,7 @@ let user_view g uf ~self view =
     | `Public -> At.[disabled]
     | `Private ->
         let req =
-          Hfrag.htmlact_request uf (User.Url.v (View {private' = false}))
+          Html_kit.htmlact_request uf (User.Url.v (View {private' = false}))
         in
         [req; Htmlact.effect `None]
     in
@@ -129,7 +129,7 @@ let user_view g uf ~self view =
     | `Private -> At.[disabled]
     | `Public ->
         let req =
-          Hfrag.htmlact_request uf (User.Url.v (View {private' = true}))
+          Html_kit.htmlact_request uf (User.Url.v (View {private' = true}))
         in
         [req; Htmlact.effect `None]
     in
@@ -148,7 +148,7 @@ let user_view_ui ?(ui_ext = fun _ ~self:_ -> El.void) g uf ~self =
           let label = Label.Url.v Index in
           let href = Kurl.Fmt.rel_url uf ~src:self ~dst:label in
           let at = At.[Hclass.edit_pages] in
-          let link = El.span [Hfrag.link ~href (El.txt Uimsg.labels)] in
+          let link = El.span [Html_kit.link ~href (El.txt Uimsg.labels)] in
           Hui.group ~x_align:`Center ~dir:`H ~at [Icon.tag; link]
       in
       let user_view = user_view g uf ~self view in
@@ -161,12 +161,12 @@ let ui ?ui_ext g ~self =
   let link_home =
     let home = Bibliography.Url.v Home in
     let href = Kurl.Fmt.rel_url uf ~src:self ~dst:home in
-    Hfrag.link ~href (El.txt "BIB")
+    Html_kit.link ~href (El.txt "BIB")
   in
   let link_help =
     let help = Bibliography.Url.v Help in
     let href = Kurl.Fmt.rel_url uf ~src:self ~dst:help in
-    Hfrag.link ~href (El.txt Uimsg.help)
+    Html_kit.link ~href (El.txt Uimsg.help)
   in
   let auth_ui = auth_ui g uf ~self in
   let user_view_ui = user_view_ui ?ui_ext g uf ~self in
@@ -175,7 +175,7 @@ let ui ?ui_ext g ~self =
     let short_title = Bibliography.project_short_title c in
     let href = (Bibliography.project_href c) in
     El.header [
-      El.h1 [Hfrag.link ~href (El.txt short_title)];
+      El.h1 [Html_kit.link ~href (El.txt short_title)];
       El.div [El.em [link_home]; El.txt "  "; link_help;
               El.txt "  "; auth_ui; ]]
   in
@@ -191,7 +191,7 @@ let ui ?ui_ext g ~self =
 let full_title g ~title =
   let b = Gen.bibliography g in
   let proj = Bibliography.project_title b in
-  if title = proj then proj else Hfrag.title ~sub:title ~sup:proj
+  if title = proj then proj else Html_kit.title ~sub:title ~sup:proj
 
 let head g ~self ~title =
   let url ~dst = Kurl.Fmt.rel_url (Gen.url_fmt g) ~src:self ~dst in
@@ -223,7 +223,7 @@ let footer g =
   in
   let link_project =
     let href = Bibliography.project_href b in
-    Hfrag.link ~href (El.txt_of Bibliography.project_title b)
+    Html_kit.link ~href (El.txt_of Bibliography.project_title b)
   in
   El.footer
     [ El.txt date; El.sp; El.txt (Bibliography.copyrights b);
@@ -248,7 +248,7 @@ let with_content ?ui_ext g ~self ~title ~content =
 
 let for_404 ?ui_ext g ~kind ~self ~consult =
   let uf = Gen.url_fmt g in
-  let kind_uncap = Hfrag.uncapitalize kind in
+  let kind_uncap = Html_kit.uncapitalize kind in
   let title = Uimsg.kind_not_found kind in
   let consult_href = Kurl.Fmt.rel_url uf ~src:self ~dst:consult in
   let consult_text = Uimsg.goto_kind_index kind_uncap in
@@ -256,7 +256,7 @@ let for_404 ?ui_ext g ~kind ~self ~consult =
     El.section [
       El.h1 [El.txt title];
       El.p [El.txt (Uimsg.kind_page_does_not_exist kind_uncap)];
-      El.p [Hfrag.link ~href:consult_href (El.txt consult_text)]]
+      El.p [Html_kit.link ~href:consult_href (El.txt consult_text)]]
   in
   with_content ?ui_ext g ~self ~title ~content
 
@@ -304,7 +304,7 @@ let error g request response' =
       Uimsg.something_went_wrong_XXX_descr
   in
   let bib_url = Kurl.Fmt.rel_url uf ~src:self ~dst:(Bibliography.Url.v Home) in
-  let goto_bib = Hfrag.link ~href:bib_url (El.txt Uimsg.go_back_to_bib) in
+  let goto_bib = Html_kit.link ~href:bib_url (El.txt Uimsg.go_back_to_bib) in
   let content =
     El.section [ El.h1 [El.txt title]; El.p [El.txt descr; El.sp; goto_bib;]]
   in

@@ -3,16 +3,16 @@
    SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
-open Hyperbib.Std
+open Hyperbib_std
 open Cmdliner
 
 let cmds =
   [ Cmd_user.cmd; Cmd_db.cmd; Cmd_html.cmd; Cmd_import.cmd;
-    Cmd_serve.cmd; ]
+    Cmd_serve.cmd; Cmd_run.cmd ]
 
 let hyperbib =
   let doc = "Annotates bibliographies" in
-  let exits = Hyperbib.Exit.Info.base_cmd in
+  let exits = Hyperbib_app.Exit.Info.base_cmd in
   let default = Term.(ret (const (`Help (`Auto, None)))) in
   let info = Cmd.info "hyperbib" ~version:Stamp.version ~doc ~exits in
   Cmd.group info ~default cmds

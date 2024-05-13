@@ -7,7 +7,7 @@
 
     Taken from {{:https://heroicons.com/}heroicons}. *)
 
-open Hyperbib.Std
+open Hyperbib_std
 
 (** {1:outline Outline} *)
 

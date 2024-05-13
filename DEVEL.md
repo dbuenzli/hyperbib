@@ -10,9 +10,8 @@ b0 -- hyperbib serve --edit=unsafe --insecure-cookie
 Or using the B0 `.show-url` action to reload your browser:
 
 ```
-b0 -- .show-url http://localhost:8000/authors -- hyperbib serve …
+b0 -- .show-url http://localhost:8000/persons -- hyperbib serve …
 ```
-
 
 # Code layout 
 
@@ -106,7 +105,7 @@ b0 -- hyperbib db schema app
 To visualize the schema diagram use 
 ```
 b0 -- hyperbib db schema app  --format=dot | dot -Tsvg > /tmp/hyperbib.svg \
-  && show-uri /tmp/hyperbib.svg
+  && show-url /tmp/hyperbib.svg
 ```
 
 

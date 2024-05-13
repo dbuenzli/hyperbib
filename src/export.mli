@@ -5,10 +5,10 @@
 
 (** Data export functions. *)
 
-open Hyperbib.Std
+open Hyperbib_std
 
 val static_html :
-  inside_dir:Fpath.t -> Hyperbib.Conf.t -> Db.t -> Page.Gen.t ->
+  inside_dir:Fpath.t -> Hyperbib_app.Conf.t -> Db.t -> Page.Gen.t ->
   (unit, string) result
 
 val bibtex_of_refs :

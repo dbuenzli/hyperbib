@@ -3,7 +3,7 @@
    SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
-open Hyperbib.Std
+open Hyperbib_std
 
 (* Keep these words for now.
     let guest = El.small [El.txt "leave empty to login as guest"] in
@@ -72,6 +72,6 @@ let page_html g ~self username =
 
 let page g ~username =
   let self = Kurl.V (User.Url.kind, Login { goto = None }) in
-  let title = Hfrag.title ~sub:username ~sup:Uimsg.user in
+  let title = Html_kit.title ~sub:username ~sup:Uimsg.user in
   let content = page_html g ~self username in
   Page.with_content g ~self ~title ~content
