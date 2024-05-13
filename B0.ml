@@ -113,8 +113,7 @@ let hyperbib =
     [ unix; threads; cmdliner; ptime; ptime_clock; b0_std; b0; b0_file;
       b0_kit; htmlit; htmlact;
       rel; rel_kit; rel_cli; rel_sqlite3; rel_pool;
-      webs; webs_kit; webs_unix; webs_cli;
-      ]
+      webs; webs_kit; webs_unix; webs_cli; ]
   in
   let srcs =
     (* TODO b0: slightly messy we need to copy it over because of
@@ -134,7 +133,7 @@ let hyperbib =
     B0_meta.empty
     (* TODO b0: supported_code doesn't work. *)
     |> ~~ B0_ocaml.Code.needs `Native
-    |> ~~ B0_unit.Exec.cwd (`In (`Scope_dir, Fpath.v "app"))
+    |> ~~ B0_unit.Action.cwd (`In (`Scope_dir, Fpath.v "app"))
   in
   let wrap proc b =
     B0_build.require_unit b hyperbib_js;
@@ -147,8 +146,8 @@ let hyperbib =
 
 let deploy_remote = "philo:"
 let pull_data =
-  B0_action.make' "pull-data" ~doc:"Pull live data" @@
-  fun _ env ~args ->
+  B0_unit.of_action "pull-data" ~doc:"Pull live data" @@
+  fun env _ ~args ->
   let* rsync = B0_rsync.get () in
   let src = Fpath.v "hyperbib/app/data/bib.sqlite3.backup" in
   let dst = B0_env.in_scope_dir env (Fpath.v "app/data/bib.sqlite3") in
@@ -163,19 +162,19 @@ let deploy_cmd name =
            sudo systemctl status %s" name name name
 
 let deploy_test =
-  B0_action.make' "deploy-test" ~doc:"Build and deploy on test server" @@
+  B0_unit.of_action "deploy-test" ~doc:"Build and deploy on test server" @@
   fun _ env ~args -> Os.Cmd.run (exec_remote (deploy_cmd "hyperbib-next"))
 
 let deploy_live =
-  B0_action.make' "deploy-live" ~doc:"Build and deploy on the live server" @@
+  B0_unit.of_action "deploy-live" ~doc:"Build and deploy on the live server" @@
   fun _ env ~args -> Os.Cmd.run (exec_remote (deploy_cmd "hyperbib"))
 
 let test_logs =
-  B0_action.make' "test-logs" ~doc:"Test server logs" @@
+  B0_unit.of_action "test-logs" ~doc:"Test server logs" @@
   fun _ env ~args -> Os.Cmd.run (exec_remote (logs_cmd "hyperbib-next"))
 
 let live_logs =
-  B0_action.make' "live-logs" ~doc:"Live server logs" @@
+  B0_unit.of_action "live-logs" ~doc:"Live server logs" @@
   fun _ env ~args -> Os.Cmd.run (exec_remote (logs_cmd "hyperbib"))
 
 (* Packs *)

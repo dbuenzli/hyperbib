@@ -16,9 +16,9 @@ let log_startup c env =
                Listening on http://%a%a@]"
         Stamp.version
         Schema.version
-        (Fmt.code Fpath.pp_unquoted) app_dir
-        (Fmt.code Webs_listener.pp) l
-        (Fmt.code Http.Path.pp) service_path);
+        (Fmt.code' Fpath.pp_unquoted) app_dir
+        (Fmt.code' Webs_listener.pp) l
+        (Fmt.code' Http.Path.pp) service_path);
   if (Service_env.editable env = `Unsafe) then
     Log.warn (fun m -> m "Anyone can edit the bibliography, no login required.")
 

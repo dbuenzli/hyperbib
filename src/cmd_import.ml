@@ -12,7 +12,7 @@ let import_legacy conf reset =
   match reset with
   | false ->
       Fmt.error "Cannot import without clearing the database use %a option"
-        Fmt.(code string) "--reset"
+        Fmt.code "--reset"
   | true ->
       let db_file = Hyperbib.Conf.db_file conf in
       let file_error e = Fmt.str "%a: %s" Fpath.pp_unquoted db_file e in

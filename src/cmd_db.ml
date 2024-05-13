@@ -115,7 +115,7 @@ let sql conf args =
   | sql :: ropts -> Cmd.(list (List.rev ropts) %% path db_file % sql)
   in
   let* sqlite3 = Os.Cmd.get (Cmd.tool "sqlite3") in
-  Os.Exit.exit @@ Os.Exit.exec Cmd.(sqlite3 % "-header" %% args)
+  Os.Exit.exit @@ Os.Exit.execv Cmd.(sqlite3 % "-header" %% args)
 
 (* Command line interface *)
 

@@ -98,8 +98,8 @@ module Conf = struct
           "Working directory is not an application directory.\n\
            %a: Use option %a to specify one or %a to use this directory\n\
           \      as an application directory."
-                  Fmt.(tty' [`Fg `Yellow]) "Hint"
-                  Fmt.code' "-a" Fmt.code' "-a ."
+                  Fmt.(st [`Fg `Yellow]) "Hint"
+                  Fmt.code "-a" Fmt.code "-a ."
     in
     let* app_dir = Os.Path.realpath app_dir in
     Ok (v ~log_level ~tty_cap ~app_dir ())

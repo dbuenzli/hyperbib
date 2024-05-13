@@ -80,7 +80,7 @@ type error = error_kind * B0_text.Tloc.t
 
 let pp_error ppf (err, l) =
   Fmt.pf ppf "@[<v>%a:@,%a: %s@]"
-    Tloc.pp l Fmt.(tty [`Fg `Red] string) "Error" err
+    Tloc.pp l (Fmt.st [`Fg `Red]) "Error" err
 
 let curr_char d = (* TODO better escaping (this is for error reports) *)
   Tdec.tok_reset d; Tdec.tok_accept_uchar d; Tdec.tok_pop d

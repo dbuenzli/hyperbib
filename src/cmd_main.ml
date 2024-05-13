@@ -18,10 +18,9 @@ let hyperbib =
   Cmd.group info ~default cmds
 
 let main () =
-  B0_cli.Exit.exit ~exec_error:Hyperbib.Exit.some_error @@
-  B0_cli.Exit.of_eval_result @@
+  Os.Exit.exit @@
   Log.time (fun _ m -> m "total time hyperbib %s" Stamp.version) @@ fun () ->
-  Cmd.eval_value hyperbib
+  match Cmd.eval_value' hyperbib with `Ok e -> e | `Exit c -> Os.Exit.code c
 
 let () = if !Sys.interactive then () else main ()
 

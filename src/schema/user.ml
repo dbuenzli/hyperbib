@@ -59,7 +59,7 @@ let fold f us acc = String.Map.fold (fun _ u -> f u) us acc
 
    That's a bit too much code :-) *)
 
-let json_hex ~kind = Jsonq.string_to ~kind String.Ascii.of_hex'
+let json_hex ~kind = Jsonq.string_to ~kind String.Ascii.of_hex
 let json_algo =
   let kind = "password hashing algorithm" in
   let algo a = match String.Ascii.lowercase a with
