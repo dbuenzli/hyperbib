@@ -36,6 +36,3 @@ module Doi : sig
     create_public:bool -> Db.t -> ref ->
     (Person.t entity list * Person.t entity list, Db.error) result
 end
-
-val legacy :
-  Db.t -> Hyperbib_app.Conf.t -> ((unit, string) result, Db.error) result

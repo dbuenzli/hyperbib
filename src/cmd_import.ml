@@ -6,9 +6,10 @@
 open Hyperbib_std
 open Result.Syntax
 
-let import_legacy conf reset =
-  (* FIXME remove that *)
+let doi ~reset conf =
   Log.if_error ~use:Hyperbib_app.Exit.some_error @@
+  Fmt.error "TODO"
+  (*
   match reset with
   | false ->
       Fmt.error "Cannot import without clearing the database use %a option"
@@ -21,34 +22,32 @@ let import_legacy conf reset =
       let* () = Db.clear db |> Db.string_error in
       let* () = Db.ensure_schema Schema.v db in
       let* () = Import.legacy db conf |> Db.string_error |> Result.join in
-      Ok Hyperbib_app.Exit.ok
-
-let db conf action reset = match action with
-| `Legacy -> import_legacy conf reset
+      Ok Hyperbib_app.Exit.ok *)
 
 (* Command line interface *)
 
 open Cmdliner
-
-let doc = "Import data in the database"
-let exits = Hyperbib_app.Exit.Info.base_cmd
-let man = [
-  `S Manpage.s_description;
-  `P "The $(tname) imports data in the database."; ]
+open Cmdliner.Term.Syntax
 
 let reset =
   let doc = "Resets the database. This deletes all existing data." in
   Arg.(value & flag & info ["reset"] ~doc)
 
-let action =
-  let action = [ "legacy", `Legacy; ] in
-  let doc =
-    let alts = Arg.doc_alts_enum action in
-    Fmt.str "The action to perform. $(docv) must be one of %s." alts
+let doi_cmd =
+  let doc = "Import bibliographic references by DOI." in
+  let man = [
+    `S Manpage.s_description;
+    `P "The $(iname) command imports data in the database."; ]
   in
-  let action = Arg.enum action in
-  Arg.(required & pos 0 (some action) None & info [] ~doc ~docv:"ACTION")
+  Hyperbib_app.Cli.cmd_with_conf "doi" ~doc ~man @@
+  let+ reset in
+  doi ~reset
 
 let cmd =
-  Cmd.v (Cmd.info "import" ~doc ~exits ~man)
-    Term.(const db $ Hyperbib_app.Cli.conf $ action $ reset)
+  let doc = "Bulk import data in the database" in
+  let man = [
+    `S Manpage.s_description;
+    `P "The $(iname) command imports data in the database."; ]
+  in
+  Hyperbib_app.Cli.cmd_group "import" ~doc ~man @@
+  [doi_cmd]
