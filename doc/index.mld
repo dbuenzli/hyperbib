@@ -52,6 +52,7 @@ Year_service}
 Bibtex
 Cmd_db
 Cmd_html
+Cmd_kit
 Cmd_import
 Cmd_serve
 Cmd_user
@@ -61,7 +62,6 @@ Db
 Doi
 Export
 Hui
-Hyperbib_app
 Id
 Import
 Service

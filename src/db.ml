@@ -12,6 +12,7 @@ let dialect = Rel_sqlite3.dialect
 
 type error = Rel_sqlite3.error
 let error_message = Rel_sqlite3.Error.message
+let error_rc_message e = Rel_sqlite3.Error.(code_to_string (code e))
 let string_error = Rel_sqlite3.string_error
 
 type t = Rel_sqlite3.t
@@ -136,6 +137,7 @@ let with_open_schema ?foreign_keys ?read_only schema db_file f =
 
 (* Queries *)
 
+let exec_sql db sql = Rel_sqlite3.exec_sql db sql
 let exec db st = Rel_sqlite3.exec db st
 let first = Rel_sqlite3.first
 let fold = Rel_sqlite3.fold

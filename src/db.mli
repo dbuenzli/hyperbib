@@ -18,6 +18,8 @@ type error
 val error_message : error -> string
 (** [error_message e] is an english error message for [e]. *)
 
+val error_rc_message : error -> string
+
 val string_error : ('a, error) result -> ('a, string) result
 (** [string_error] is [Result.map_error error_message]. *)
 
@@ -91,6 +93,8 @@ val with_open_schema :
 (** [with_open_schema] is {!with_open} followed by {!ensure_schema}. *)
 
 (** {1:queries Queries} *)
+
+val exec_sql : t -> string -> (unit, error) result
 
 val exec : t -> unit Rel_sql.Stmt.t -> (unit, error) result
 (** [exec] abstracts {!Rel_sqlite3.exec}. *)

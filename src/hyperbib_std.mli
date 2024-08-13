@@ -35,6 +35,7 @@ module El = Htmlit.El
 module Bag = Rel_query.Bag
 
 (** {1:other Other needs} *)
+
 module Bazaar : sig
 
   (* FIXME it these kinds of things should likely be added to

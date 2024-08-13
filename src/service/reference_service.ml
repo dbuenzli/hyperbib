@@ -102,7 +102,8 @@ let fill_in_form env req doi =
   let* cancel =
     Result.map_error
       (* Bof *)
-      (fun e -> Result.get_error (Http.Response.bad_request_400 ~explain:e ())) @@
+      (fun e ->
+         Result.get_error (Http.Response.bad_request_400 ~explain:e ())) @@
     let* bare = Kurl.Bare.of_req_referer req in
     Ok (Entity.Url.cancel_url_of_query (Kurl.Bare.query bare))
   in
@@ -183,10 +184,8 @@ let create app req = (* create and update are very similar factor out a bit. *)
   let entity_page_url id = Reference.Url.v (Page (None, id)) in
   Service_env.with_db_transaction' `Immediate app @@ fun db ->
   let* q = Http.Request.to_query req in
-  let* vs =
-    Hquery.careless_find_table_cols ~ignore:[Col.V Reference.id']
-      Reference.table q
-  in
+  let ignore = [Col.V Reference.id'] in
+  let* vs = Hquery.careless_find_table_cols ~ignore Reference.table q in
   let vs = match Hquery.find_date q with
   | Error _ (* FIXME form validation *) -> vs
   | Ok d ->
@@ -226,7 +225,8 @@ let update env req id =
   let ignore = [Col.V Reference.id'] in
   let* vs = Hquery.careless_find_table_cols ~ignore Reference.table q in
   let vs = match Hquery.find_date q with
-  | Error _ (* FIXME form validation *) -> vs
+  | Error _ (* FIXME form validation, which we also need to poperly type
+               dois. *) -> vs
   | Ok d ->
       let y, md = Reference.col_values_for_date d in
       y :: md :: vs
@@ -250,6 +250,11 @@ let update env req id =
   let g = Service_env.page_gen env in
   let* render_data, cites, cited_by = get_page_data db g r in
   let uf = Page.Gen.url_fmt g in
+  (* FIXME, commit 04a09ae1036 improved certain fragments but before we
+     had the following hich has the advantage that the URL chanegs
+     if we update the title.
+     let self = Reference.Url.page r (* assume comes from that page *)
+  *)
   let* self = Html_kit.url_of_req_referer req in
   let title = Reference_html.page_full_title g r in
   let html = Reference_html.view_full g ~self r ~render_data ~cites ~cited_by in

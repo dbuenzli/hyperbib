@@ -104,8 +104,7 @@ b0 -- hyperbib db schema app
 
 To visualize the schema diagram use 
 ```
-b0 -- hyperbib db schema app  --format=dot | dot -Tsvg > /tmp/hyperbib.svg \
-  && show-url /tmp/hyperbib.svg
+b0 -- hyperbib db schema -f dot app | dot -Tsvg | show-url -t s.svg
 ```
 
 

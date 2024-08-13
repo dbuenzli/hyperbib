@@ -141,7 +141,7 @@ module Static_html = struct
     Ok ()
 
   let write_static_files ~dir conf =
-    let src = Hyperbib_app.Conf.static_dir conf in
+    let src = Cli_kit.Conf.static_dir conf in
     Bazaar.cp_dir_content ~recurse:true ~of_dir:src ~inside_dir:dir ()
 
   let write_data ~dir data_conf db g =

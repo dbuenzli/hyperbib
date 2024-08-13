@@ -171,6 +171,9 @@ let add_col_value (type c) ~col:(col : ('a, c) Rel.Col.t) q acc =
       | Rel.Type.Option Rel.Type.Int ->
           parse_kind ~kind:"int option"
             int_option_of_string col acc key v
+      | Rel.Type.Option Rel.Type.Text ->
+          let v = if v = "" (* XXX allow to trim *) then None else Some v in
+          Ok (Rel.Col.Value (col, v) :: acc)
       | Rel.Type.Option _ as t -> unhandled key t
       | Rel.Type.Blob as t -> unhandled key t
       | t -> unhandled key t

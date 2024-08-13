@@ -203,6 +203,7 @@ let default =
         "webs", {||};
         "htmlit", {||};
         "htmlact", {||};
+        "conf-sqlite2", {||};
         "rel", {||};
         "note", {||};
         "brr", {||};

@@ -58,6 +58,12 @@ module Conf : sig
   (** [http_client c] is the HTTP client to use in the app. *)
 end
 
+val with_db_transaction :
+  Conf.t -> Db.transaction_kind ->
+  (Db.t -> ('a, string) result) -> ('a, string) result
+
+
+
 (** Exit codes. *)
 module Exit : sig
 
@@ -79,31 +85,27 @@ module Exit : sig
   end
 end
 
-(** Cli interaction. *)
-module Cli : sig
+open Cmdliner
 
-  open Cmdliner
+val fpath : Fpath.t Arg.conv
+(** [fpath] is a filepath converter. *)
 
-  val fpath : Fpath.t Arg.conv
-  (** [fpath] is a filepath converter. *)
+(** {1:conf Cli configuration} *)
 
-  (** {1:conf Cli configuration} *)
-
-  val conf : Conf.t Term.t
-  (** [conf] is a cmdliner term for configuration.
+val conf : Conf.t Term.t
+(** [conf] is a cmdliner term for configuration.
 
       Term evaluation sets up logging level and color output by side
       effect and looksup the HTTP client. *)
 
-  val cmd_with_conf :
-    ?doc:string -> ?man:Manpage.block list -> ?exits:Cmd.Exit.info list ->
-    string -> (Conf.t -> 'a) Term.t -> 'a Cmd.t
+val cmd_with_conf :
+  ?doc:string -> ?man:Manpage.block list -> ?exits:Cmd.Exit.info list ->
+  string -> (Conf.t -> 'a) Term.t -> 'a Cmd.t
 
-  val cmd :
-    ?doc:string -> ?man:Manpage.block list -> ?exits:Cmd.Exit.info list ->
-    string -> 'a Term.t -> 'a Cmd.t
+val cmd :
+  ?doc:string -> ?man:Manpage.block list -> ?exits:Cmd.Exit.info list ->
+  string -> 'a Term.t -> 'a Cmd.t
 
-  val cmd_group :
-    ?doc:string -> ?man:Manpage.block list -> ?exits:Cmd.Exit.info list ->
-    string -> 'a Cmd.t list -> 'a Cmdliner.Cmd.t
-end
+val cmd_group :
+  ?doc:string -> ?man:Manpage.block list -> ?exits:Cmd.Exit.info list ->
+  ?default:'a Cmdliner.Term.t -> string -> 'a Cmd.t list -> 'a Cmdliner.Cmd.t

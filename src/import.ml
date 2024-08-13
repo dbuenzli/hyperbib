@@ -44,7 +44,6 @@ module Doi = struct
     String.equal p0.family p1.family &&
     String.equal p0.given p1.given
 
-
   (* DOI metadata query and extraction *)
 
   let personq =

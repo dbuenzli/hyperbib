@@ -10,16 +10,18 @@ open Hyperbib_std
 type id = Id.t
 (** The type for suggestion ids. These are allocated by the database. *)
 
+type doi = string
+
 type t
 (** The type for suggestions. *)
 
 val v :
-  id:id -> timestamp:int -> doi:Doi.t -> suggestion:string -> comment:string ->
+  id:id -> timestamp:int -> doi:doi -> suggestion:string -> comment:string ->
   email:string -> unit -> t
 (** [v …] is a suggestion with given properties. See accessors for
     semantics. *)
 
-val row : id -> int -> Doi.t -> string -> string -> string -> t
+val row : id -> int -> doi -> string -> string -> string -> t
 (** [row …] is unlabelled {!v}. *)
 
 val new' : t
@@ -31,7 +33,7 @@ val id : t -> id
 val timestamp : t -> int
 (** [timestamp s] is the time when the suggestion made it to the database. *)
 
-val doi : t -> Doi.t
+val doi : t -> doi
 (** [doi s] is the DOI of the suggestion (empty string if none). *)
 
 val suggestion : t -> string
@@ -47,7 +49,7 @@ val email : t -> string
 
 val id' : (t, id) Rel.Col.t
 val timestamp' : (t, int) Rel.Col.t
-val doi' : (t, Doi.t) Rel.Col.t
+val doi' : (t, doi) Rel.Col.t
 val suggestion' : (t, string) Rel.Col.t
 val comment' : (t, string) Rel.Col.t
 val email' : (t, string) Rel.Col.t

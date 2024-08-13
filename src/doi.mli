@@ -5,38 +5,72 @@
 
 (** DOI names and their resolution.
 
-    {b Note.} DOI names are ASCII case insensitive, we normalize
-    them to lowercase, as it screams less and provides less problems
-    for matching. *)
+    {b Note.} DOI names are ASCII case insensitive, we normalize them
+    to lowercase. It screams less and provides less problems for
+    matching. *)
 
 open Hyperbib_std
 
 (** {1:dois DOI names} *)
 
 type t = string
-(** The type for DOI names. Note that this can be the empty string. On the
-    empty string, resolutions errors. *)
-
-val pp : Format.formatter -> t -> unit
-(** [pp] formats a DOI name (without a resolver or [doi:]). *)
-
-val normalize : t -> t
-(** [normalize d] normalizes [d] by lowercasing US-ASCII characters. *)
+(** The type for DOI names. {b TODO} make abstract. *)
 
 (** {1:scraping Scraping} *)
 
+val normalize : string -> string
+(** [normalize s] normalizes [s] by lowercasing US-ASCII characters. *)
+
 val extract : ?start:int -> string -> t option
 (** [extract s] looks for the first ["10."] prefix at or after [start]
-    (defaults to [0]) and then tries to parse a DOI until the first
-    {!Char.Ascii.is_blank} or the end of string.  The result is
-    normalized.
+    (defaults to [0]) and then tries to delimit a DOI:
+    {ul
+    {- If ["10."] starts at index [0], it simply takes all bytes until
+       the first the first {!Char.Ascii.is_white} or
+       {!Char.Ascii.is_control} or the end of string.}
+    {- Otherwise it assumes DOIs have balanced bracket delimiters and
+       stops on unbalanced brackets ([')'], ['\]'], ['}'], ['>']). It
+       also removes a final quote or double quote if the context looks
+       markupish.}}
 
     {b Note.} It seems that ISO 26324:2022 now allow other directory
     number than [10], this might need to be adjusted in the future. *)
 
-val list_of_text_scrape : string -> t list
-(** {list_of_text_scrape s] assuming an US-ASCII compatible text encoding
-    roughly finds DOI names by looking for ["10."] and {!extract}ing them. *)
+val fold_text_scrape : (t -> 'acc -> 'acc) -> string -> 'acc -> 'acc
+(** [fold_text_scrape f s acc] folds over the DOIs in [s] with [f]
+    starting with [acc]. This assumes an US-ASCII compatible text encoding
+    and repeatedly find them with {!extract}. *)
+
+(** {1:convert Converting} *)
+
+(**/**)
+val unsafe_of_string : string -> t
+(**/**)
+
+val of_string : string -> (t, string) result
+(** [of_string s] is a DOI from [s]. This uses {!extract} but
+    assumes the string was already delimited. *)
+
+val to_string : t -> string
+(** [to_string d] is [d] as a string without a resolver or [doi:].
+    See also {!presentations}. *)
+
+val pp : Format.formatter -> t -> unit
+(** [pp] formats a DOI name like {!to_string} does. *)
+
+(** {1:presentations Presentations} *)
+
+val default_resolver : Webs_url.t
+(** [default_resolver] is the default resolver used to resolve
+    DOIs. This is {:https://doi.org}. *)
+
+val as_uri : t -> string
+(** [as_uri d] is [d] prefixed by [doi:]. This percent encodes [d]
+    as needed. *)
+
+val as_url : ?resolver:Webs_url.t -> t -> Webs_url.t
+(** [as_url ~resolver d] is [d] prefixed by [resolver] (defaults to
+    {!default_resolver}). This precent encodes [d] as needed. *)
 
 (** {1:predicates Predicates and comparisons} *)
 
@@ -46,11 +80,15 @@ val equal : t -> t -> bool
 val compare : t -> t -> int
 (** [compare] is a total order on DOI names compatible with {!equal}. *)
 
-(** {1:res Resolution} *)
+(** {1:sets_maps Sets and Maps} *)
 
-val default_resolver : Webs_url.t
-(** [default_resolver] is the default resolver used to resolve
-    DOIs. This is {:https://doi.org}. *)
+module Set : Set.S with type elt := t
+(** Sets of DOIs. *)
+
+module Map : Map.S with type key := t
+(** Maps of DOIs. *)
+
+(** {1:res Resolution} *)
 
 val resolve_to_url :
   ?resolver:string -> Webs.Http_client.t -> t ->

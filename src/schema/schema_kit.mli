@@ -6,3 +6,4 @@
 (** Schema definition commonalities. *)
 
 val date_md_partial_type : Date.md_partial Rel.Type.t
+val doi_type : Doi.t Rel.Type.t

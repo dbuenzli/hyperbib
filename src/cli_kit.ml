@@ -65,6 +65,14 @@ module Conf = struct
     Ok (make ~log_level ~fmt_styler ~app_dir ~http_client ())
 end
 
+let with_db_transaction conf kind f =
+  let db_file = Conf.db_file conf in
+  let* () = Db.ensure_db_path db_file in
+  Result.map_error (fun e -> Fmt.str "%a: %s" Fpath.pp_unquoted db_file e) @@
+  Result.join @@ Result.join @@ Result.map Db.string_error @@
+  Db.with_open_schema Schema.v db_file @@ fun db ->
+  Db.with_transaction kind db f
+
 module Exit = struct
   open Cmdliner
   let ok = Os.Exit.code Cmd.Exit.ok
@@ -73,47 +81,45 @@ module Exit = struct
   let some_error = Os.Exit.Code Cmd.Exit.some_error
   module Info = struct
     let e c doc = Cmdliner.Cmd.Exit.info (Os.Exit.get_code c) ~doc
-    let user_exists = e user_exists "on adding an exisiting user."
+    let user_exists = e user_exists "on adding an existing user."
     let conf_error = e conf_error "on configuration error."
     let base_cmd = user_exists :: conf_error :: Cmd.Exit.defaults
   end
 end
 
-module Cli = struct
-  open Cmdliner
-  open Cmdliner.Term.Syntax
+open Cmdliner
+open Cmdliner.Term.Syntax
 
-  let fpath = Arg.conv' ~docv:"PATH" Fpath.(of_string, pp)
-  let common_man = []
-  let docs = Manpage.s_common_options
+let fpath = Arg.conv' ~docv:"PATH" Fpath.(of_string, pp)
+let common_man = []
+let docs = Manpage.s_common_options
 
-  let conf =
-    Term.term_result @@
-    let+ log_level =
-      let env = Cmd.Env.info "HYPERBIB_VERBOSITY" in
-      B0_std_cli.log_level ~docs ~env ()
-    and+ fmt_styler =
-      let env = Cmd.Env.info "HYPERBIB_COLOR" in
-      B0_std_cli.tty_cap ~docs ~env ()
-    and+ app_dir =
-      let doc = "Application directory." and docv = "APP_DIR" in
-      let absent = "current working directory" in
-      let env = Cmd.Env.info "HYPERBIB_APP_DIR" in
-      Arg.(value & opt (some ~none:"." fpath) None &
-           info ["a"; "app-dir"] ~doc ~docv ~env ~absent)
-    in
-    Conf.with_cli ~log_level ~fmt_styler ~app_dir
+let conf =
+  Term.term_result @@
+  let+ log_level =
+    let env = Cmd.Env.info "HYPERBIB_VERBOSITY" in
+    B0_std_cli.log_level ~docs ~env ()
+  and+ fmt_styler =
+    let env = Cmd.Env.info "HYPERBIB_COLOR" in
+    B0_std_cli.tty_cap ~docs ~env ()
+  and+ app_dir =
+    let doc = "Application directory." and docv = "APP_DIR" in
+    let absent = "current working directory" in
+    let env = Cmd.Env.info "HYPERBIB_APP_DIR" in
+    Arg.(value & opt (some ~none:"." fpath) None &
+         info ["a"; "app-dir"] ~doc ~docv ~env ~absent)
+  in
+  Conf.with_cli ~log_level ~fmt_styler ~app_dir
 
-  let cmd ?doc ?(man = []) ?(exits = []) name term =
-    let man = [`Blocks man; `Blocks common_man] in
-    let exits = List.append exits Exit.Info.base_cmd in
-    Cmd.v (Cmd.info name ~exits ?doc ~man) term
+let cmd ?doc ?(man = []) ?(exits = []) name term =
+  let man = [`Blocks man; `Blocks common_man] in
+  let exits = List.append exits Exit.Info.base_cmd in
+  Cmd.v (Cmd.info name ~exits ?doc ~man) term
 
-  let cmd_with_conf ?doc ?man ?exits name term =
-    cmd ?doc ?man ?exits name Term.(term $ conf)
+let cmd_with_conf ?doc ?man ?exits name term =
+  cmd ?doc ?man ?exits name Term.(term $ conf)
 
-  let cmd_group ?doc ?(man = []) ?(exits = []) name cmds =
-    let man = [`Blocks man; `Blocks common_man] in
-    let exits = List.append exits Exit.Info.base_cmd in
-    Cmd.group (Cmd.info name ~exits ?doc ~man) cmds
-end
+let cmd_group ?doc ?(man = []) ?(exits = []) ?default name cmds =
+  let man = [`Blocks man; `Blocks common_man] in
+  let exits = List.append exits Exit.Info.base_cmd in
+  Cmd.group (Cmd.info name ~exits ?doc ~man) ?default cmds

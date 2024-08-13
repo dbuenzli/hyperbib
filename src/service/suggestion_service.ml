@@ -14,8 +14,29 @@ let err_doi_unspecified_msg =
 let err_doi_error_msg =
   El.div ~at:[Hclass.message; Hclass.error] [El.txt Uimsg.doi_error]
 
+let err_doi_extract_error_msg doi =
+  El.div ~at:[Hclass.message; Hclass.error]
+    [El.txt (Uimsg.doi_extract_error doi)]
+
 let err_doi_not_found_msg doi =
   El.div ~at:[Hclass.message; Hclass.error] [El.txt (Uimsg.doi_not_found doi)]
+
+let suggestion_notification env id =
+  if not (Service_env.suggestion_notification env) then Ok () else
+  let uf = Service_env.url_fmt env in
+  let url = Kurl.Fmt.url ~full:true uf (Suggestion.Url.v Index) in
+  let url = String.concat "#" [url; string_of_int id] in
+  let sender = Service_env.email_sender env in
+  let recipient = Service_env.notification_email env in
+  let bib = Page.Gen.bibliography (Service_env.page_gen env) in
+  let name = Bibliography.project_short_title bib in
+  let subject = String.concat " " [Uimsg.new_suggestion_on; name] in
+  let body =
+    Fmt.str "%s,\n\n%s\n\n  %s\n\n---"
+      Uimsg.hello Uimsg.someone_made_new_suggestion_here url
+    (* TODO add link how to deactivate. *)
+  in
+  Email.send ~sender ~recipient ~subject ~body
 
 let lookup_doi db env req s =
   let* self = Html_kit.url_of_req_referer req in
@@ -24,12 +45,20 @@ let lookup_doi db env req s =
       let msg = err_doi_extract_error_msg (Suggestion.doi s) in
       let e = "Could not extract DOI" in
       Ok (Suggestion.doi s, Suggestion.suggestion s, Some msg, Some e)
-  | Ok None ->
-      Ok (doi, Suggestion.suggestion s, Some (err_doi_not_found_msg doi), None)
-  | Ok (Some ref) ->
-      let suggestion = Import.Doi.ref_to_short_text_citation ref in
-      let* msg = Service_kit.find_dupe_doi g ~self db doi in
-      Ok (doi, suggestion, msg, None)
+  | Some doi ->
+      let* doi, ref = Service_kit.lookup_doi env doi in
+      let g = Service_env.page_gen env in
+      match ref with
+      | Error e ->
+          let msg = err_doi_error_msg in
+          Ok (doi, Suggestion.suggestion s, Some msg, Some e)
+      | Ok None ->
+          Ok (doi, Suggestion.suggestion s,
+              Some (err_doi_not_found_msg doi), None)
+      | Ok (Some ref) ->
+          let suggestion = Import.Doi.ref_to_short_text_citation ref in
+          let* msg = Service_kit.find_dupe_doi g ~self db doi in
+          Ok (doi, suggestion, msg, None)
 
 let honeypot_error fill =
   let explain = Fmt.str "Bot honeypot triggered with fill: %s" fill in
@@ -73,23 +102,6 @@ let suggestion_of_req req =
   in
   Ok (Suggestion.v ~id:0 ~timestamp ~doi ~suggestion ~comment ~email ())
 
-let suggestion_notification env id =
-  if not (Service_env.suggestion_notification env) then Ok () else
-  let uf = Service_env.url_fmt env in
-  let url = Kurl.Fmt.url ~full:true uf (Suggestion.Url.v Index) in
-  let url = String.concat "#" [url; string_of_int id] in
-  let sender = Service_env.email_sender env in
-  let recipient = Service_env.notification_email env in
-  let bib = Page.Gen.bibliography (Service_env.page_gen env) in
-  let name = Bibliography.project_short_title bib in
-  let subject = String.concat " " [Uimsg.new_suggestion_on; name] in
-  let body =
-    Fmt.str "%s,\n\n%s\n\n  %s\n\n---"
-      Uimsg.hello Uimsg.someone_made_new_suggestion_here url
-    (* TODO add link how to deactivate. *)
-  in
-  Email.send ~sender ~recipient ~subject ~body
-
 (* Responses *)
 
 let confirm_delete env id =
@@ -126,8 +138,8 @@ let fill_in env req =
   Service_env.with_db_transaction' `Deferred env @@ fun db ->
   let g = Service_env.page_gen env in
   let* s = suggestion_of_req req in
+  let doi = Suggestion.doi s in
   let* doi, suggestion, msg, explain =
-    let doi = Doi.extract (Suggestion.doi s) in
     if doi = ""
     then Ok (doi, Suggestion.suggestion s, Some err_doi_unspecified_msg, None)
     else lookup_doi db env req s

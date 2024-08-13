@@ -7,11 +7,12 @@ open Hyperbib_std
 open Rel
 
 module Suggestion = struct
+  type doi = string
   type id = Id.t
   type t =
     { id : id;
       timestamp : int;
-      doi : Doi.t;
+      doi : doi;
       suggestion : string;
       comment : string;
       email : string }
@@ -53,7 +54,6 @@ end
 
 include Suggestion
 include Entity.Identifiable_queries (Suggestion)
-
 
 open Rel_query.Syntax
 

@@ -28,15 +28,14 @@ let find_dupe_doi ?(no_suggestion_dupe_check = false) g ~self db doi =
   | Some r -> Ok (Some (Doi_html.warn_doi_exists g ~self doi r))
 
 let lookup_doi env doi =
-  let doi_cache = Hyperbib_app.Conf.doi_cache_dir (Service_env.conf env) in
-  let doi = Doi.extract doi in
+  let doi_cache = Cli_kit.Conf.doi_cache_dir (Service_env.conf env) in
   let* httpc =
     Result.map_error
       (* Bof *)
       (fun e ->
          Result.get_error (Http.Response.server_error_500 ~explain:e ())) @@
     Result.map Option.some
-      (Hyperbib_app.Conf.http_client (Service_env.conf env))
+      (Cli_kit.Conf.http_client (Service_env.conf env))
   in
   Ok (doi, Import.Doi.get_ref httpc ~cache:doi_cache doi)
 
@@ -57,7 +56,6 @@ let resp_err_doi_error g ~self ~cancel = (* move to reference_html *)
   let at = [Hclass.message; Hclass.error] in
   let msg = El.p ~at [El.txt Uimsg.doi_error]in
   empty_reference_form ~msg g ~self ~cancel
-
 
 let fill_in_reference_form ?no_suggestion_dupe_check env db ~self ~cancel doi =
   let g = Service_env.page_gen env in

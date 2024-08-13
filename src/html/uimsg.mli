@@ -51,6 +51,7 @@ val document_suggested : string -> string
 val doi : string
 val doi_not_found : string -> string
 val doi_error : string
+val doi_extract_error : string -> string
 val doi_unspecified : string
 val duplicate : string
 val edit : string

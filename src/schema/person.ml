@@ -15,8 +15,8 @@ let role_dec = function
 | 0 -> Ok Author | 1 -> Ok Editor | n -> Fmt.error "%d: unknown role" n
 
 let role_type =
-  let c = Type.Coded.v ~name:"Contributor.role" role_enc role_dec Type.Int in
-  Type.Coded c
+  Type.coded @@
+  Type.Coded.make ~name:"Contributor.role" role_enc role_dec Type.Int
 
 module Person = struct
   type id = Id.t

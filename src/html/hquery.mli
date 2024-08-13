@@ -73,10 +73,7 @@ val careless_find_table_cols :
 
     {b WARNING.} It is not a good idea to use this function, when your
     database schema evolves, it may end up exposing columns to queries
-    that weere not meant to be updatable by the query. *)
-
-
-
+    that were not meant to be updatable by the query. *)
 
 
 val key_for_rel : ?suff:string -> 'r Table.t -> ('r, 'a) Col.t -> string

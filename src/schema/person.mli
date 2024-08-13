@@ -15,10 +15,10 @@ type role = Author | Editor (** *)
 (** The type for person roles. *)
 
 val role_type : role Rel.Type.t
-(** [role_type] encodes roles in Ask values. *)
+(** [role_type] encodes roles in Rel values. *)
 
 val role_to_string : role -> string
-(** [role_to_string r] is an US-ASCII string represenation of [r]. *)
+(** [role_to_string r] is an US-ASCII string representation of [r]. *)
 
 (** {1:persons Persons} *)
 
@@ -29,7 +29,7 @@ type t
 (** The type for persons. *)
 
 type person = t
-(** See {!t}. *)
+(**  See {!t}. *)
 
 val v :
   id:id -> last_name:string -> first_names:string ->

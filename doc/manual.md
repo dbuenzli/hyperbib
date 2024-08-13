@@ -107,7 +107,7 @@ publish it via a simple webserver:
 ```
 hyperbib serve -a . --        # Edit your bibliography locally.
 rm -rf /var/www/mybib     
-hyperbib html app /var/www/mybib 
+hyperbib export html /var/www/mybib 
 ```
 
 ## Backup

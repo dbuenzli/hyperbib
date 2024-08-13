@@ -56,6 +56,10 @@ let document_suggested s =
 let doi = "DOI"
 let doi_not_found s =
   Fmt.str "Sorry, the document identified by DOI ‘%s’ cannot be found." s
+
+let doi_extract_error s =
+  Fmt.str "Sorry, could not extract a DOI from ‘%s’." s
+
 let doi_error = Fmt.str "Sorry, an unexpected error occured during DOI lookup."
 let doi_unspecified = "No DOI specified in ‘DOI’ field."
 let duplicate = "Duplicate"

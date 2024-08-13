@@ -10,7 +10,7 @@ open Result.Syntax
 
 type editable = [ `No | `With_login | `Unsafe ]
 type t =
-  { conf : Hyperbib_app.Conf.t;
+  { conf : Cli_kit.Conf.t;
     caps : User.Caps.t;
     db_pool : Db.pool;
     editable : editable;
@@ -37,10 +37,10 @@ let url_fmt e = Page.Gen.url_fmt e.page_gen
 let v ~conf ~caps ~db_pool ~editable ~page_gen () =
   (* FIXME store these things in the db or in a json file. *)
   let max_pending_suggestions = 30 in
-  let email_sender = "vps@erratique.ch" in
+  let email_sender = "relay@dipdip.ch" in
   let notification_email = "bib@philoclimate.ch" in
   let suggestion_notification = true in
-  let static_dir = Hyperbib_app.Conf.static_dir conf in
+  let static_dir = Cli_kit.Conf.static_dir conf in
   { conf; caps; db_pool; editable; email_sender; max_pending_suggestions;
     notification_email; page_gen; static_dir; suggestion_notification }
 
