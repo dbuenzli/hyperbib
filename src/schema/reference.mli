@@ -20,7 +20,7 @@ type reference = t
 
 val v :
   id:id -> abstract:string -> container:Container.id option ->
-  date:Date.partial option -> doi:Doi.t -> isbn:string -> issue:string ->
+  date:Date.partial option -> doi:Doi.t option -> isbn:string -> issue:string ->
   note:string -> pages:string -> private_note:string ->
   public:bool -> publisher:string -> title:string -> type':string ->
   volume:string -> t
@@ -28,8 +28,8 @@ val v :
 
 val row :
   id -> string -> Container.id option -> Date.year option ->
-  Date.md_partial option -> Doi.t -> string -> string -> string -> string ->
-  string -> bool -> string -> string -> string -> string -> t
+  Date.md_partial option -> Doi.t option -> string -> string -> string ->
+  string -> string -> bool -> string -> string -> string -> string -> t
 (** [row] is {!v} unlabelled. *)
 
 val new' : t
@@ -44,7 +44,7 @@ val container : t -> Container.id option
 val date : t -> Date.partial option
 (** [date] is the publication date of the reference. *)
 
-val doi : t -> Doi.t
+val doi : t -> Doi.t option
 (** [doi] is the DOI name of the reference. *)
 
 val isbn : t -> string
@@ -113,7 +113,7 @@ val abstract' : (t, string) Col.t
 val container' : (t, Container.id option) Col.t
 val date_year' : (t, int option) Col.t
 val date_md' : (t, Date.md_partial option) Col.t
-val doi' : (t, Doi.t) Col.t
+val doi' : (t, Doi.t option) Col.t
 val isbn' : (t, string) Col.t
 val issue' : (t, string) Col.t
 val note' : (t, string) Col.t
@@ -125,7 +125,6 @@ val title' : (t, string) Col.t
 val type'' : (t, string) Col.t
 val volume' : (t, string) Col.t
 val table : t Table.t
-
 
 val col_values_for_date : Date.partial option -> t Col.value * t Col.value
 

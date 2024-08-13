@@ -29,12 +29,15 @@ let backup conf file =
 
 let do_changes (col_renames, table_renames) db =
   Log.app (fun m -> m "Changing live database schema…");
-  Result.join @@ Db.string_error @@
-  Db.with_transaction `Immediate db @@ fun db ->
   let* (live, issues) = Db.schema db |> Db.string_error in
   let src = live and dst = Schema.v in
   let* cs = Rel.Schema.changes ~col_renames ~table_renames ~src ~dst () in
-  let _true, stmts = Rel_sql.schema_changes Rel_sqlite3.dialect cs in
+  let trans, stmts = Rel_sql.schema_changes Rel_sqlite3.dialect cs in
+  if trans then
+    Result.join @@ Db.string_error @@
+    Db.with_transaction `Immediate db @@ fun db ->
+    List.iter_stop_on_error (Db.exec db) stmts |> Db.string_error
+  else
   List.iter_stop_on_error (Db.exec db) stmts |> Db.string_error
 
 let changes conf (col_renames, table_renames as r) format exec no_backup =
@@ -50,7 +53,7 @@ let changes conf (col_renames, table_renames as r) format exec no_backup =
   | false when cs = [] -> Ok ()
   | true ->
       (* We cannot be a transaction to do the backup, so we do it
-         here. We then recompute the changes from within a transaction. *)
+         here. We then recompute the changes. *)
       let* () = if no_backup then Ok () else make_backup db_file db in
       do_changes r db
   | false ->

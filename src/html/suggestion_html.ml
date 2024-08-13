@@ -97,7 +97,7 @@ let pending_anchor = "pending"
 
 let doi s =
   let txt = El.txt ("doi:" ^ Suggestion.doi s) in
-  let d = Html_kit.doi_link (Suggestion.doi s) txt in
+  let d = Html_kit.doi_link (Some (Suggestion.doi s)) txt in
   if El.is_void d then d else El.small [El.sp ; d]
 
 let created g s =

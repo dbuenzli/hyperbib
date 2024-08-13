@@ -65,7 +65,7 @@ let edit_title r =
 
 let edit_doi r =
   let label = El.txt Uimsg.doi and col = Reference.doi' in
-  Hui.field_string ~autogrow:true ~min_size:8 ~label ~col r
+  Hui.field_string_option ~autogrow:true ~min_size:8 ~label ~col r
 
 let edit_isbn r =
   let label = El.txt Uimsg.isbn and col = Reference.isbn' in

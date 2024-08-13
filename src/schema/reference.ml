@@ -28,7 +28,7 @@ module Reference = struct
       abstract : string;
       container : Container.id option;
       date : Date.partial option;
-      doi : Doi.t;
+      doi : Doi.t option;
       isbn : string;
       issue : string;
       note : string;
@@ -61,7 +61,7 @@ module Reference = struct
       pages; private_note; public; publisher; title; type'; volume; }
 
   let new' =
-    { id = 0; abstract = ""; container = None; date = None; doi = "";
+    { id = 0; abstract = ""; container = None; date = None; doi = None;
       isbn = ""; issue = ""; note = ""; pages = ""; private_note = "";
       public = false; publisher = ""; title = Uimsg.untitled;
       type' = ""; volume = ""; }
@@ -105,7 +105,7 @@ module Reference = struct
   let date_md' =
     Col.v "date_md" Type.(Option Schema_kit.date_md_partial_type) date_md
 
-  let doi' = Col.v "doi" Type.Text doi
+  let doi' = Col.v "doi" Type.(Option Text) doi
   let isbn' = Col.v "isbn" Type.Text isbn
   let issue' = Col.v "issue" Type.Text issue
   let note' = Col.v "note" Type.Text note
@@ -400,8 +400,8 @@ module Cites = struct
     let* ref = Bag.table ref_table in
     let is_rid = Int.(rid = rel #. reference') in
     let is_internal_doi =
-      Text.(not (ref #. ref_doi' = empty)) &&
-      Text.(rel #. doi' = ref #. ref_doi')
+      Option.is_some (ref #. ref_doi') &&
+      Text.(rel #. doi' = Option.get (ref #. ref_doi'))
     in
     let pair x y = Bag.inj (fun x y -> x, y) $ x $ y in (* FIXME rel *)
     let rel' = pair (rel #. reference') (ref #. id') in
@@ -544,13 +544,15 @@ let dois_cited rid =
 let find_dois dois =
   let* doi = dois in
   let* r = Bag.table table in
-  let is_doi = Text.(not (doi = empty) && doi = r #. doi') in
-  Bag.where is_doi (Bag.yield r)
+  let eq_doi = Option.(equal (r #.doi') (some Type.Text doi) ~eq:Text.equal) in
+  Bag.where eq_doi (Bag.yield r)
 
 let find_doi doi =
   let* r = Bag.table table in
-  let is_doi = Text.(not (doi = empty) && doi = r #. doi') in
-  Bag.where is_doi (Bag.yield r)
+  let eq_doi =
+    Option.(equal (r #. doi') (some Type.Text doi) ~eq:Text.equal)
+  in
+  Bag.where eq_doi (Bag.yield r)
 
 let render_data ~only_public refs =
   let ref_ids = ids_of_refs refs in

@@ -75,7 +75,7 @@ val anchor_a : string -> El.html
 
 val link : ?at:At.t list -> href:string -> El.html -> El.html
 
-val doi_link : ?at:At.t list -> Doi.t -> El.html -> El.html
+val doi_link : ?at:At.t list -> Doi.t option -> El.html -> El.html
 
 val mailto_link :
   ?at:At.t list -> ?body:string ->

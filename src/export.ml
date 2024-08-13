@@ -43,7 +43,8 @@ module Static_html = struct
     let cites = Reference.find_dois (Reference.dois_cited rid) in
     let* cites = refs_render_data ~only_public cites db in
     let cited_by = match Reference.doi r with
-    | "" -> Bag.empty | doi -> Reference.citing_doi (Rel_query.Text.v doi)
+    | None -> Bag.empty
+    | Some doi -> Reference.citing_doi (Rel_query.Text.v doi)
     in
     let* cited_by = refs_render_data ~only_public cited_by db in
     write_page ~dir g (Reference_html.page g r ~render_data ~cites ~cited_by)
@@ -291,6 +292,9 @@ module Bibtex = struct
 
   let ref_to_bib rs r =
     let add_if_non_empty k v m = if v = "" then m else String.Map.add k v m in
+    let add_if_some k v m = match v with
+    | None -> m | Some v -> String.Map.add k v m
+    in
     let container =
       let find_container c = Id.Map.find_opt c rs.Reference.containers in
       Option.bind (Reference.container r) find_container
@@ -303,7 +307,7 @@ module Bibtex = struct
       String.Map.empty
       |> add_if_non_empty "note" (Reference.note r)
       |> add_if_non_empty "author" (ref_author rs r)
-      |> add_if_non_empty "doi" (Reference.doi r)
+      |> add_if_some "doi" (Reference.doi r)
       |> add_if_non_empty "editor" (ref_editor rs r)
       |> add_if_non_empty "keywords" (ref_keywords rs r)
       |> add_if_non_empty "number" (Reference.issue r)

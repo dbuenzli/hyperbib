@@ -157,6 +157,11 @@ let input_string ?at ?autocomplete ?autogrow ~min_size ~col r =
   let name = Rel.Col.name col and v = Rel.Col.proj col r in
   input_string' ?at ?autocomplete ?autogrow ~min_size ~name v
 
+let input_string_option ?at ?autocomplete ?autogrow ~min_size ~col r =
+  let name = Rel.Col.name col and v = Rel.Col.proj col r in
+  let v = match v with None -> "" | Some v -> v in
+  input_string' ?at ?autocomplete ?autogrow ~min_size ~name v
+
 let input_text ?at ?autogrow ~min_rows ~col r =
   let name = Rel.Col.name col and v = Rel.Col.proj col r in
   input_text' ?at ?autogrow ~min_rows ~name v
@@ -178,7 +183,6 @@ let field_bool ?input_at ?(at = []) ~label ~col r =
   let col_class = Class.for_col col in
   El.label ~at:(Hclass.field :: col_class :: at) [input; El.sp; label]
 
-
 let field_string'
     ?input_at ?(at = []) ?autocomplete ?autogrow ~min_size ~label ~name v
   =
@@ -197,6 +201,18 @@ let field_string
   in
   let col_class = Class.for_col col in
   El.label ~at:(Hclass.field :: col_class :: at) [label; El.sp; input]
+
+
+let field_string_option (* c&p from field_string *)
+    ?input_at ?(at = []) ?autocomplete ?autogrow ~min_size ~label ~col r
+  =
+  let label = El.span ~at:[Class.label] [label] in
+  let input =
+    input_string_option ?at:input_at ?autocomplete ?autogrow ~min_size ~col r
+  in
+  let col_class = Class.for_col col in
+  El.label ~at:(Hclass.field :: col_class :: at) [label; El.sp; input]
+
 
 let field_text ?textarea_at ?(at = []) ?autogrow ~min_rows ~label ~col r =
   let label = El.span ~at:[Class.label] [label] in

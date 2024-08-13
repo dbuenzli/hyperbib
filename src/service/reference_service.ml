@@ -38,8 +38,8 @@ let get_page_data db g r =
   let cites = Reference.find_dois (Reference.dois_cited rid) in
   let* cites = Reference.render_data ~only_public cites db in
   let cited_by = match Reference.doi r with
-  | "" -> Bag.empty
-  | doi -> Reference.citing_doi (Rel_query.Text.v doi)
+  | None -> Bag.empty
+  | Some doi -> Reference.citing_doi (Rel_query.Text.v doi)
   in
   let* cited_by = Reference.render_data ~only_public cited_by db in
   Ok (render_data, cites, cited_by)

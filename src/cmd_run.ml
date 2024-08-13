@@ -53,7 +53,6 @@ let test () conf =
   Log.app (fun m -> m "Ok");
   Ok Cli_kit.Exit.ok
 
-
 (* Command line interface *)
 
 open Cmdliner

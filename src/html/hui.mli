@@ -180,6 +180,11 @@ val field_string :
   ?autogrow:bool -> min_size:int -> label:El.html ->
   col:('r, string) Rel.Col.t -> 'r -> El.html
 
+val field_string_option :
+  ?input_at:At.t list -> ?at:At.t list -> ?autocomplete:bool ->
+  ?autogrow:bool -> min_size:int -> label:El.html ->
+  col:('r, string option) Rel.Col.t -> 'r -> El.html
+
 val field_text :
   ?textarea_at:At.t list -> ?at:At.t list -> ?autogrow:bool -> min_rows:int ->
   label:El.html -> col:('r, string) Rel.Col.t -> 'r -> El.html

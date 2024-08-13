@@ -19,7 +19,7 @@ module Doi = struct
       abstract : string;
       cites : Doi.t list;
       container_title : string;
-      doi : Doi.t;
+      doi : Doi.t option;
       editors : person list;
       isbn : string;
       issn : string;
@@ -109,7 +109,7 @@ module Doi = struct
     | None -> Ok None
     | Some json ->
         let* ref = Jsonq.query refq json in
-        Ok (Some (ref doi))
+        Ok (Some (ref (Some doi)))
 
   (* Converting to hyperbib entities. A bit convoluted we need to check
      which entities already exists in the db. *)

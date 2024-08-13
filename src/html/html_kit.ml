@@ -101,10 +101,9 @@ let anchor_a aid =
 let link ?(at = []) ~href:h content = El.a ~at:(At.href h :: at) [content]
 
 let doi_link ?(at = []) doi text = match doi with
-| "" -> El.void
-| doi ->
-    let dlink = Fmt.str "%s/%s" Doi.default_resolver doi in
-    let at = At.(href dlink :: v "data-doi" doi :: at) in
+| None -> El.void
+| Some doi ->
+    let at = At.(href (Doi.as_url doi) :: v "data-doi" doi :: at) in
     El.a ~at [text]
 
 let mailto_link ?(at = []) ?(body = "") ?(subject = "") ~email text =
