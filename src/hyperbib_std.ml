@@ -33,4 +33,14 @@ module Bazaar = struct
       Os.File.copy ~force:true ~make_path:true src ~dst
     in
     Os.Dir.fold_files ?dotfiles ?follow_symlinks ~rel:true ~recurse cp src ()
+
+  open Rel
+
+  let col_values ?(ignore = []) rt r =
+    let eq_col (Col.V c0) (Col.V c1) = Col.equal_name c0 c1 in
+    let add_col_value r acc (Col.V col as colv) =
+      if List.exists (eq_col colv) ignore then acc else
+      Col.Value (col, Col.proj col r) :: acc
+    in
+    Row.fold (add_col_value r) [] rt
 end

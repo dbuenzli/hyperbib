@@ -7,41 +7,125 @@ open Hyperbib_std
 open Result.Syntax
 open Rel
 
-let check_dois () conf =
-  let ref_dois = Row.(t2 Reference.id' (text "doi")) in
-  let reference_dois =
-    (* FIXME rel this is too much boilerplate ! :-) *)
-    let open Rel_query.Syntax in
-    let* r = Bag.table Reference.table in
-    let id = r #. Reference.id' in
-    let doi = r #. Reference.doi' in
-    Bag.where Bool.true'
-      (Bag.yield (Bag.row (fun id doi -> id, doi) $ id $ doi))
+let pp_check ppf () = Fmt.(st [`Bg `White; `Fg `Black]) ppf " TEST "
+let pp_pass ppf () = Fmt.(st [`Bg `Green; `Fg `Black]) ppf " PASS "
+let pp_fail ppf () = Fmt.(st [`Bg `Red; `Fg `Black]) ppf " FAIL "
+
+let check_reference_dois db ~repair =
+  let reference_dois_stmt =
+    let ref_dois = Row.(t2 Reference.id' Reference.doi') in
+    let reference_dois =
+      (* FIXME rel this is too much boilerplate ! :-) *)
+      let open Rel_query.Syntax in
+      let* r = Bag.table Reference.table in
+      let id = r #. Reference.id' in
+      let doi = r #. Reference.doi' in
+      Bag.where Bool.true'
+        (Bag.yield (Bag.row (fun id doi -> id, doi) $ id $ doi))
+    in
+    Rel_query.Sql.of_bag ref_dois reference_dois
   in
-  let reference_dois_stmts = Rel_query.Sql.of_bag ref_dois reference_dois
+  let do_update ~id doi =
+    let update_reference_doi ~id doi =
+      let set = Col.[Value (Reference.doi', doi)] in
+      let where = Col.[Value (Reference.id', id)] in
+      Rel_sql.update Db.dialect Reference.table ~set ~where
+    in
+    let* () = Db.exec db (update_reference_doi ~id doi) in
+    Ok (Log.app (fun m -> m "Reference %d: repaired" id))
+  in
+  let check (id, doi) n = match doi with
+  | None -> n
+  | Some "" ->
+      Log.err (fun m -> m "Reference %d: Invalid empty DOI, should be NULL" id);
+      (if not repair then () else
+       (Log.if_error ~use:() @@ Db.string_error @@ do_update ~id None));
+      n + 1
+  | Some doi ->
+      match Doi.of_string doi with
+      | Error e ->
+          Log.err (fun m -> m "Reference %d: DOI %S: %s" id doi e);
+          n + 1
+      | Ok doi' ->
+          let doi' = Doi.to_string doi' in
+          if Doi.equal doi' doi then n else begin
+            Log.warn (fun m ->
+                m "Reference %d: DOI %S not normalized (%S)" id doi doi');
+            (if not repair then () else
+             (Log.if_error ~use:() @@ Db.string_error @@
+              do_update ~id (Some doi')));
+            n + 1
+          end
+  in
+  Db.fold db reference_dois_stmt check 0 |> Db.string_error
+
+ let check_cites_doi db ~repair =
+   let cites_stmt =
+     let cites =
+       let open Rel_query.Syntax in
+       let* r = Bag.table Reference.Cites.table in
+       Bag.yield r
+     in
+     Rel_query.Sql.of_bag' Reference.Cites.table cites
+   in
+   let do_update oldr newr =
+     let update oldr newr =
+       let set =
+         let ignore = Col.[V Reference.Cites.reference'] in
+         Bazaar.col_values (Table.row Reference.Cites.table) ~ignore newr
+       in
+       let where = (* XXX this is basically primary_key *)
+         Bazaar.col_values (Table.row Reference.Cites.table) oldr
+       in
+       Rel_sql.update Db.dialect Reference.Cites.table ~set ~where
+     in
+     let* () = Db.exec db (update oldr newr) in
+     Ok (Log.app
+           (fun m -> m "Cites reference %d: repaired"
+               (Reference.Cites.reference newr)))
+   in
+   let check r n =
+     let reference = Reference.Cites.reference r in
+     let doi = Reference.Cites.doi r in
+     match
+       (* It seems sometimes crossrefs gave us spaces *)
+       Doi.of_string (String.replace_all ~sub:" " ~by:"" doi)
+     with
+     | Error e ->
+         Log.err (fun m -> m "Cites reference %d: DOI %S: %s" reference doi e);
+         n + 1
+     | Ok doi' ->
+         let doi' = Doi.to_string doi' in
+         if Doi.equal doi' doi then n else begin
+           Log.warn begin fun m ->
+             m "Cites reference %d: DOI %S not normalized (%S)"
+               reference doi doi'
+           end;
+           (if not repair then () else
+            let newr = Reference.Cites.v ~reference ~doi:doi' in
+            Log.if_error ~use:() @@ Db.string_error @@ do_update r newr);
+           n + 1
+         end
+   in
+   Db.fold db cites_stmt check 0 |> Db.string_error
+
+let check_dois ~repair conf =
+  let log_result n =
+    Log.app (fun m -> m "%a@." (if n > 0 then pp_fail else pp_pass) ())
   in
   Log.if_error ~use:Cli_kit.Exit.some_error @@
   Cli_kit.with_db_transaction conf `Deferred @@ fun db ->
-  Log.app (fun m -> m "Checking DOIs in the %a table"
-              Fmt.code (Table.name Reference.table));
-  let check (id, doi) () =
-    if doi = ""
-    then
-      Log.err (fun m -> m "reference %d: Invalid empty DOI, should be NULL" id)
-    else match Doi.of_string doi with
-    | Error e ->
-        if doi = "" then
-          Log.err (fun m -> m "reference %d: DOI %S: %s" id doi e)
-    | Ok doi' ->
-        let doi' = Doi.to_string doi' in
-        if doi' = doi then () else
-        Log.warn (fun m ->
-            m "reference %d: DOI %S not normalized (%S)" id doi doi')
-  in
-  let* () = Db.fold db
-      (Db.show_plan db
-         (Db.show_sql reference_dois_stmts)) check () |> Db.string_error in
-  Ok Cli_kit.Exit.ok
+  Log.app (fun m -> m "%a DOIs in the %a table"
+              pp_check () Fmt.code (Table.name Reference.Cites.table));
+  let* n0 = check_cites_doi db ~repair in
+  log_result n0;
+  Log.app (fun m -> m "%a DOIs in the %a table"
+              pp_check () Fmt.code (Table.name Reference.table));
+  let* n1 = check_reference_dois db ~repair in
+  log_result n1;
+  if n0 + n1 = 0
+  then Ok Cli_kit.Exit.ok
+  else Ok Cli_kit.Exit.some_error
 
 let test () conf =
   Log.if_error ~use:Cli_kit.Exit.some_error @@
@@ -62,11 +146,12 @@ let check_dois_cmd =
   let doc = "Check DOIs" in
   let man =
     [ `S Manpage.s_description;
-      `P "The $(iname) command is used for checking DOIs in the database"; ]
+      `P "The $(iname) command is used for checking DOIs in the database."; ]
   in
-  Cli_kit.cmd_with_conf "check-dois" ~doc ~man @@
-  let+ () = Term.const () in
-  check_dois ()
+  Cli_kit.cmd_with_conf "doi-check" ~doc ~man @@
+  let doc = "Repair warnings and errors that can be." in
+  let+ repair = Arg.(value & flag & info ["repair"] ~doc) in
+  check_dois ~repair
 
 let test_cmd =
   let doc = "Test" in
