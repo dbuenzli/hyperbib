@@ -23,7 +23,7 @@ which you  want to publish your website and find a suitable value for
 these variables:
 
 ```
-export HPYERBIB_APP_DIR=/var/www/hyperbib
+export HYPERBIB_APP_DIR=/var/www/hyperbib
 export HYPERBIB_LISTEN=localhost:8000
 export HYPERBIB_SERVICE_PATH=/mybibliography/ 
 export HYPERBIB_USER=`whoami`
