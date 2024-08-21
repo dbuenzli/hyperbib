@@ -3,27 +3,27 @@ open Result.Syntax
 
 (* OCaml libraries *)
 
-let unix = B0_ocaml.libname "unix"
-let rel = B0_ocaml.libname "rel"
-let rel_kit = B0_ocaml.libname "rel.kit"
-let rel_cli = B0_ocaml.libname "rel.cli"
-let rel_pool = B0_ocaml.libname "rel.pool"
-let rel_sqlite3 = B0_ocaml.libname "rel.sqlite3"
 let b0_std = B0_ocaml.libname "b0.std"
-let b0 = B0_ocaml.libname "b0"
-let b0_file = B0_ocaml.libname "b0.file"
-let b0_kit = B0_ocaml.libname "b0.kit"
-let jsont = B0_ocaml.libname "jsont"
 let brr = B0_ocaml.libname "brr"
-let note = B0_ocaml.libname "note"
-let note_brr = B0_ocaml.libname "note.brr"
+let bytesrw = B0_ocaml.libname "bytesrw"
+let bytesrw_xxhash = B0_ocaml.libname "bytesrw.xxhash"
+let bytesrw_unix = B0_ocaml.libname "bytesrw.unix"
 let cmdliner = B0_ocaml.libname "cmdliner"
-let htmlit = B0_ocaml.libname "htmlit"
 let htmlact = B0_ocaml.libname "htmlact"
 let htmlact_page = B0_ocaml.libname "htmlact.page"
+let htmlit = B0_ocaml.libname "htmlit"
+let jsont = B0_ocaml.libname "jsont"
+let note = B0_ocaml.libname "note"
+let note_brr = B0_ocaml.libname "note.brr"
 let ptime = B0_ocaml.libname "ptime"
 let ptime_clock = B0_ocaml.libname "ptime.clock.os"
+let rel = B0_ocaml.libname "rel"
+let rel_cli = B0_ocaml.libname "rel.cli"
+let rel_kit = B0_ocaml.libname "rel.kit"
+let rel_pool = B0_ocaml.libname "rel.pool"
+let rel_sqlite3 = B0_ocaml.libname "rel.sqlite3"
 let threads = B0_ocaml.libname "threads"
+let unix = B0_ocaml.libname "unix"
 let webs = B0_ocaml.libname "webs"
 let webs_cli = B0_ocaml.libname "webs.cli"
 let webs_kit = B0_ocaml.libname "webs.kit"
@@ -111,8 +111,8 @@ let write_static_file_stamp b =
 let hyperbib =
   let doc = "hyperbib tool" in
   let requires =
-    [ unix; threads; cmdliner; ptime; ptime_clock; b0_std; b0; b0_file;
-      b0_kit; jsont; htmlit; htmlact;
+    [ unix; threads; cmdliner; bytesrw; bytesrw_xxhash; bytesrw_unix;
+      ptime; ptime_clock; b0_std; jsont; htmlit; htmlact;
       rel; rel_kit; rel_cli; rel_sqlite3; rel_pool;
       webs; webs_kit; webs_unix; webs_cli; ]
   in
@@ -204,6 +204,8 @@ let default =
         "htmlit", {||};
         "htmlact", {||};
         "conf-sqlite2", {||};
+        "conf-xxhash", {||};
+        "conf-zstd", {||};
         "rel", {||};
         "note", {||};
         "brr", {||};

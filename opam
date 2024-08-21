@@ -26,6 +26,8 @@ depends: [
   "htmlit"
   "htmlact"
   "conf-sqlite2"
+  "conf-xxhash"
+  "conf-zstd"
   "rel"
   "note"
   "brr"
@@ -40,53 +42,3 @@ pin-depends: [
   ["rel.~dev" "git+https://erratique.ch/repos/rel.git#master"]
   ["webs.~dev" "git+https://erratique.ch/repos/webs.git#master"]
 ]
-opam-version: "2.0"
-name: "rel"
-synopsis: "Relational database programming for OCaml"
-description: """\
-Rel is a library for programming with relational databases in OCaml.
-It provides:
-
-- Typed combinators to describe database rows and their representation
-  as custom OCaml values.
-- Typed combinators to describe database schemas. Schemas can be translated 
-  to SQL data definitions or, conversly, generated for existing databases 
-  (external schema definition).
-- Automated schema changes via schema diffing.
-- Raw SQL statements typing and SQL generation helpers (parametric on SQL
-  dialect).
-- Query language embedded in *plain* OCaml. Queries are typed,
-  composable and compile to a single, flat, SQL query (experimental).
-- Support for using SQLite3 databases.
-
-Rel is distributed under the ISC license. The base library has no
-dependencies. The `Rel_cli` library depends on `cmdliner`. The
-`Rel_sqlite3` library depends on the C SQLite3 library (at least
-v3.38.5).
-
-Homepage: https://erratique.ch/software/rel"""
-maintainer: "Daniel Bünzli <daniel.buenzl i@erratique.ch>"
-authors: "The rel programmers"
-license: "ISC"
-tags: ["database" "query" "SQL" "org:erratique"]
-homepage: "https://erratique.ch/software/rel"
-doc: "https://erratique.ch/software/rel/doc"
-bug-reports: "https://github.com/dbuenzli/rel/issues"
-depends: [
-  "ocaml" {>= "4.14.0"}
-  "ocamlfind" {build}
-  "ocamlbuild" {build}
-  "topkg" {build & >= "1.0.3"}
-  "cmdliner" {>= "1.3.0"}
-]
-depopts: ["conf-sqlite3"]
-build: [
-  "ocaml"
-  "pkg/pkg.ml"
-  "build"
-  "--dev-pkg"
-  "%{dev}%"
-  "--with-conf-sqlite3"
-  "%{conf-sqlite3:installed}%"
-]
-dev-repo: "git+https://erratique.ch/repos/rel.git"

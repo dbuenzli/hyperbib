@@ -7,19 +7,36 @@
 {!modules:
 Bibliography
 Bibliography_service
+Bibtex
+Cli_kit
+Cmd_db
+Cmd_export
+Cmd_import
+Cmd_run
+Cmd_serve
+Cmd_user
 Container
 Container_html
 Container_service
+Crossref
+Date
+Db
+Docstore
+Doi
 Doi_html
 Entity
 Entity_html
 Entity_service
+Export
 Hclass
 Help_html
 Home_html
 Hquery
 Html_kit
+Hui
 Icon
+Id
+Import
 Label
 Label_html
 Label_service
@@ -30,11 +47,14 @@ Person_service
 Reference
 Reference_html
 Reference_service
-Schema_kit
 Schema
+Schema_kit
+Service
+Service_env
+Service_kit
+Stamp
 Static_file
 Static_file_service
-Stamp
 Subject
 Subject_html
 Subject_service
@@ -44,29 +64,8 @@ User_html
 User_service
 Year
 Year_html
-Year_service}
-
-{1:tool Tool}
-
-{!modules:
-Bibtex
-Cmd_db
-Cmd_html
-Cmd_kit
-Cmd_import
-Cmd_serve
-Cmd_user
-Crossref
-Date
-Db
-Doi
-Export
-Hui
-Id
-Import
-Service
-Service_kit
-Service_env}
+Year_service
+}
 
 {1:doc Md documentation}
 
@@ -74,5 +73,4 @@ Service_env}
 {- {{:../_docs/DEVEL.html}DEVEL}}
 {- {{:../_docs/LICENSE.html}LICENSE}}
 {- {{:../_docs/README.html}README}}
-{- {{:../_docs/TODO.html}TODO}}
 {- {{:../_docs/doc/manual.html}Manual}}}

@@ -7,10 +7,11 @@
 
 (** {1:std Standard libray needs}
 
-    For now we piggy back on B0_std but we should not. *)
+    For now we sometimes piggy back B0_std but we should not. *)
 
 module Char = B0_std.Char
 module String = B0_std.String
+module Bytes = Bytesrw.Bytes
 module Result = B0_std.Result
 module Fmt = B0_std.Fmt
 module List = B0_std.List
@@ -22,6 +23,7 @@ module Os = B0_std.Os
 (** {1:lib Library shortcuts} *)
 
 module Url = Webs_url
+module Media_type = Webs.Media_type
 module Http = Webs.Http
 module Http_client = Webs.Http_client
 module Res = Webs_bazaar.Res

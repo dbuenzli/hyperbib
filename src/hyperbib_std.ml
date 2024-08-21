@@ -5,6 +5,7 @@
 
 module Char = B0_std.Char
 module String = B0_std.String
+module Bytes = Bytesrw.Bytes
 module Result = B0_std.Result
 module Fmt = B0_std.Fmt
 module Log = B0_std.Log
@@ -16,6 +17,7 @@ module Os = B0_std.Os
 module Bag = Rel_query.Bag
 
 module Url = Webs_url
+module Media_type = Webs.Media_type
 module Http = Webs.Http
 module Http_client = Webs.Http_client
 module Res = Webs_bazaar.Res

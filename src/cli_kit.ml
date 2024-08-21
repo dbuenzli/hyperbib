@@ -16,6 +16,8 @@ module Conf = struct
   let make ~log_level ~fmt_styler ~app_dir ~http_client () =
     { log_level; fmt_styler; app_dir; http_client }
 
+
+  let docstore_path = Fpath.v "data/docs"
   let db_path = Fpath.v "data/bib.sqlite3"
   let log_level c = c.log_level
   let fmt_styler c = c.fmt_styler
@@ -27,6 +29,7 @@ module Conf = struct
   let doi_cache_dir c = Fpath.(c.app_dir / "dois")
   let db_file c = Fpath.(c.app_dir // db_path)
   let db_backup_file c = Fpath.(db_file c + ".backup")
+  let docstore_dir c = Fpath.(c.app_dir // docstore_path)
 
   let setup_http_client () =
     (* We should eventually switch to libcurl *)
