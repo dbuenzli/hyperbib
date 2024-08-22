@@ -29,10 +29,16 @@ type t
 val with_open :
   ?foreign_keys:bool -> ?read_only:bool -> Fpath.t -> (t -> 'a) ->
   ('a, error) result
-(** [with_open file yf] calls [f] with a database open on [file].  If
+(** [with_open file f] calls [f] with a database open on [file].  If
     [read_only] is [true] (defaults to [false]), no writes are
     allowed. This sets the database in WAL mode. See also
     {!with_open_schema}. *)
+
+val with_open' :
+  ?foreign_keys:bool -> ?read_only:bool -> Fpath.t -> (t -> 'a) ->
+  ('a, string) result
+(** [with_open'] is like {!with_open} but with an error string
+    prefixed by the file. *)
 
 val ensure_db_path : Fpath.t -> (unit, string) result
 (** [ensures_db_path db_file] the parent of [db_file] exists. It's a
@@ -63,6 +69,9 @@ val backup : Fpath.t -> t -> (unit, string) result
 val backup_thread : pool -> every_s:int -> Fpath.t -> Thread.t
 (** [backup_thread p every_s file] makes every [every_s] seconds a
     stable copy to [file] of the database drawn from [p]. *)
+
+val restore : backup:Fpath.t -> t -> (unit, string) result
+(** [restore backup db] restore [backup] into [db]. *)
 
 (** {1:transactions Transaction} *)
 

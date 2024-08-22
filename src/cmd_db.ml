@@ -7,7 +7,11 @@ open Hyperbib_std
 open Result.Syntax
 
 let log_making_backup file =
-  Log.app (fun m -> m "Making backup to %a" Fpath.pp file)
+  Log.app (fun m -> m "Making backup to %a" (Fmt.code' Fpath.pp) file)
+
+let log_restore_backup backup db =
+  Log.app (fun m -> m "@[<v>Restoring backup %a@,into %a@]"
+              (Fmt.code' Fpath.pp) backup (Fmt.code' Fpath.pp) db)
 
 let make_backup db_file db =
   let backup = Db.stamped_backup_file db_file in
@@ -68,6 +72,23 @@ let changes conf (col_renames, table_renames as r) format exec no_backup =
   in
   Ok Cli_kit.Exit.ok
 
+let restore ~backup ~last conf =
+  Log.if_error ~use:Cli_kit.Exit.some_error @@
+  let db_file = Cli_kit.Conf.db_file conf in
+  let* backup = match backup with
+  | None when last -> Ok (Cli_kit.Conf.db_backup_file conf)
+  | Some backup -> Ok backup
+  | None ->
+      Fmt.error
+        "@[<v>No backup specified.@,Specify an %a file on the \
+         command line or@,use option %a to use the latest automated backup.@]"
+        Fmt.code ".sqlite3" Fmt.code "-l"
+  in
+  Result.join @@ Db.with_open' db_file @@ fun dst ->
+  let () = log_restore_backup backup db_file in
+  let* () = Db.restore ~backup dst in
+  Ok Cli_kit.Exit.ok
+
 (* Reset *)
 
 let reset conf no_backup (* populate *) =
@@ -123,6 +144,7 @@ let sql conf args =
 (* Command line interface *)
 
 open Cmdliner
+open Cmdliner.Term.Syntax
 
 let exits = Cli_kit.Exit.Info.base_cmd
 
@@ -136,11 +158,10 @@ let backup_cmd =
     let doc = "The backup file. If unspecified a new timestamped file is \
                written in data directory of the application directory."
     in
-    Arg.(value & pos 0 (some Cli_kit.fpath) None &
-         info [] ~doc ~docv:"FILE")
+    Arg.(value & pos 0 (some Cli_kit.fpath) None & info [] ~doc ~docv:"FILE")
   in
-  Cmd.v (Cmd.info "backup" ~doc ~man)
-    Term.(const backup $ Cli_kit.conf $ dst)
+  Cmd.v (Cmd.info "backup" ~doc ~man) @@
+  Term.(const backup $ Cli_kit.conf $ dst)
 
 let changes_cmd =
   let doc = "Compare live database and application schema" in
@@ -173,9 +194,26 @@ let changes_cmd =
                $(b,WARNING) this may be dangerous for your data." in
     Arg.(value & flag & info ["no-backup"] ~doc)
   in
-  Cmd.v (Cmd.info "changes" ~doc ~man)
-    Term.(const changes $ Cli_kit.conf $ Rel_cli.renames () $ format $
-          exec $ no_backup)
+  Cmd.v (Cmd.info "changes" ~doc ~man) @@
+  Term.(const changes $ Cli_kit.conf $ Rel_cli.renames () $ format $
+        exec $ no_backup)
+
+let restore_cmd =
+  let doc = "Restore a database backup" in
+  let man = [
+    `S Manpage.s_description;
+    `P "$(iname) restores a backup of the database."; ]
+  in
+  Cli_kit.cmd_with_conf "restore" ~doc ~man @@
+  let+ backup =
+    let doc = "$(docv) is the backup file to restore." in
+    let docv = "BACKUP.sqlite3" in
+    Arg.(value & pos 0 (some Cli_kit.fpath) None & info [] ~doc ~docv)
+  and+ last =
+    let doc = "Use the last automated backup." in
+    Arg.(value & flag & info ["l"; "last"] ~doc)
+  in
+  restore ~backup ~last
 
 let reset_cmd =
   let doc = "Reset the database" in
@@ -193,8 +231,8 @@ let reset_cmd =
     let doc = "Populate the tables with basic app data." in
     Arg.(value & flag & info ["p"; "populate"] ~doc)
   in *)
-  Cmd.v (Cmd.info "reset" ~doc ~exits ~man)
-    Term.(const reset $ Cli_kit.conf $ no_backup (* $ populate *))
+  Cmd.v (Cmd.info "reset" ~doc ~exits ~man) @@
+  Term.(const reset $ Cli_kit.conf $ no_backup (* $ populate *))
 
 let schema_cmd =
   let doc = "Output the app or live database schema" in
@@ -212,9 +250,9 @@ let schema_cmd =
     let docv = "WHICH" in
     Arg.(required & pos 0 (Arg.enum e) None & info [] ~doc ~docv)
   in
-  Cmd.v (Cmd.info "schema" ~doc ~exits ~man)
-    Term.(const schema $ Cli_kit.conf $ which $
-          Rel_cli.schema_format ~default:`Sqlite3 ())
+  Cmd.v (Cmd.info "schema" ~doc ~exits ~man) @@
+  Term.(const schema $ Cli_kit.conf $ which $
+        Rel_cli.schema_format ~default:`Sqlite3 ())
 
 let sql_cmd =
   let doc = "Get an SQL prompt on the database" in
@@ -238,5 +276,5 @@ let cmd =
     `S Manpage.s_description;
     `P "The $(tname) command manages the application database."; ]
   in
-  Cmd.group (Cmd.info "db" ~doc ~exits ~man)
-    [backup_cmd; changes_cmd; schema_cmd; sql_cmd]
+  Cmd.group (Cmd.info "db" ~doc ~exits ~man) @@
+  [backup_cmd; changes_cmd; reset_cmd; restore_cmd; schema_cmd; sql_cmd]

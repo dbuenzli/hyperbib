@@ -110,7 +110,8 @@ let check_reference_dois db ~repair =
    Db.fold db cites_stmt check 0 |> Db.string_error
 
 let check_dois ~repair conf =
-  let log_result n =
+  let log_result ~repair n =
+    if repair then () else
     Log.app (fun m -> m "%a@." (if n > 0 then pp_fail else pp_pass) ())
   in
   Log.if_error ~use:Cli_kit.Exit.some_error @@
@@ -118,11 +119,11 @@ let check_dois ~repair conf =
   Log.app (fun m -> m "%a DOIs in the %a table"
               pp_check () Fmt.code (Table.name Reference.Cites.table));
   let* n0 = check_cites_doi db ~repair in
-  log_result n0;
+  log_result ~repair n0;
   Log.app (fun m -> m "%a DOIs in the %a table"
               pp_check () Fmt.code (Table.name Reference.table));
   let* n1 = check_reference_dois db ~repair in
-  log_result n1;
+  log_result ~repair n1;
   if n0 + n1 = 0
   then Ok Cli_kit.Exit.ok
   else Ok Cli_kit.Exit.some_error

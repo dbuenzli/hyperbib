@@ -147,7 +147,7 @@ let hyperbib =
 
 let deploy_remote = "philo:"
 let pull_data =
-  B0_unit.of_action "pull-data" ~doc:"Pull live data" @@
+  B0_unit.of_action "pull-data" ~doc:"Pull live data into dev database" @@
   fun env _ ~args ->
   let* rsync = B0_rsync.get () in
   let src = ~/"hyperbib/app/data/bib.sqlite3.backup" in

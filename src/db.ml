@@ -32,8 +32,11 @@ let close = Rel_sqlite3.close
 let with_open ?foreign_keys ?read_only db_file f =
   let* db = open' ?foreign_keys ?read_only db_file in
   let finally () = Log.if_error ~use:() (close db |> string_error) in
-  let v = Fun.protect ~finally @@ fun () -> f db in
-  Ok v
+  Fun.protect ~finally @@ fun () -> Ok (f db)
+
+let with_open' ?foreign_keys ?read_only db_file f =
+  Result.map_error (Fmt.str "%a: %s" Fpath.pp db_file) @@ string_error @@
+  with_open ?foreign_keys ?read_only db_file f
 
 let ensure_db_path db_path =
   Result.map ignore (Os.Dir.create ~make_path:true (Fpath.parent db_path))
@@ -89,6 +92,15 @@ let backup_thread pool ~every_s file =
   in
   Thread.create loop ()
 
+let restore ~backup dst =
+  let* () = Os.File.must_exist backup (* sqlite3 error message is subpar *) in
+  Result.join @@ with_open' ~read_only:true backup @@ fun src ->
+  string_error @@
+  let* b = Rel_sqlite3.Backup.init ~dst ~src () in
+  let* finished = Rel_sqlite3.Backup.step b () in
+  assert (finished);
+  Rel_sqlite3.Backup.finish b
+
 (* Transactions *)
 
 type transaction_kind = [ `Deferred | `Immediate | `Exclusive ]
@@ -124,7 +136,7 @@ let ensure_schema ?(read_only = false) s db =
       if cs = [] then Ok () else
       Fmt.error
         "@[<v>Live database and application schema do not match.@,\
-         Use %a to inspect changes and upgrade the live schema.@]"
+         Use %a to inspect changes and upgrade@,the live schema.@]"
         Fmt.code "hyperbib db changes"
 
 let schema = Rel_sqlite3.schema_of_db
