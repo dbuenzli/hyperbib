@@ -10,6 +10,7 @@ open Rel
 
 let test ~file conf =
   Log.if_error ~use:Cli_kit.Exit.some_error @@
+
   Ok Cli_kit.Exit.ok
 
 (* Command line interface *)

@@ -13,22 +13,33 @@ Or using the B0 `.show-url` action to reload your browser:
 b0 -- .show-url http://localhost:8000/persons -- hyperbib serve …
 ```
 
+There are also a few component oriented tests that can be invoked with: 
+
+```
+b0 test
+```
+
 # Code layout 
 
-## Cli tool and backend
+All the source is in [`src`](src):
 
-All the source is in [`src`](src). This directory has a few generic
-modules independent from the project, the commands of the tool, and it
-ties up the web service definition from the datastructure definitions
-in 
-[src/schema](src/schema), their HTML rendering in [src/html](src/html)
-and their service in [src/service](src/service) which are 
-eventually aggregated in the final URL request tree by
-[`src/service_tree.ml`](src/service_tree.ml). 
+* The directory has a few project pervasives modules and a few generic
+  modules independent from the project.
+  
+* [`src/tool`](src/tool) has the commands and implementation of the 
+  `hyperbib` tool.
 
-[src/html](src/html) also has the page generation mecanism and a few
-more generic helper modules which could eventually be a bit
-generalized and maybe librarificated.
+* [`src/schema`](src/schema), has the database schemas 
+  their HTML rendering in [`src/html`](src/html)
+  and their service in [`src/service`](src/service) which are 
+  eventually aggregated in the final URL request tree by
+  [`src/service_tree.ml`](src/service_tree.ml).
+
+* [`src/html`](src/html) also has the page generation mecanism and a few
+  more generic helper modules which could eventually be a bit
+  generalized and maybe libraryficated.
+
+* [`src/front`](src/front) has the front end support see below.
 
 In general given a schema entity, for example a `Person.t`. The following
 modules are defined:
@@ -56,9 +67,37 @@ accident into the annoying circular dependency.
 `src/service/*_service.ml` files and in
 [`src/export.ml`](src/export.ml).  This should be fixed.
 
-## Front end
+# Database and schema
 
-The front end support is in [src/front](src/front). This has the fonts
+The SQLite database holds the bibliographic data and metadata. It does
+not hold user data (e.g. username or passwords). That way the file can
+be directly as a research artifact for preservation (the SQLite file
+format is recommended by the [Library of congress][loc]).
+
+Database use is abstracted by the [`src/db.mli`](src/db.mli) module, there 
+should be (almost) no mention of the `Rel_sqlite3` anywhere else.
+
+The SQL database definition can be output via 
+
+```
+b0 -- hyperbib db schema app
+```
+
+To visualize the schema diagram use 
+```
+b0 -- hyperbib db schema -f dot app | dot -Tsvg | show-url -t s.svg
+```
+
+# Web service
+
+The webservice uses the HTTP/1.1 `Webs` connector, each connection is
+served by a single thread, if needed (most of the time for now) the
+thread draws a database connection from a pool. Both threads and
+database connections are pooled with the same size.
+
+# Front end
+
+The front end support is in [`src/front`](src/front). This has the fonts
 and `.css` files and the front end code. The OCaml files are compiled
 to JavaScript via `js_of_ocaml` and *for now* everything is copied
 over by the build system to [`app/static`](app/static).
@@ -73,39 +112,13 @@ The goal is to have as little as possible here and push the `htmlact`
 way.  A few more things could be removed if we improve it, e.g. with
 local DOM tree substitutions.
 
-# Web service
 
-The webservice uses the HTTP/1.1 `Webs` connector, each connection is
-served by a single thread, if needed (most of the time for now) the
-thread draws a database connection from a pool. Both threads and
-database connections are pooled with the same size.
 
-# Database use and schema
-
-Database use is abstracted by the [`src/db.mli`](src/db.mli) module, there 
-should be no mention of the `Rel_sqlite3` anywhere else.
-
-## Usage
-
-The SQLite database holds the bibliographic data and metadata. It does
-not hold user data (e.g. username or passwords). That way the file can
-be directly as a research artifact for preservation (the SQLite file
-format is recommended by the [Library of congress][loc]).
 
 [loc]: https://www.loc.gov/preservation/resources/rfs/data.html
 
-## Schema
 
-The SQL database definition can be output via 
 
-```
-b0 -- hyperbib db schema app
-```
-
-To visualize the schema diagram use 
-```
-b0 -- hyperbib db schema -f dot app | dot -Tsvg | show-url -t s.svg
-```
 
 
 

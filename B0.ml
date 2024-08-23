@@ -29,6 +29,8 @@ let webs_cli = B0_ocaml.libname "webs.cli"
 let webs_kit = B0_ocaml.libname "webs.kit"
 let webs_unix = B0_ocaml.libname "webs.unix"
 
+let hyperbib_base = B0_ocaml.libname "hyperbib.base"
+
 (* Front end (and copy to app/static) *)
 
 let static_dir = ~/"app/static"
@@ -108,40 +110,59 @@ let write_static_file_stamp b =
   B0_memo.ready_file m mli;
   B0_memo.copy m mli ~dst:(stamp_mli b)
 
-let hyperbib =
-  let doc = "hyperbib tool" in
-  let requires =
-    [ unix; threads; cmdliner; bytesrw; bytesrw_xxhash; bytesrw_unix;
-      ptime; ptime_clock; b0_std; jsont; htmlit; htmlact;
-      rel; rel_kit; rel_cli; rel_sqlite3; rel_pool;
-      webs; webs_kit; webs_unix; webs_cli; ]
-  in
+let hyperbib_base_requires =
+  [ unix; threads; cmdliner; bytesrw; bytesrw_xxhash; bytesrw_unix;
+    ptime; ptime_clock; b0_std; jsont; htmlit; htmlact;
+    rel; rel_kit; rel_cli; rel_sqlite3; rel_pool;
+    webs; webs_kit; webs_unix; webs_cli; ]
+
+let hyperbib_requires =
+  hyperbib_base :: hyperbib_base_requires (* remove once we have -H support *)
+
+let hyperbib_base_lib =
+  let doc = "hyperbib components" in
   let srcs =
-    (* TODO b0: slightly messy we need to copy it over because of
-       https://github.com/ocaml/ocaml/issues/9717
-       Maybe we should rather always copy srcs to build_dir *)
     let stamp b =
+      (* TODO b0: slightly messy we need to copy it over because of
+         https://github.com/ocaml/ocaml/issues/9717
+         Maybe we should rather always copy srcs to build_dir *)
       Fut.return (Fpath.Set.(singleton (stamp_ml b) |> add (stamp_mli b)))
     in
-    [`Dir ~/"src";
-     `Dir ~/"src/service";
-     `Dir ~/"src/schema";
-     `Dir ~/"src/html";
-     `X stamp_mli_src;
-     `Fut stamp]
+    [ `Dir ~/"src";
+      `Dir ~/"src/service";
+      `Dir ~/"src/schema";
+      `Dir ~/"src/html";
+      `X stamp_mli_src;
+      `Fut stamp ]
   in
+  let requires = hyperbib_base_requires in
+  let exports = hyperbib_base_requires in
+  let wrap proc b = write_static_file_stamp b; proc b in
+  B0_ocaml.lib hyperbib_base ~doc ~srcs ~requires ~exports ~wrap
+
+let hyperbib =
+  let doc = "hyperbib tool" in
+  let srcs = [ `Dir ~/"src/tool" ] in
   let meta =
     B0_meta.empty
     (* TODO b0: supported_code doesn't work. *)
     |> ~~ B0_ocaml.Code.needs `Native
     |> ~~ B0_unit.Action.cwd (`In (`Scope_dir, ~/"app"))
   in
-  let wrap proc b =
-    B0_build.require_unit b hyperbib_js;
-    write_static_file_stamp b;
-    proc b
-  in
+  let wrap proc b = B0_build.require_unit b hyperbib_js; proc b in
+  let requires = hyperbib_requires in
   B0_ocaml.exe "hyperbib" ~public:true ~wrap ~doc ~srcs ~requires ~meta
+
+(* Test *)
+
+let test ?doc ?run:(r = true) ?(requires = []) ?(srcs = []) src =
+  let srcs = (`File src) :: srcs in
+  let requires = hyperbib_base :: requires in
+  let meta = B0_meta.(empty |> tag test |> ~~ run r) in
+  let name = Fpath.basename ~strip_ext:true src in
+  B0_ocaml.exe name ~srcs ~requires ~meta ?doc
+
+let test_docstore = test ~/"test/test_docstore.ml"
 
 (* Actions *)
 
@@ -221,4 +242,4 @@ let default =
     |> B0_meta.tag B0_release.tag
   in
   B0_pack.make "default" ~meta ~locked:true @@
-  [hyperbib; hyperbib_js]
+  B0_unit.list ()
