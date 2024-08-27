@@ -54,8 +54,7 @@ module Work = struct
 end
 
 let rec for_doi httpc ~cache doi =
-  let doi_to_fname doi = String.map (function '/' -> '_' | c -> c) doi in
-  let doi_file = Fpath.(cache / doi_to_fname doi + ".json") in
+  let doi_file = Fpath.(cache / Doi.as_filename doi + ".json") in
   let* exists = Os.File.exists doi_file in
   match exists with
   | true ->

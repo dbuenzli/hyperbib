@@ -10,18 +10,20 @@ type id = xxh3_128_hex
 
 type t =
   { id : id; reference : Reference.id option; slug : string;
-    media_type : Media_type.t; }
+    media_type : Media_type.t; public : bool; origin : string; }
 
-let v ~id ~reference ~slug ~media_type =
-  { id; reference; slug; media_type; }
+let v ~id ~reference ~slug ~media_type ~public ~origin =
+  { id; reference; slug; media_type; public; origin; }
 
-let row id reference slug media_type =
-  { id; reference; slug; media_type }
+let row id reference slug media_type public origin =
+  { id; reference; slug; media_type; public; origin; }
 
 let id d = d.id
 let reference d = d.reference
 let slug d = d.slug
 let media_type d = d.media_type
+let public d = d.public
+let origin d = d.origin
 
 open Rel
 
@@ -29,6 +31,8 @@ let id' = Col.v "id" Type.Text id
 let reference' = Col.v "reference" Type.(Option Int) reference
 let slug' = Col.v "slug" Type.Text slug
 let media_type' = Col.v "media_type" Type.Text media_type
+let public' = Col.v "public" Type.Bool public
+let origin' = Col.v "origin" Type.Text origin
 
 let table =
   let primary_key = Col.[V id'] in
@@ -46,4 +50,4 @@ let table =
      Table.Index.v  Col.[V id']]
   in
   Table.v "doc" ~primary_key ~unique_keys ~foreign_keys ~indices @@
-  Row.(unit row * id' * reference' * slug' * media_type')
+  Row.(unit row * id' * reference' * slug' * media_type' * public' * origin')

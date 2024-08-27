@@ -6,6 +6,20 @@
 open Hyperbib_std
 open Result.Syntax
 
+let setup_http_client () =
+  (* We should eventually switch to libcurl *)
+  let trace pid cmd =
+    Log.debug (fun m -> m "%a" Webs_spawn_client.pp_trace (pid, cmd))
+  in
+  let c = Webs_spawn_client.make ~trace () in
+  begin match c with
+  | Ok _ -> () | Error e ->
+      Log.warn @@ fun m ->
+      m "@[<v>The app may not work properly, no HTTP client found:@,%s@]" e
+  end;
+  c
+
+
 module Conf = struct
   type t =
     { log_level : Log.level;
@@ -30,19 +44,6 @@ module Conf = struct
   let db_file c = Fpath.(c.app_dir // db_path)
   let db_backup_file c = Fpath.(db_file c + ".backup")
   let docstore_dir c = Fpath.(c.app_dir // docstore_path)
-
-  let setup_http_client () =
-    (* We should eventually switch to libcurl *)
-    let trace pid cmd =
-      Log.debug (fun m -> m "%a" Webs_spawn_client.pp_trace (pid, cmd))
-    in
-    let c = Webs_spawn_client.make ~trace () in
-    begin match c with
-    | Ok _ -> () | Error e ->
-        Log.warn @@ fun m ->
-        m "@[<v>The app may not work properly, no HTTP client found:@,%s@]" e
-    end;
-    c
 
   let find_app_dir = function
   | Some app_dir -> Ok app_dir
@@ -110,7 +111,7 @@ let conf =
     let absent = "current working directory" in
     let env = Cmd.Env.info "HYPERBIB_APP_DIR" in
     Arg.(value & opt (some ~none:"." fpath) None &
-         info ["a"; "app-dir"] ~doc ~docv ~env ~absent)
+         info ["a"; "app-dir"] ~doc ~docs ~docv ~env ~absent)
   in
   Conf.with_cli ~log_level ~fmt_styler ~app_dir
 

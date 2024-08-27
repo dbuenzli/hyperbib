@@ -61,7 +61,6 @@ module Conf : sig
   (** [http_client c] is the HTTP client to use in the app. *)
 end
 
-
 val with_db_transaction :
   Conf.t -> Db.transaction_kind ->
   (Db.t -> ('a, string) result) -> ('a, string) result

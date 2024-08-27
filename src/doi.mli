@@ -72,6 +72,10 @@ val as_url : ?resolver:Webs_url.t -> t -> Webs_url.t
 (** [as_url ~resolver d] is [d] prefixed by [resolver] (defaults to
     {!default_resolver}). This precent encodes [d] as needed. *)
 
+val as_filename : t -> string
+(** [as_filename d] is [d] as a file name. It simply munges the
+    slashes and backlashes into [_]. *)
+
 (** {1:predicates Predicates and comparisons} *)
 
 val equal : t -> t -> bool
@@ -115,3 +119,12 @@ val formatted_citation : string
 val json : string
 (** [json] is ["application/json; charset=utf-8"]. For crossref managed
     DOIs this seems to return the format {!Crossref}. *)
+
+val to_document :
+  ?resolver:Webs_url.t -> Webs.Http_client.t -> media_type:Webs.Media_type.t ->
+  t-> (Webs_url.t * Webs.Http.Body.t, string) result
+(** [to_document] is a best-effort resolver to try find a document of
+    type [media_type] using [resolver]. It tries to resolve directly
+    to the given [media_type] or if a webpage is returned tries to
+    scrape it for a link to the document using various heuristics. In
+    case of success it returns the URL and a body to consume. *)

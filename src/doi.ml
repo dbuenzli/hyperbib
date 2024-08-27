@@ -104,6 +104,8 @@ let as_uri d = Fmt.str "doi:%s" (Webs.Http.Pct.encode `Uri d)
 let as_url ?(resolver = default_resolver) d =
   Fmt.str "%s/%s" resolver (Webs.Http.Pct.encode `Uri d)
 
+let as_filename doi = String.map (function '/' | '\\' -> '_' | c -> c) doi
+
 (* Predicates and comparisons *)
 
 let equal = String.equal
@@ -157,3 +159,77 @@ let resolve_to_content_type ?resolver ~content_type:ctype httpc doi
 let bibtex = "application/x-bibtex; charset=utf-8"
 let formatted_citation = "text/x-bibliography; charset=utf-8"
 let json = "application/json; charset=utf-8"
+
+(* Resolving to document *)
+
+let mozilla = "Mozilla/5.0"
+
+let find_document_url_candidates ~doi ~media_type urls =
+  (* Keep only URLs whose path have media_type's ext as a suffix and if there
+     are multiple URLs with the same filename arbitrarily keep only one. *)
+  let last_segment p = match String.rindex_opt p '/' with
+  | None -> p | Some i -> String.subrange ~first:(i + 1) p
+  in
+  let ext = Media_type.to_file_ext media_type in
+  let add (fnames, acc as ret) url = match Webs_url.path url with
+  | None -> ret
+  | Some path ->
+      if not (String.ends_with ~suffix:ext url) then ret else
+      let fname = last_segment path in
+      if String.Set.mem fname fnames then ret else
+      let fnames = String.Set.add fname fnames in
+      fnames, url :: acc
+  in
+  snd (List.fold_left add (String.Set.empty, []) urls)
+
+let document_content_type_okay ~media_type ctype =
+  ctype = media_type || ctype = "application/octet-stream"
+
+let download_document_url httpc ~media_type url =
+  let accept_types = media_type in
+  let headers =
+    Http.Headers.(empty |> def user_agent mozilla |> def accept accept_types)
+  in
+  let* request = Http.Request.of_url ~headers `GET ~url in
+  let* response = Http_client.request httpc ~follow:true request in
+  let url = (* FIXME add something to Http_client *)
+    let headers = Http.Response.headers response in
+    match Http.Headers.find Http_client.x_follow_location headers with
+    | None -> url | Some url -> url
+  in
+  let status = Http.Response.status response in
+  if status <> 200 then Fmt.error "%s: %a" url Http.Status.pp status else
+  let body = Http.Response.body response in
+  let ctype = Media_type.get_type (Http.Body.content_type body) in
+  if document_content_type_okay ~media_type ctype then Ok (url, body) else
+  Fmt.error  "%s: Expected %s found: %s" url media_type ctype
+
+let to_document ?resolver httpc ~media_type doi =
+  let accept_types =
+    String.concat ", " [media_type; "text/html;q=0.5"; "text/plain;q=0.4"]
+  in
+  let headers =
+    Http.Headers.(empty |> def user_agent mozilla |> def accept accept_types)
+  in
+  let url = as_url ?resolver doi in
+  let* request = Http.Request.of_url ~headers `GET ~url in
+  let* response = Http_client.request httpc ~follow:true request in
+  let url = (* FIXME add something to Http_client *)
+    let headers = Http.Response.headers response in
+    match Http.Headers.find Http_client.x_follow_location headers with
+    | None -> url | Some url -> url
+  in
+  let status = Http.Response.status response in
+  if status <> 200
+  then Fmt.error "%s: %a" url Http.Status.pp status else
+  let body = Http.Response.body response in
+  let ctype = Media_type.get_type (Http.Body.content_type body) in
+  if document_content_type_okay ~media_type ctype then Ok (url, body) else
+  let* page = Http.Body.to_string body in
+  let urls = Webs_url.list_of_text_scrape ~root:url page in
+  match find_document_url_candidates ~doi ~media_type urls with
+  | [] -> Fmt.error "%s: No document URL found" url
+  | [doc_url] -> download_document_url httpc ~media_type doc_url
+  | urls ->
+      Fmt.error "@[<v>%s: Giving up. Multiple URL document candidates@,%a@]"
+        url Fmt.(list string) urls
