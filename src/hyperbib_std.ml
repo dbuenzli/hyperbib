@@ -39,8 +39,8 @@ module Bazaar = struct
   open Rel
 
   let col_values ?(ignore = []) rt r =
-    let eq_col (Col.V c0) (Col.V c1) = Col.equal_name c0 c1 in
-    let add_col_value r acc (Col.V col as colv) =
+    let eq_col (Col.Def c0) (Col.Def c1) = Col.equal_name c0 c1 in
+    let add_col_value r acc (Col.Def col as colv) =
       if List.exists (eq_col colv) ignore then acc else
       Col.Value (col, Col.proj col r) :: acc
     in

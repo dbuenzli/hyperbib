@@ -35,7 +35,7 @@ let create
   let* () = check_edit_authorized env in
   Service_env.with_db_transaction' `Immediate env @@ fun db ->
   let* q = Http.Request.to_query req in
-  let* vs = Hquery.careless_find_table_cols ~ignore:[Col.V E.id'] E.table q in
+  let* vs = Hquery.careless_find_table_cols ~ignore:[Def E.id'] E.table q in
   let* id = Db.insert' db (E.create_cols ~ignore_id:true vs) in
   let uf = Service_env.url_fmt env in
   let headers = Html_kit.htmlact_redirect uf (entity_page_url id) in

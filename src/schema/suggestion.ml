@@ -36,20 +36,17 @@ module Suggestion = struct
 
   (* Table *)
 
-  let id' = Col.v "id" Type.Int id
-  let timestamp' = Col.v "timestamp" Type.Int timestamp
-  let doi' = Col.v "doi" Type.Text doi
-  let suggestion' = Col.v "suggestion" Type.Text suggestion
-  let comment' = Col.v "comment" Type.Text comment
-  let email' = Col.v "email" Type.Text email
+  let id' = Col.make "id" Type.int id
+  let timestamp' = Col.make "timestamp" Type.int timestamp
+  let doi' = Col.make "doi" Type.text doi
+  let suggestion' = Col.make "suggestion" Type.text suggestion
+  let comment' = Col.make "comment" Type.text comment
+  let email' = Col.make "email" Type.text email
   let table =
-    let primary_key = [Col.V id'] in
-    let indices = [ Table.index [Col.V doi']] in
-    let row =
-      Row.(unit row * id' * timestamp' * doi' * suggestion' * comment' *
-           email')
-    in
-    Table.v "suggestion" row ~primary_key ~indices
+    let primary_key = Table.Primary_key.make [Def id'] in
+    let indices = [ Table.Index.make [Col.Def doi']] in
+    Table.make "suggestion" ~primary_key ~indices @@
+    Row.(unit row * id' * timestamp' * doi' * suggestion' * comment' * email')
 end
 
 include Suggestion

@@ -8,30 +8,30 @@ open Rel
 
 type conf = string * string
 let conf =
-  let name = Col.v "name" Type.Text fst in
-  let value = Col.v "value" Type.Text snd in
+  let name = Col.make "name" Type.text fst in
+  let value = Col.make "value" Type.text snd in
   let conf k v = k, v in
-  let row = Row.(unit conf * name * value) in
-  Table.v "conf" row
+  Table.make "conf" @@
+  Row.(unit conf * name * value)
 
 let version = 1
 let tables =
-  [ Table.V conf;
-    Table.V Label.table;
-    Table.V Person.table;
-    Table.V Person.Label.table;
-    Table.V Subject.table;
-    Table.V Subject.Label.table;
-    Table.V Subject.See_also.table;
-    Table.V Container.table;
-    Table.V Container.Label.table;
-    Table.V Reference.table;
-    Table.V Reference.Label.table;
-    Table.V Reference.Contributor.table;
-    Table.V Reference.Subject.table;
-    Table.V Reference.Cites.table;
-    Table.V Doc.table;
-    Table.V Suggestion.table;
-  ]
+  Table.[ Def conf;
+          Def Container.Label.table;
+          Def Container.table;
+          Def Doc.table;
+          Def Label.table;
+          Def Person.Label.table;
+          Def Person.table;
+          Def Reference.Cites.table;
+          Def Reference.Contributor.table;
+          Def Reference.Label.table;
+          Def Reference.Subject.table;
+          Def Reference.table;
+          Def Subject.Label.table;
+          Def Subject.See_also.table;
+          Def Subject.table;
+          Def Suggestion.table; ]
 
-let v = Rel.Schema.v ~tables ()
+
+let v = Rel.Schema.make ~tables ()

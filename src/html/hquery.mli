@@ -57,15 +57,16 @@ val get_col :
     [false] for HTML checkboxes. *)
 
 val find_cols :
-  cols:'r Col.v list -> Http.Query.t -> ('r Col.value list, Http.Response.t) result
+  cols:'r Col.def list -> Http.Query.t ->
+  ('r Col.value list, Http.Response.t) result
 
 val find_table_cols :
-  'r Table.t -> cols:'r Col.v list -> Http.Query.t ->
+  'r Table.t -> cols:'r Col.def list -> Http.Query.t ->
   ('r Col.value list, Http.Response.t) result
 (** [find_table_cols t cs] finds the value of columns [cs] of [t] in [q]. *)
 
 val careless_find_table_cols :
-  ?ignore:'r Col.v list -> 'r Table.t ->
+  ?ignore:'r Col.def list -> 'r Table.t ->
   Http.Query.t -> ('r Col.value list, Http.Response.t) result
 (** Do not use, use {!find_table_cols}. [careless_find_table_cols r q]
     finds in [q] all column names of [t], except those mentioned in

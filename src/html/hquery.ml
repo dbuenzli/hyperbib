@@ -104,20 +104,22 @@ let parse_kind ~kind kind_of_string col acc k v = match kind_of_string v with
 | None -> bad_val_400 ~kind k v
 
 let unhandled key t =
-  let explain = Fmt.str "key %s: unhandled column type %a" key Rel.Type.pp t in
+  let explain =
+    Fmt.str "key %s: unhandled column type %a" key Rel.Type.Repr.pp t
+  in
   Http.Response.server_error_500 ~explain ()
 
 let decode_col_value :
   type a. ('r, a) Rel.Col.t -> string -> (a, Http.Response.t) result =
-  fun col s -> match Rel.Col.type' col with
-  | Rel.Type.Bool -> Ok true
-  | Rel.Type.Int -> kind_dec (Rel.Col.name col) int s
-  | Rel.Type.Int64 -> kind_dec (Rel.Col.name col) int64 s
-  | Rel.Type.Float -> kind_dec (Rel.Col.name col) float s
-  | Rel.Type.Text -> Ok s
+  fun col s -> match Rel.Type.Repr.of_t (Rel.Col.type' col) with
+  | Bool -> Ok true
+  | Int -> kind_dec (Rel.Col.name col) int s
+  | Int64 -> kind_dec (Rel.Col.name col) int64 s
+  | Float -> kind_dec (Rel.Col.name col) float s
+  | Text -> Ok s
   (* TODO *)
-  | Rel.Type.Option _ as t -> unhandled (Rel.Col.name col) t
-  | Rel.Type.Blob as t -> unhandled (Rel.Col.name col) t
+  | Option _ as t -> unhandled (Rel.Col.name col) t
+  | Blob as t -> unhandled (Rel.Col.name col) t
   | t -> unhandled (Rel.Col.name col) t
 
 let get_col :
@@ -127,9 +129,9 @@ let get_col :
   match Http.Query.find_first key q with
   | Some s -> decode_col_value col s
   | None ->
-      begin match (Rel.Col.type' col) with
-      | Rel.Type.Bool -> (* HTML checkboxes work that way… *) Ok false
-      | t -> no_key_400 ~kind:(Fmt.str "%a" Rel.Type.pp t) key
+      begin match Rel.Type.Repr.of_t (Rel.Col.type' col) with
+      | Bool -> (* HTML checkboxes work that way… *) Ok false
+      | t -> no_key_400 ~kind:(Fmt.str "%a" Rel.Type.Repr.pp t) key
       end
 
 let find_col :
@@ -141,8 +143,8 @@ let find_col :
   match Http.Query.find_first key q with
   | Some s -> decode_col_value col s
   | None ->
-      begin match (Rel.Col.type' col) with
-      | Rel.Type.Bool -> (* HTML checkboxes work that way… *)
+      begin match Rel.Type.Repr.of_t (Rel.Col.type' col) with
+      | Bool -> (* HTML checkboxes work that way… *)
           Ok false
       | _ -> Ok none
       end
@@ -151,37 +153,37 @@ let add_col_value (type c) ~col:(col : ('a, c) Rel.Col.t) q acc =
   let key = Rel.Col.name col in
   match Http.Query.find_first key q with
   | None ->
-      begin match (Rel.Col.type' col) with
-      | Rel.Type.Bool ->
+      begin match Rel.Type.Repr.of_t (Rel.Col.type' col) with
+      | Bool ->
           (* That's the way HTML checkboxes work :-( *)
           Ok (Rel.Col.Value (col, false) :: acc)
       | _ ->  Ok acc
       end
   | Some v ->
-      match Rel.Col.type' col with
-      | Rel.Type.Bool ->
+      match Rel.Type.Repr.of_t (Rel.Col.type' col) with
+      | Bool ->
           parse_kind ~kind:"bool" bool_of_string_opt col acc key v
-      | Rel.Type.Int ->
+      | Int ->
           parse_kind ~kind:"int" int_of_string_opt col acc key v
-      | Rel.Type.Int64 ->
+      | Int64 ->
           parse_kind ~kind:"int64" Int64.of_string_opt col acc key v
-      | Rel.Type.Float ->
+      | Float ->
           parse_kind ~kind:"float" float_of_string_opt col acc key v
-      | Rel.Type.Text -> Ok (Rel.Col.Value (col, v) :: acc)
-      | Rel.Type.Option Rel.Type.Int ->
+      | Text -> Ok (Rel.Col.Value (col, v) :: acc)
+      | Option Int ->
           parse_kind ~kind:"int option"
             int_option_of_string col acc key v
-      | Rel.Type.Option Rel.Type.Text ->
+      | Option Text ->
           let v = if v = "" (* XXX allow to trim *) then None else Some v in
           Ok (Rel.Col.Value (col, v) :: acc)
-      | Rel.Type.Option _ as t -> unhandled key t
-      | Rel.Type.Blob as t -> unhandled key t
+      | Option _ as t -> unhandled key t
+      | Blob as t -> unhandled key t
       | t -> unhandled key t
 
 let find_cols ~cols q =
   let rec loop q acc = function
   | [] -> Ok acc
-  | Rel.Col.V col :: cs ->
+  | Rel.Col.Def col :: cs ->
       match add_col_value ~col q acc with
       | Ok acc -> loop q acc cs
       | Error _ as e -> e
@@ -199,14 +201,16 @@ let key_for_rel ?suff t c =
 
 (* Hyperbib stuff *)
 
-
 let is_undo = "is-undo"
 let key_is_undo = key is_undo bool
 
 let date_key = "x-date"
 let find_date q = match Http.Query.find_first date_key q with
 | None | Some "" -> Ok None
-| Some s -> Result.map Option.some (Date.partial_of_string s)
+| Some s ->
+    match Date.partial_of_string s with
+    | v -> Ok (Some v)
+    | exception Failure e -> Error e
 
 let cite_key = "x-cite"
 let find_cites q = Http.Query.find_all cite_key q
@@ -224,16 +228,13 @@ let find_create_container q =
       let isbn = get @@ Http.Query.find_first create_container_isbn q in
       let public = Http.Query.mem "public" q (* XXX Brittle *) in
       Option.some @@
-        Container.v
-          ~id:0 ~title ~isbn ~issn ~note:"" ~private_note:""
-          ~public ()
+      Container.v ~id:0 ~title ~isbn ~issn ~note:"" ~private_note:"" ~public ()
 
 let person_key = function
 | None -> Reference.Contributor.(key_for_rel table person')
 | Some role ->
     let suff = Person.role_to_string role in
     Reference.Contributor.(key_for_rel table person' ~suff)
-
 
 (* FIXME this is retarded *)
 

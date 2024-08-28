@@ -68,7 +68,7 @@ let duplicate env req src =
   let* () = Entity_service.check_edit_authorized env in
   Service_env.with_db_transaction' `Immediate env @@ fun db ->
   let* q = Http.Request.to_query req in
-  let ignore = [Col.V Container.id'] in
+  let ignore = [Col.Def Container.id'] in
   let* vs = Hquery.careless_find_table_cols ~ignore Container.table q in
   let* dst = Db.insert' db (Container.create_cols ~ignore_id:true vs) in
   let* () = Db.exec' db (Container.Label.copy_applications_stmt ~src ~dst) in
@@ -206,7 +206,7 @@ let update env req id =
   let* () = Entity_service.check_edit_authorized env in
   Service_env.with_db_transaction' `Immediate env @@ fun db ->
   let* q = Http.Request.to_query req in
-  let ignore = [Col.V Container.id'] in
+  let ignore = Col.[Def Container.id'] in
   let* vs = Hquery.careless_find_table_cols ~ignore Container.table q in
   let* () = Db.exec' db (Container.update id vs) in
   let* c = get_container db id in

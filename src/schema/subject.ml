@@ -58,25 +58,28 @@ module Subject = struct
 
   (* Table *)
 
-  let id' = Col.v "id" Type.Int id
-  let name' = Col.v "name" Type.Text name
-  let description' = Col.v "description" Type.Text description
-  let private_note' = Col.v "private_note" Type.Text private_note
-  let public' = Col.v "public" Type.Bool public
-  let parent' = Col.v "parent" Type.(Option Int) parent
-  let see' = Col.v "see" Type.(Option Int) see
+  let id' = Col.make "id" Type.int id
+  let name' = Col.make "name" Type.text name
+  let description' = Col.make "description" Type.text description
+  let private_note' = Col.make "private_note" Type.text private_note
+  let public' = Col.make "public" Type.bool public
+  let parent' = Col.make "parent" Type.(option int) parent
+  let see' = Col.make "see" Type.(option int) see
   let table =
-    let row =
-      Row.(unit row * id' * name' * parent' * see' * description' *
-           private_note' * public');
-    in
+    let primary_key = Table.Primary_key.make [Def id'] in
     let foreign_keys =
-      [ Table.self_foreign_key ~cols:[Col.V see'] ~parent:[Col.V id']
+      [ Table.Foreign_key.make
+          ~cols:[Def see']
+          ~parent:(Self [Def id'])
           ~on_delete:`Cascade () (* FIXME maybe not *);
-        Table.self_foreign_key ~cols:[Col.V parent'] ~parent:[Col.V id']
-          ~on_delete:`Set_null () ]
+        Table.Foreign_key.make
+          ~cols:[Def parent']
+          ~parent:(Self [Def id'])
+          ~on_delete:`Set_null ()]
     in
-    Table.v "subject" row ~primary_key:[Col.V id'] ~foreign_keys
+    Table.make "subject" ~primary_key ~foreign_keys @@
+    Row.(unit row * id' * name' * parent' * see' * description' *
+         private_note' * public');
 end
 
 include Subject
@@ -88,17 +91,18 @@ module See_also = struct
   let row given that = { given; that }
   let given s = s.given
   let that s = s.that
-  let given' = Col.v "given" Type.Int given
-  let that' = Col.v "that" Type.Int that
+  let given' = Col.make "given" Type.int given
+  let that' = Col.make "that" Type.int that
   let table =
-    let primary_key = Col.[V given'; V that'] in
-    let parent = (table, [Col.V id']) and on_delete = `Cascade in
+    let primary_key = Table.Primary_key.make [Def given'; Def that'] in
     let foreign_keys =
-      [ Table.foreign_key ~cols:[Col.V given'] ~parent ~on_delete ();
-        Table.foreign_key ~cols:[Col.V that'] ~parent ~on_delete (); ]
+      let parent = Table.Foreign_key.Table (table, [Col.Def id']) in
+      let on_delete = `Cascade in
+      [ Table.Foreign_key.make ~cols:[Def given'] ~parent ~on_delete ();
+        Table.Foreign_key.make ~cols:[Def that'] ~parent ~on_delete (); ]
     in
-    Table.v "subject_see_also" Row.(unit row * given' * that')
-      ~primary_key ~foreign_keys
+    Table.make "subject_see_also" ~primary_key ~foreign_keys @@
+    Row.(unit row * given' * that')
 
   let create r = Rel_sql.insert_into Db.dialect table r
 end
@@ -135,7 +139,7 @@ let list_visibility =
 
 let list_visibility_stmt =
   let row = Table.row table in
-  let publishable = Col.v "visible" Type.Bool snd in
+  let publishable = Col.make "visible" Type.bool snd in
   let ret = Row.unit (fun s p -> s, p) in
   let res = Row.(cat ret ~proj:fst row * publishable) in
   Rel_query.Sql.(func @@ ret res list_visibility)

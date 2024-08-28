@@ -41,19 +41,19 @@ module Label = struct
 
   (* Table *)
 
-  let id' = Col.v "id" Type.Int id
-  let name' = Col.v "name" Type.Text name
-  let synopsis' = Col.v "synopsis" Type.Text synopsis
-  let color' = Col.v "color" Type.Int64 color
-  let note' = Col.v "note" Type.Text note
-  let private_note' = Col.v "private_note" Type.Text private_note
-  let public' = Col.v "public" Type.Bool public
+  let id' = Col.make "id" Type.int id
+  let name' = Col.make "name" Type.text name
+  let synopsis' = Col.make "synopsis" Type.text synopsis
+  let color' = Col.make "color" Type.int64 color
+  let note' = Col.make "note" Type.text note
+  let private_note' = Col.make "private_note" Type.text private_note
+  let public' = Col.make "public" Type.bool public
   let table =
-    let primary_key = [Col.V id'] in
-    let unique_keys = [Table.unique_key [Col.V name']] in
-    Table.v "label"
-      Row.(unit row * id' * name' * synopsis' * color' * note' * private_note' *
-           public') ~primary_key ~unique_keys
+    let primary_key = Table.Primary_key.make [Def id'] in
+    let unique_keys = [Table.Unique_key.make [Def name']] in
+    Table.make "label" ~primary_key ~unique_keys @@
+    Row.(unit row * id' * name' * synopsis' * color' * note' * private_note' *
+         public')
 end
 
 include Label
@@ -93,20 +93,24 @@ module For_entity (E : Entity.IDENTIFIABLE) = struct
   let entity e = e.entity
   let label e = e.label
 
-  let entity' = Col.v "entity" Type.Int entity
-  let label' = Col.v "label" Type.Int label
+  let entity' = Col.make "entity" Type.int entity
+  let label' = Col.make "label" Type.int label
   let table =
     let name = Table.name E.table ^ "_label" in
-    let primary_key = [Col.V entity'; Col.V label'] in
-    let foreign_keys = Table.[
-        foreign_key ~cols:Col.[V entity'] ~parent:(E.table, Col.[V E.id'])
+    let primary_key = Table.Primary_key.make [Def entity'; Def label'] in
+    let foreign_keys =
+      [ Table.Foreign_key.make
+          ~cols:[Def entity']
+          ~parent:(Table (E.table, [Def E.id']))
           ~on_delete:`Cascade ();
-        foreign_key ~cols:Col.[V label'] ~parent:(Label.table, Col.[V id'])
+        Table.Foreign_key.make
+          ~cols:[Def label']
+          ~parent:(Table (Label.table, [Def id']))
           ~on_delete:`Cascade ()]
     in
-    let indices = [Table.index [Col.V label']] in
-    Table.v name Row.(unit row * entity' * label')
-      ~primary_key ~foreign_keys ~indices
+    let indices = [Table.Index.make [Def label']] in
+    Table.make name ~primary_key ~foreign_keys ~indices @@
+    Row.(unit row * entity' * label')
 
   open Rel_query.Syntax
 

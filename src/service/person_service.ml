@@ -69,14 +69,16 @@ let duplicate env req src =
   let* () = Entity_service.check_edit_authorized env in
   Service_env.with_db_transaction' `Immediate env @@ fun db ->
   let* q = Http.Request.to_query req in
-  let ignore = [Col.V Person.id'] in
+  let ignore = Col.[Def Person.id'] in
   let* vs = Hquery.careless_find_table_cols ~ignore Person.table q in
   let* dst = Db.insert' db (Person.create_cols ~ignore_id:true vs) in
   let copy_contribs = Reference.Contributor.copy_contributions_stmt ~src ~dst in
   let* () = Db.exec' db copy_contribs in
   let* () = Db.exec' db (Person.Label.copy_applications_stmt ~src ~dst) in
   let uf = Service_env.url_fmt env in
-  let headers = Html_kit.htmlact_redirect uf (Person.Url.v (Page (None, dst))) in
+  let headers =
+    Html_kit.htmlact_redirect uf (Person.Url.v (Page (None, dst)))
+  in
   Ok (Http.Response.empty ~headers Http.Status.ok_200)
 
 let duplicate_form env req id =
@@ -230,7 +232,7 @@ let update env req id =
   let* () = Entity_service.check_edit_authorized env in
   Service_env.with_db_transaction' `Immediate env @@ fun db ->
   let* q = Http.Request.to_query req in
-  let ignore = [Col.V Person.id'] in
+  let ignore = [Col.Def Person.id'] in
   let* vs = Hquery.careless_find_table_cols ~ignore Person.table q in
   let* () = Db.exec' db (Person.update id vs) in
   let* p = get_person db id in

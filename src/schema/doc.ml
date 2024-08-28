@@ -27,27 +27,25 @@ let origin d = d.origin
 
 open Rel
 
-let id' = Col.v "id" Type.Text id
-let reference' = Col.v "reference" Type.(Option Int) reference
-let slug' = Col.v "slug" Type.Text slug
-let media_type' = Col.v "media_type" Type.Text media_type
-let public' = Col.v "public" Type.Bool public
-let origin' = Col.v "origin" Type.Text origin
+let id' = Col.make "id" Type.text id
+let reference' = Col.make "reference" Type.(option int) reference
+let slug' = Col.make "slug" Type.text slug
+let media_type' = Col.make "media_type" Type.text media_type
+let public' = Col.make "public" Type.bool public
+let origin' = Col.make "origin" Type.text origin
 
 let table =
-  let primary_key = Col.[V id'] in
-  let unique_keys = [Table.Unique_key.v Col.[V id'; V reference']] in
+  let primary_key = Table.Primary_key.make [Def id'] in
+  let unique_keys = [Table.Unique_key.make [Def id'; Def reference']] in
   let foreign_keys =
-    [let cols = Col.[V reference'] in
-     let parent =
-       Table.Foreign_key.Parent (`Table Reference.table, [V Reference.id'])
-     in
-     let on_delete = `Set_null in
-     Table.Foreign_key.v ~cols ~on_delete ~parent ()]
+    [ Table.Foreign_key.make
+        ~cols:[Def reference']
+        ~parent:(Table (Reference.table, [Def Reference.id']))
+        ~on_delete:`Set_null ()]
   in
   let indices =
-    [Table.Index.v  Col.[V reference'];
-     Table.Index.v  Col.[V id']]
+    [ Table.Index.make [Def reference'];
+      Table.Index.make [Def id']]
   in
-  Table.v "doc" ~primary_key ~unique_keys ~foreign_keys ~indices @@
+  Table.make "doc" ~primary_key ~unique_keys ~foreign_keys ~indices @@
   Row.(unit row * id' * reference' * slug' * media_type' * public' * origin')

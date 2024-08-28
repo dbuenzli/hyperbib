@@ -10,13 +10,13 @@ type role = Author | Editor
 let role_to_string = function Author -> "author" | Editor -> "editor"
 let pp_role ppf r = Fmt.string ppf (role_to_string r)
 
-let role_enc = function Author -> Ok 0 | Editor -> Ok 1
-let role_dec = function
-| 0 -> Ok Author | 1 -> Ok Editor | n -> Fmt.error "%d: unknown role" n
-
 let role_type =
+  let enc = function Author -> 0 | Editor -> 1 in
+  let dec = function
+  | 0 -> Author | 1 -> Editor | n -> Fmt.failwith "%d: Unknown role" n
+  in
   Type.coded @@
-  Type.Coded.make ~name:"Contributor.role" role_enc role_dec Type.Int
+  Type.Coded.make ~name:"Contributor.role" Type.int ~enc ~dec ~pp:pp_role
 
 module Person = struct
   type id = Id.t
@@ -90,18 +90,18 @@ module Person = struct
 
   (* Table *)
 
-  let id' = Col.v "id" Type.Int id
-  let last_name' = Col.v "last_name" Type.Text last_name
-  let first_names' = Col.v "first_names" Type.Text first_names
-  let orcid' = Col.v "orcid" Type.Text orcid
-  let note' = Col.v "note" Type.Text note
-  let private_note' = Col.v "private_note" Type.Text private_note
-  let public' = Col.v "public" Type.Bool public
+  let id' = Col.make "id" Type.int id
+  let last_name' = Col.make "last_name" Type.text last_name
+  let first_names' = Col.make "first_names" Type.text first_names
+  let orcid' = Col.make "orcid" Type.text orcid
+  let note' = Col.make "note" Type.text note
+  let private_note' = Col.make "private_note" Type.text private_note
+  let public' = Col.make "public" Type.bool public
   let table =
-    let primary_key = [Col.V id'] in
-    Table.v "person"
-      Row.(unit row * id' * last_name' * first_names' * orcid' * note' *
-           private_note' * public') ~primary_key
+    let primary_key = Table.Primary_key.make [Def id'] in
+    Table.make "person" ~primary_key @@
+    Row.(unit row * id' * last_name' * first_names' * orcid' * note' *
+         private_note' * public')
 end
 
 include Person

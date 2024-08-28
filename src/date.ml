@@ -19,11 +19,11 @@ type md_partial = month * day option
 let md_partial_of_string s =
   let i = int_of_string in
   try match String.split_on_char '-' s with
-  | [m] -> Ok (i m, None)
-  | [m; d] -> Ok (i m, Some (i d))
+  | [m] -> (i m, None)
+  | [m; d] -> (i m, Some (i d))
   | _ -> failwith ""
   with
-  | Failure _ -> Fmt.error "%S: not of the form MM[-DD]" s
+  | Failure _ -> Fmt.failwith "%S: not of the form MM[-DD]" s
 
 let md_partial_to_string (m, d) = match d with
 | None -> Fmt.str "%02d" m
@@ -38,12 +38,12 @@ type partial = year * md_partial option
 let partial_of_string s =
   let i = int_of_string in
   try match String.split_on_char '-' s with
-  | [y] -> Ok (i y, None)
-  | [y; m] -> Ok (i y, Some (i m, None))
-  | [y; m; d] -> Ok (i y, Some (i m, Some (i d)))
+  | [y] -> (i y, None)
+  | [y; m] -> (i y, Some (i m, None))
+  | [y; m; d] -> (i y, Some (i m, Some (i d)))
   | _ -> failwith ""
   with
-  | Failure _ -> Fmt.error "%S: not of the form YYYY[-MM[-DD]]" s
+  | Failure _ -> Fmt.failwith "%S: not of the form YYYY[-MM[-DD]]" s
 
 let partial_to_string (y, md) = match md with
 | None -> Fmt.str "%04d" y

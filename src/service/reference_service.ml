@@ -184,7 +184,7 @@ let create app req = (* create and update are very similar factor out a bit. *)
   let entity_page_url id = Reference.Url.v (Page (None, id)) in
   Service_env.with_db_transaction' `Immediate app @@ fun db ->
   let* q = Http.Request.to_query req in
-  let ignore = [Col.V Reference.id'] in
+  let ignore = [Col.Def Reference.id'] in
   let* vs = Hquery.careless_find_table_cols ~ignore Reference.table q in
   let vs = match Hquery.find_date q with
   | Error _ (* FIXME form validation *) -> vs
@@ -222,7 +222,7 @@ let update env req id =
   let* () = Entity_service.check_edit_authorized env in
   Service_env.with_db_transaction' `Immediate env @@ fun db ->
   let* q = Http.Request.to_query req in
-  let ignore = [Col.V Reference.id'] in
+  let ignore = [Col.Def Reference.id'] in
   let* vs = Hquery.careless_find_table_cols ~ignore Reference.table q in
   let vs = match Hquery.find_date q with
   | Error _ (* FIXME form validation, which we also need to poperly type

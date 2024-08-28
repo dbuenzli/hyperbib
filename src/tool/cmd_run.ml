@@ -71,7 +71,7 @@ let check_reference_dois db ~repair =
    let do_update oldr newr =
      let update oldr newr =
        let set =
-         let ignore = Col.[V Reference.Cites.reference'] in
+         let ignore = Col.[Def Reference.Cites.reference'] in
          Bazaar.col_values (Table.row Reference.Cites.table) ~ignore newr
        in
        let where = (* XXX this is basically primary_key *)

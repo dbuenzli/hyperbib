@@ -98,42 +98,42 @@ module Reference = struct
 
   (* Table *)
 
-  let id' = Col.v "id" Type.Int id
-  let abstract' = Col.v "abstract" Type.Text abstract
-  let container' = Col.v "container" Type.(Option Int) container
-  let date_year' = Col.v "date_year" Type.(Option Int) date_year
+  let id' = Col.make "id" Type.int id
+  let abstract' = Col.make "abstract" Type.text abstract
+  let container' = Col.make "container" Type.(option int) container
+  let date_year' = Col.make "date_year" Type.(option int) date_year
   let date_md' =
-    Col.v "date_md" Type.(Option Schema_kit.date_md_partial_type) date_md
+    Col.make "date_md" Type.(option Schema_kit.date_md_partial_type) date_md
 
-  let doi' = Col.v "doi" Type.(Option Text) doi
-  let isbn' = Col.v "isbn" Type.Text isbn
-  let issue' = Col.v "issue" Type.Text issue
-  let note' = Col.v "note" Type.Text note
-  let pages' = Col.v "pages" Type.Text pages
-  let private_note' = Col.v "private_note" Type.Text private_note
-  let public' = Col.v "public" Type.Bool public
-  let publisher' = Col.v "publisher" Type.Text publisher
-  let title' = Col.v "title" Type.Text title
-  let type'' = Col.v "type" Type.Text type'
-  let volume' = Col.v "volume" Type.Text volume
+  let doi' = Col.make "doi" Type.(option text) doi
+  let isbn' = Col.make "isbn" Type.text isbn
+  let issue' = Col.make "issue" Type.text issue
+  let note' = Col.make "note" Type.text note
+  let pages' = Col.make "pages" Type.text pages
+  let private_note' = Col.make "private_note" Type.text private_note
+  let public' = Col.make "public" Type.bool public
+  let publisher' = Col.make "publisher" Type.text publisher
+  let title' = Col.make "title" Type.text title
+  let type'' = Col.make "type" Type.text type'
+  let volume' = Col.make "volume" Type.text volume
   let table =
-    let primary_key = [Col.V id'] in
+    let primary_key = Table.Primary_key.make [Def id'] in
     let foreign_keys =
-      let parent = Container.table, [Col.V Container.id'] in
-      let on_delete = `Set_null in
-      [Table.foreign_key ~cols:[Col.V container'] ~parent ~on_delete ()]
+      [ Table.Foreign_key.make
+          ~cols:[Def container']
+          ~parent:(Table (Container.table, [Def Container.id']))
+          ~on_delete:`Set_null () ]
     in
     let indices = [
-      Table.index [Col.V doi'];
-      Table.index [Col.V container'];
-      Table.index [Col.V date_year']; ]
+      Table.Index.make [Def doi'];
+      Table.Index.make [Def container'];
+      Table.Index.make [Def date_year']; ]
     in
-    let row =
-      Row.(unit row * id' * abstract' * container' * date_year' * date_md' *
-           doi' * isbn' * issue' * note' * pages' * private_note' * public' *
-           publisher' * title' * type'' * volume')
-    in
-    Table.v "reference" row ~primary_key ~foreign_keys ~indices
+    Table.make "reference" ~primary_key ~foreign_keys ~indices @@
+    Row.(unit row * id' * abstract' * container' * date_year' * date_md' *
+         doi' * isbn' * issue' * note' * pages' * private_note' * public' *
+         publisher' * title' * type'' * volume')
+
 
   let col_values_for_date = function
   | None -> Col.Value (date_year', None), Col.Value (date_md', None)
@@ -184,25 +184,30 @@ module Contributor = struct
   let position c = c.position
   let order_by_position c0 c1 = Int.compare c0.position c1.position
 
-  let reference' = Col.v "reference" Type.Int reference
-  let person' = Col.v "person" Type.Int person
-  let role' = Col.v "role" Person.role_type role
-  let position' = Col.v "position" Type.Int position
+  let reference' = Col.make "reference" Type.int reference
+  let person' = Col.make "person" Type.int person
+  let role' = Col.make "role" Person.role_type role
+  let position' = Col.make "position" Type.int position
   let table =
-    let primary_key = [Col.V reference'; Col.V person'; Col.V role']; in
+    let primary_key =
+      Table.Primary_key.make [Def reference'; Def person'; Def role'];
+    in
     let foreign_keys =
-      [ Table.foreign_key
-          ~cols:[Col.V reference'] ~parent:(table, [Col.V id'])
+      [ Table.Foreign_key.make
+          ~cols:[Def reference']
+          ~parent:(Table (table, [Def id']))
           ~on_delete:`Cascade ();
-        Table.foreign_key
-          ~cols:[Col.V person'] ~parent:(Person.table, [Col.V Person.id'])
+        Table.Foreign_key.make
+          ~cols:[Def person']
+          ~parent:(Table (Person.table, [Def Person.id']))
           ~on_delete:`Cascade () ]
     in
     let indices =
-      [ Table.index [Col.V person']; Table.index [Col.V reference']]
+      [ Table.Index.make [Def person'];
+        Table.Index.make [Def reference']]
     in
-    let row = Row.(unit row * reference' * person' * role' * position') in
-    Table.v "reference_contributor" row ~primary_key ~foreign_keys ~indices
+    Table.make "reference_contributor" ~primary_key ~foreign_keys ~indices
+    @@ Row.(unit row * reference' * person' * role' * position')
 
   open Rel_query.Syntax
 
@@ -265,22 +270,23 @@ module Subject = struct
   let reference a = a.reference
   let subject a = a.subject
 
-  let reference' = Col.v "reference" Type.Int reference
-  let subject' = Col.v "subject" Type.Int subject
+  let reference' = Col.make "reference" Type.int reference
+  let subject' = Col.make "subject" Type.int subject
   let table =
-    let primary_key = [Col.V reference'; Col.V subject'] in
+    let primary_key = Table.Primary_key.make [Def reference'; Def subject'] in
     let foreign_keys = [
-      Table.foreign_key
-        ~cols:[Col.V reference'] ~parent:(table, [Col.V id'])
+      Table.Foreign_key.make
+        ~cols:[Def reference']
+        ~parent:(Table (table, [Def id']))
         ~on_delete:`Cascade ();
-      Table.foreign_key
-        ~cols:[Col.V subject'] ~parent:(Subject.table, [Col.V Subject.id'])
-        ~on_delete:`Cascade ();
-    ]
+      Table.Foreign_key.make
+        ~cols:[Def subject']
+        ~parent:(Table (Subject.table, [Def Subject.id']))
+        ~on_delete:`Cascade () ]
     in
-    let indices = [Table.index [Col.V subject']] in
-    let row = Row.(unit row * reference' * subject') in
-    Table.v "reference_subject" row ~primary_key ~foreign_keys ~indices
+    let indices = [ Table.Index.make [Def subject'] ] in
+    Table.make "reference_subject" ~primary_key ~foreign_keys ~indices @@
+    Row.(unit row * reference' * subject')
 
   open Rel_query.Syntax
 
@@ -374,17 +380,18 @@ module Cites = struct
   let reference c = c.reference
   let doi c = c.doi
 
-  let reference' = Col.v "reference" Type.Int reference
-  let doi' = Col.v "doi" Type.Text doi
+  let reference' = Col.make "reference" Type.int reference
+  let doi' = Col.make "doi" Type.text doi
   let table =
-    let primary_key = [Col.V reference'; Col.V doi'] in
+    let primary_key = Table.Primary_key.make [Def reference'; Def doi'] in
     let foreign_keys =
-      [ Table.foreign_key
-          ~cols:[Col.V reference'] ~parent:(table, [Col.V id'])
+      [ Table.Foreign_key.make
+          ~cols:[Def reference']
+          ~parent:(Table (table, [Def id']))
           ~on_delete:`Cascade () ]
     in
-    let row = Row.(unit row * reference' * doi') in
-    Table.v "cites" row ~primary_key ~foreign_keys
+    Table.make "cites" ~primary_key ~foreign_keys @@
+    Row.(unit row * reference' * doi')
 
   open Rel_query.Syntax
 
@@ -544,13 +551,13 @@ let dois_cited rid =
 let find_dois dois =
   let* doi = dois in
   let* r = Bag.table table in
-  let eq_doi = Option.(equal (r #.doi') (some Type.Text doi) ~eq:Text.equal) in
+  let eq_doi = Option.(equal (r #.doi') (some Type.text doi) ~eq:Text.equal) in
   Bag.where eq_doi (Bag.yield r)
 
 let find_doi doi =
   let* r = Bag.table table in
   let eq_doi =
-    Option.(equal (r #. doi') (some Type.Text doi) ~eq:Text.equal)
+    Option.(equal (r #. doi') (some Type.text doi) ~eq:Text.equal)
   in
   Bag.where eq_doi (Bag.yield r)
 

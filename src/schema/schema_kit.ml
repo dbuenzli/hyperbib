@@ -6,14 +6,12 @@
 open Rel
 
 let date_md_partial_type =
-  let name = "date-md-partial" and pp = Date.pp_md_partial in
-  let enc = Fun.compose Result.ok Date.md_partial_to_string in
+  let enc = Date.md_partial_to_string in
   let dec = Date.md_partial_of_string in
-  Type.coded (Type.Coded.make ~name ~pp enc dec Type.Text)
+  let pp = Date.pp_md_partial in
+  Type.coded @@ Type.Coded.make ~name:"date-md-partial" Type.text ~enc ~dec ~pp
 
 let doi_type =
-  let name = "doi" and pp = Doi.pp in
-  let enc = Fun.compose Result.ok Doi.to_string in
-  let dec = Fun.compose Result.ok Doi.unsafe_of_string in
-  let _dec = Doi.of_string in
-  Type.coded (Type.Coded.make ~name ~pp enc dec Type.Text)
+  let enc = Doi.to_string in
+  let dec = Doi.unsafe_of_string (* FIXME *) in
+  Type.coded @@ Type.Coded.make ~name:"doi" Type.text ~enc ~dec ~pp:Doi.pp

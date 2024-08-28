@@ -60,19 +60,18 @@ module Container = struct
 
   (* Table *)
 
-  let id' = Col.v "id" Type.Int id
-  let title' = Col.v "title" Type.Text title
-  let isbn' = Col.v "isbn" Type.Text isbn
-  let issn' = Col.v "issn" Type.Text issn
-  let note' = Col.v "note" Type.Text note
-  let private_note' = Col.v "private_note" Type.Text private_note
-  let public' = Col.v "public" Type.Bool public
+  let id' = Col.make "id" Type.int id
+  let title' = Col.make "title" Type.text title
+  let isbn' = Col.make "isbn" Type.text isbn
+  let issn' = Col.make "issn" Type.text issn
+  let note' = Col.make "note" Type.text note
+  let private_note' = Col.make "private_note" Type.text private_note
+  let public' = Col.make "public" Type.bool public
   let table =
-    let primary_key = [Col.V id'] in
-    let row = Row.(unit row * id' * title' * isbn' * issn' * note' *
-                   private_note' * public')
-    in
-    Table.v "container" row ~primary_key
+    let primary_key = Table.Primary_key.make [Def id'] in
+    Table.make "container" ~primary_key @@
+    Row.(unit row * id' * title' * isbn' * issn' * note' * private_note' *
+         public')
 end
 
 include Container

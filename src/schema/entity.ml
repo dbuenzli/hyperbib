@@ -71,11 +71,11 @@ module Identifiable_queries (E : IDENTIFIABLE) :
   type t = E.t
 
   let create ~ignore_id p =
-    let ignore = if ignore_id then [Col.V E.id'] else [] in
+    let ignore = if ignore_id then [Col.Def E.id'] else [] in
     Rel_sql.insert_into Db.dialect ~ignore E.table p
 
   let create_cols ~ignore_id cols =
-    let ignore = if ignore_id then [Col.V E.id'] else [] in
+    let ignore = if ignore_id then [Col.Def E.id'] else [] in
     Rel_sql.insert_into_cols Db.dialect ~ignore E.table cols
 
   let delete id =
