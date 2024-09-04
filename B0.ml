@@ -15,8 +15,7 @@ let htmlit = B0_ocaml.libname "htmlit"
 let jsont = B0_ocaml.libname "jsont"
 let note = B0_ocaml.libname "note"
 let note_brr = B0_ocaml.libname "note.brr"
-let ptime = B0_ocaml.libname "ptime"
-let ptime_clock = B0_ocaml.libname "ptime.clock.os"
+let ptime_clock = B0_ocaml.libname "ptime.clock"
 let rel = B0_ocaml.libname "rel"
 let rel_cli = B0_ocaml.libname "rel.cli"
 let rel_kit = B0_ocaml.libname "rel.kit"
@@ -112,7 +111,7 @@ let write_static_file_stamp b =
 
 let hyperbib_base_requires =
   [ unix; threads; cmdliner; bytesrw; bytesrw_xxhash; bytesrw_unix;
-    ptime; ptime_clock; b0_std; jsont; htmlit; htmlact;
+    ptime_clock; b0_std; jsont; htmlit; htmlact;
     rel; rel_kit; rel_cli; rel_sqlite3; rel_pool;
     webs; webs_kit; webs_unix; webs_cli; ]
 
@@ -215,12 +214,12 @@ let default =
     |> ~~ B0_meta.issues "https://github.com/dbuenzli/hyperbib/issues"
     |> ~~ B0_meta.description_tags ["app"; "bibliography"; "org:erratique"]
     |> ~~ B0_opam.depends
-      [ "ocaml", {|>= "4.12"|};
+      [ "ocaml", {|>= "5.2.0"|};
         "ocamlfind", {|build|};
         "b0", {|build|};
         "cmdliner", {|>= "1.3.0"|};
         "bytesrw", {||};
-        "ptime", {||};
+        "ptime", {|>= "1.2.0"|};
         "webs", {||};
         "htmlit", {||};
         "htmlact", {||};
@@ -232,11 +231,11 @@ let default =
         "brr", {||};
         "js_of_ocaml", {||};]
     |> ~~ B0_opam.pin_depends
-      [ "bytesrw.~dev", "git+https://erratique.ch/repos/bytesrw.git#master";
-        "jsont.~dev", "git+https://erratique.ch/repos/jsont.git#master";
-        "htmlact.~dev", "git+https://erratique.ch/repos/htmlact.git#master";
-        "rel.~dev", "git+https://erratique.ch/repos/rel.git#master";
-        "webs.~dev", "git+https://erratique.ch/repos/webs.git#master"]
+      [ "bytesrw.dev", "git+https://erratique.ch/repos/bytesrw.git#master";
+        "jsont.dev", "git+https://erratique.ch/repos/jsont.git#master";
+        "htmlact.dev", "git+https://erratique.ch/repos/htmlact.git#master";
+        "rel.dev", "git+https://erratique.ch/repos/rel.git#master";
+        "webs.dev", "git+https://erratique.ch/repos/webs.git#master"]
     |> ~~ B0_opam.build {|[["b0"]]|}
     |> B0_meta.tag B0_opam.tag
     |> B0_meta.tag B0_release.tag

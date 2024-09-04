@@ -52,7 +52,7 @@ let test () =
   assert (existed); assert (not exists);
   let* () = Docstore.with_doc key1 store @@ function
   | None -> ()
-  | Some _ -> Test.failf "Expected no doc for key %a" Xxh3_128.pp key1 ~__POS__
+  | Some _ -> Test.fail "Expected no doc for key %a" Xxh3_128.pp key1 ~__POS__
   in
   (* Add something a second time. *)
   let* key0 = Docstore.add (Bytes.Reader.of_string data0) store in
@@ -60,7 +60,7 @@ let test () =
   (* Fold over the store keys. *)
   let add key path acc = match key with
   | Some key -> Test.eq (module Xxh3_128) key data0_key
-  | None -> Test.failf "%a: File should not exist" Fpath.pp path
+  | None -> Test.fail "%a: File should not exist" Fpath.pp path
   in
   let* () = Docstore.fold add store () in
   Ok ()

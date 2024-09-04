@@ -16,12 +16,12 @@ homepage: "https://erratique.ch/software/hyperbib"
 doc: "https://erratique.ch/software/hyperbib/doc"
 bug-reports: "https://github.com/dbuenzli/hyperbib/issues"
 depends: [
-  "ocaml" {>= "4.12"}
+  "ocaml" {>= "5.2.0"}
   "ocamlfind" {build}
   "b0" {build}
   "cmdliner" {>= "1.3.0"}
   "bytesrw"
-  "ptime"
+  "ptime" {>= "1.2.0"}
   "webs"
   "htmlit"
   "htmlact"
@@ -36,9 +36,9 @@ depends: [
 build: "b0"
 dev-repo: "git+https://erratique.ch/repos/hyperbib.git"
 pin-depends: [
-  ["bytesrw.~dev" "git+https://erratique.ch/repos/bytesrw.git#master"]
-  ["jsont.~dev" "git+https://erratique.ch/repos/jsont.git#master"]
-  ["htmlact.~dev" "git+https://erratique.ch/repos/htmlact.git#master"]
-  ["rel.~dev" "git+https://erratique.ch/repos/rel.git#master"]
-  ["webs.~dev" "git+https://erratique.ch/repos/webs.git#master"]
+  ["bytesrw.dev" "git+https://erratique.ch/repos/bytesrw.git#master"]
+  ["jsont.dev" "git+https://erratique.ch/repos/jsont.git#master"]
+  ["htmlact.dev" "git+https://erratique.ch/repos/htmlact.git#master"]
+  ["rel.dev" "git+https://erratique.ch/repos/rel.git#master"]
+  ["webs.dev" "git+https://erratique.ch/repos/webs.git#master"]
 ]
