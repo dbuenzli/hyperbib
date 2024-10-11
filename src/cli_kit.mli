@@ -45,8 +45,11 @@ module Conf : sig
   (** [db_backup_file c] is the stable backup of the sqlite3 database file
       holding application data. *)
 
-  val docstore_dir : t -> Fpath.t
-  (** [docstore_dir c] is the path to the documentation store. *)
+  val blobstore_dir : t -> Fpath.t
+  (** [blobstore_dir c] is the path to the documentation store. *)
+
+  val blobstore : t -> (Blobstore.t, string) result
+  (** [blobstore c] is the blob store of {!blobstore_dir}. *)
 
   (*
   val bib_conf_file : t -> Fpath.t
@@ -60,6 +63,8 @@ module Conf : sig
   val http_client : t -> (Http_client.t, string) result
   (** [http_client c] is the HTTP client to use in the app. *)
 end
+
+val with_db : Conf.t -> (Db.t -> 'a) -> ('a, string) result
 
 val with_db_transaction :
   Conf.t -> Db.transaction_kind ->

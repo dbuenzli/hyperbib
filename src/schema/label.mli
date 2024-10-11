@@ -95,7 +95,7 @@ module type APPLICATION = sig
   type entity
   (** The type for labeled entities. *)
 
-  type entity_id = Id.t
+  type entity_id
   (** The type for labeled entity identifiers. *)
 
   type t
@@ -136,8 +136,9 @@ module type APPLICATION = sig
 end
 
 (** [For_entity (E)] is a relation to apply labels to entity [E]. *)
-module For_entity (E : Entity.IDENTIFIABLE) :
-  (APPLICATION with type entity := E.t and type entity_id := id)
+module For_entity
+    (Eid : Entity.ID) (E : Entity.IDENTIFIABLE with type id = Eid.t) :
+  (APPLICATION with type entity := E.t and type entity_id := E.id)
 
 (** {1:url Url} *)
 

@@ -107,11 +107,11 @@ module See_also = struct
   let create r = Rel_sql.insert_into Db.dialect table r
 end
 
-module Label = Label.For_entity (Subject)
+module Label = Label.For_entity (Id) (Subject)
 
 (* Queries *)
 
-include Entity.Publicable_queries (Subject)
+include Entity.Publicable_queries (Id) (Subject)
 
 open Rel_query.Syntax
 

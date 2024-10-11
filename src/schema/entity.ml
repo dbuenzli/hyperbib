@@ -6,8 +6,19 @@
 open Hyperbib_std
 open Rel
 
+module type ID = sig
+  type t
+
+  module Rel : sig
+    val type' : t Rel.Type.t
+    val v : t -> t Rel_query.value
+    val equal : t Rel_query.value -> t Rel_query.value -> bool Rel_query.value
+    val ( = ) : t Rel_query.value -> t Rel_query.value -> bool Rel_query.value
+  end
+end
+
 module type IDENTIFIABLE = sig
-  type id = Id.t
+  type id
   type t
   val id : t -> id
   val id' : (t, id) Col.t
@@ -45,7 +56,7 @@ module type DESCRIBABLE = sig
 end
 
 module type IDENTIFIABLE_QUERIES = sig
-  type id = Id.t
+  type id
   type t
   val create : ignore_id:bool -> t -> unit Rel_sql.Stmt.t
   val create_cols : ignore_id:bool -> t Col.value list -> unit Rel_sql.Stmt.t
@@ -59,10 +70,10 @@ end
 
 module type IDENTIFIABLE_WITH_QUERIES = sig
   include IDENTIFIABLE
-  include IDENTIFIABLE_QUERIES with type t := t and type id = id
+  include IDENTIFIABLE_QUERIES with type t := t and type id := id
 end
 
-module Identifiable_queries (E : IDENTIFIABLE) :
+module Identifiable_queries (Id : ID) (E : IDENTIFIABLE with type id = Id.t) :
   (IDENTIFIABLE_QUERIES with type t := E.t and type id := E.id) = struct
 
   open Rel_query.Syntax
@@ -83,21 +94,21 @@ module Identifiable_queries (E : IDENTIFIABLE) :
 
   let find_id id =
     let* p = Bag.table E.table in
-    let eq_id = Int.(p #. E.id' = id) in
+    let eq_id = Id.Rel.(p #. E.id' = id) in
     Bag.where eq_id (Bag.yield p)
 
   let find_id_stmt =
-    Rel_query.Sql.(func @@ int @-> ret (Table.row E.table) find_id)
+    Rel_query.Sql.(func @@ Id.Rel.type' @-> ret (Table.row E.table) find_id)
 
   let find_ids ids = let* id = ids in find_id id
 
   let find_id_list ids =
-    let add acc id = Bag.union (find_id (Int.v id)) acc in
+    let add acc id = Bag.union (find_id (Id.Rel.v id)) acc in
     match ids with
     | [] -> Bag.empty
     | id :: ids ->
         (* FIXME rel bug: we want to fold starting with Bag.empty *)
-        List.fold_left add (find_id (Int.v id)) ids
+        List.fold_left add (find_id (Id.Rel.v id)) ids
 
   let update id cols =
     Rel_sql.update Db.dialect E.table ~set:cols ~where:[Col.Value (E.id', id)]
@@ -112,13 +123,13 @@ end
 
 module type PUBLICABLE_WITH_QUERIES = sig
   include PUBLICABLE
-  include PUBLICABLE_QUERIES with type t := t and type id = id
+  include PUBLICABLE_QUERIES with type t := t and type id := id
 end
 
-module Publicable_queries (E : PUBLICABLE) :
+module Publicable_queries (Id : ID) (E : PUBLICABLE with type id = Id.t) :
   (PUBLICABLE_QUERIES with type t := E.t and type id := E.id) = struct
 
-  include Identifiable_queries (E)
+  include Identifiable_queries (Id) (E)
 
   open Rel_query.Syntax
 

@@ -303,6 +303,42 @@ module Cites : sig
     reference:id -> dois:Doi.t list -> (Db.t -> (unit, Db.error) result)
 end
 
+(** Doc relation *)
+module Doc : sig
+
+  type t
+  (** The type for the reference document relation. *)
+
+  val make : reference:id -> blob:Blob.id -> t
+  (** [make reference doc] indicates [doc] is a document for
+      [reference]. *)
+
+  val row : id -> Blob.id -> t
+  (** [row] is unlabelled {!v}.  *)
+
+  val reference : t -> id
+  (** [reference s] is the documented reference. *)
+
+  val blob : t -> Blob.id
+  (** [blob s] is the document's blob. *)
+
+  (** {1:table Table} *)
+
+  val reference' : (t, id) Col.t
+  (** [reference'] is the column for {!val-reference}. *)
+
+  val blob' : (t, Blob.id) Col.t
+  (** [blob'] is the column for {!val-blob}. *)
+
+  val table : t Table.t
+  (** The table for blob relationships. *)
+
+  (** {1:queries Queries} *)
+
+  val create : t -> unit Rel_sql.Stmt.t
+  (** [create doc] creates a document relationship. *)
+end
+
 (** {2:queries Queries} *)
 
 include Entity.PUBLICABLE_QUERIES with type t := t and type id := id

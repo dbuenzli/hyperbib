@@ -30,8 +30,7 @@ module Conf = struct
   let make ~log_level ~fmt_styler ~app_dir ~http_client () =
     { log_level; fmt_styler; app_dir; http_client }
 
-
-  let docstore_path = Fpath.v "data/docs"
+  let blobstore_path = Fpath.v "data/blobs"
   let db_path = Fpath.v "data/bib.sqlite3"
   let log_level c = c.log_level
   let fmt_styler c = c.fmt_styler
@@ -43,7 +42,8 @@ module Conf = struct
   let doi_cache_dir c = Fpath.(c.app_dir / "dois")
   let db_file c = Fpath.(c.app_dir // db_path)
   let db_backup_file c = Fpath.(db_file c + ".backup")
-  let docstore_dir c = Fpath.(c.app_dir // docstore_path)
+  let blobstore_dir c = Fpath.(c.app_dir // blobstore_path)
+  let blobstore c = Blobstore.of_dir (blobstore_dir c)
 
   let find_app_dir = function
   | Some app_dir -> Ok app_dir
@@ -68,6 +68,12 @@ module Conf = struct
     let* app_dir = Os.Path.realpath app_dir in
     Ok (make ~log_level ~fmt_styler ~app_dir ~http_client ())
 end
+
+let with_db conf f =
+  let db_file = Conf.db_file conf in
+  let* () = Db.ensure_db_path db_file in
+  Result.map_error (fun e -> Fmt.str "%a: %s" Fpath.pp_unquoted db_file e) @@
+  Db.with_open_schema Schema.v db_file f
 
 let with_db_transaction conf kind f =
   let db_file = Conf.db_file conf in

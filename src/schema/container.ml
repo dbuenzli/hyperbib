@@ -76,7 +76,7 @@ end
 
 include Container
 type container = t
-module Label = Label.For_entity (Container)
+module Label = Label.For_entity (Id) (Container)
 
 let match' ~title ~isbn ~issn =
   let open Rel_query.Syntax in
@@ -105,7 +105,7 @@ let select_stmt =
 
 (* Queries *)
 
-include Entity.Publicable_queries (Container)
+include Entity.Publicable_queries (Id) (Container)
 
 (* URL requests *)
 

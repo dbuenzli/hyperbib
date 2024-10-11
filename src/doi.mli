@@ -121,10 +121,12 @@ val json : string
     DOIs this seems to return the format {!Crossref}. *)
 
 val to_document :
-  ?resolver:Webs_url.t -> Webs.Http_client.t -> media_type:Webs.Media_type.t ->
-  t-> (Webs_url.t * Webs.Http.Body.t, string) result
+  ?url_only:bool -> ?resolver:Webs_url.t -> Webs.Http_client.t ->
+  media_type:Webs.Media_type.t -> t->
+  (Webs_url.t * Webs.Http.Body.t, string) result
 (** [to_document] is a best-effort resolver to try find a document of
     type [media_type] using [resolver]. It tries to resolve directly
     to the given [media_type] or if a webpage is returned tries to
     scrape it for a link to the document using various heuristics. In
-    case of success it returns the URL and a body to consume. *)
+    case of success returns an URL to the document and a body to its content.
+    If [only_url] is specified the body is {!Webs.Http.Body.empty}. *)

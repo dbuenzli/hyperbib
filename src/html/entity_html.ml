@@ -139,7 +139,8 @@ let input_entity_id ~input_name:n eid =
   El.input ~at:At.[hidden; name n; value eid] ()
 
 let entity_input_by_id
-    (type t) (module E : Entity.PUBLICABLE with type t = t)
+    (type t) (type id)
+    (module E : Entity.PUBLICABLE with type t = t and type id = int)
     uf ~input_name ~render ~orderable ~remove ~suff e
   =
   let input = input_entity_id ~input_name (Some (E.id e)) in

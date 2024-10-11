@@ -161,7 +161,7 @@ let test ?doc ?run:(r = true) ?(requires = []) ?(srcs = []) src =
   let name = Fpath.basename ~strip_ext:true src in
   B0_ocaml.exe name ~srcs ~requires ~meta ?doc
 
-let test_docstore = test ~/"test/test_docstore.ml"
+let test_blobstore = test ~/"test/test_blobstore.ml"
 
 (* Actions *)
 

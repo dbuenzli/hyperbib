@@ -41,7 +41,7 @@ module Label = struct
 
   (* Table *)
 
-  let id' = Col.make "id" Type.int id
+  let id' = Col.make "id" Id.Rel.type' id
   let name' = Col.make "name" Type.text name
   let synopsis' = Col.make "synopsis" Type.text synopsis
   let color' = Col.make "color" Type.int64 color
@@ -65,7 +65,7 @@ type label_id = id
 
 module type APPLICATION = sig
   type entity
-  type entity_id = Id.t
+  type entity_id
   type t
   val v : entity:entity_id -> label:id -> t
   val row : entity_id -> id -> t
@@ -83,7 +83,9 @@ module type APPLICATION = sig
     src:entity_id -> dst:entity_id -> unit Rel_sql.Stmt.t
 end
 
-module For_entity (E : Entity.IDENTIFIABLE) = struct
+module For_entity (Eid : Entity.ID)
+    (E : Entity.IDENTIFIABLE with type id = Eid.t) =
+struct
   type entity = E.t
   type entity_id = E.id
   type t = { entity : E.id; label : id; }
@@ -93,8 +95,8 @@ module For_entity (E : Entity.IDENTIFIABLE) = struct
   let entity e = e.entity
   let label e = e.label
 
-  let entity' = Col.make "entity" Type.int entity
-  let label' = Col.make "label" Type.int label
+  let entity' = Col.make "entity" Eid.Rel.type' entity
+  let label' = Col.make "label" Id.Rel.type' label
   let table =
     let name = Table.name E.table ^ "_label" in
     let primary_key = Table.Primary_key.make [Def entity'; Def label'] in
@@ -119,7 +121,7 @@ module For_entity (E : Entity.IDENTIFIABLE) = struct
   let applications eids =
     let* eid = eids in
     let* rel = Bag.table table in
-    Bag.where Int.(eid = rel #. entity') (Bag.yield rel)
+    Bag.where Eid.Rel.(eid = rel #. entity') (Bag.yield rel)
 
   let of_applications ~only_public apps =
     let* label = Bag.table Label.table in
@@ -141,14 +143,16 @@ module For_entity (E : Entity.IDENTIFIABLE) = struct
          FROM %s as a
          WHERE a.entity = ?2" (Table.name table) (Table.name table)
     in
-    let stmt = Rel_sql.Stmt.(func sql @@ int @-> int @-> unit) in
+    let stmt =
+      Rel_sql.Stmt.(func sql @@ Eid.Rel.type' @-> Eid.Rel.type' @-> unit)
+    in
     fun ~src ~dst -> stmt dst src
 
 end
 
 (* Queries *)
 
-include Entity.Publicable_queries (Label)
+include Entity.Publicable_queries (Id) (Label)
 
 (* Urls *)
 

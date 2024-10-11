@@ -202,9 +202,9 @@ let download_document_url httpc ~media_type url =
   let body = Http.Response.body response in
   let ctype = Media_type.get_type (Http.Body.content_type body) in
   if document_content_type_okay ~media_type ctype then Ok (url, body) else
-  Fmt.error  "%s: Expected %s found: %s" url media_type ctype
+  Fmt.error "%s: Expected %s found: %s" url media_type ctype
 
-let to_document ?resolver httpc ~media_type doi =
+let to_document ?(url_only = false) ?resolver httpc ~media_type doi =
   let accept_types =
     String.concat ", " [media_type; "text/html;q=0.5"; "text/plain;q=0.4"]
   in
@@ -220,16 +220,18 @@ let to_document ?resolver httpc ~media_type doi =
     | None -> url | Some url -> url
   in
   let status = Http.Response.status response in
-  if status <> 200
-  then Fmt.error "%s: %a" url Http.Status.pp status else
+  if status <> 200 then Fmt.error "%s: %a" url Http.Status.pp status else
   let body = Http.Response.body response in
   let ctype = Media_type.get_type (Http.Body.content_type body) in
-  if document_content_type_okay ~media_type ctype then Ok (url, body) else
+  if document_content_type_okay ~media_type ctype
+  then Ok (url, if url_only then Http.Body.empty else body) else
   let* page = Http.Body.to_string body in
   let urls = Webs_url.list_of_text_scrape ~root:url page in
   match find_document_url_candidates ~doi ~media_type urls with
   | [] -> Fmt.error "%s: No document URL found" url
-  | [doc_url] -> download_document_url httpc ~media_type doc_url
+  | [doc_url] ->
+      if url_only then Ok (doc_url, Http.Body.empty) else
+      download_document_url httpc ~media_type doc_url
   | urls ->
       Fmt.error "@[<v>%s: Giving up. Multiple URL document candidates@,%a@]"
         url Fmt.(list string) urls

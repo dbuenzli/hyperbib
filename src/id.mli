@@ -39,3 +39,11 @@ module Map : sig
   (** [get_list k m] is the list bound to [k] in [m] or the empty
       list if [k] is unbound. *)
 end
+
+
+module Rel : sig
+  val type' : t Rel.Type.t
+  val v : t -> t Rel_query.value
+  val equal : t Rel_query.value -> t Rel_query.value -> bool Rel_query.value
+  val ( = ) : t Rel_query.value -> t Rel_query.value -> bool Rel_query.value
+end

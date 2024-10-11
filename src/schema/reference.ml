@@ -124,10 +124,10 @@ module Reference = struct
           ~parent:(Table (Container.table, [Def Container.id']))
           ~on_delete:`Set_null () ]
     in
-    let indices = [
-      Table.Index.make [Def doi'];
-      Table.Index.make [Def container'];
-      Table.Index.make [Def date_year']; ]
+    let indices =
+      [ Table.Index.make [Def doi'];
+        Table.Index.make [Def container'];
+        Table.Index.make [Def date_year']; ]
     in
     Table.make "reference" ~primary_key ~foreign_keys ~indices @@
     Row.(unit row * id' * abstract' * container' * date_year' * date_md' *
@@ -163,7 +163,7 @@ let subject_id = Subject.id
 (* Relations *)
 
 let label_order_by_name = Label.order_by_name
-module Label = Label.For_entity (Reference)
+module Label = Label.For_entity (Id) (Reference)
 
 module Contributor = struct
   type t =
@@ -361,7 +361,8 @@ module Subject = struct
     let delete_all id = Rel_sql.delete_from Db.dialect table ~where:[ref_col] in
     let insert sid =
       Db.exec db @@
-      Rel_sql.insert_into_cols Db.dialect table [ref_col; Col.Value (subject', sid)]
+      Rel_sql.insert_into_cols Db.dialect table
+        [ref_col; Col.Value (subject', sid)]
     in
     let open Result.Syntax in
     let* () = Db.exec db (delete_all id) in
@@ -387,8 +388,8 @@ module Cites = struct
     let foreign_keys =
       [ Table.Foreign_key.make
           ~cols:[Def reference']
-          ~parent:(Table (table, [Def id']))
-          ~on_delete:`Cascade () ]
+          ~parent:(Table (ref_table, [Def id']))
+          ~on_delete:`Cascade (); ]
     in
     Table.make "cites" ~primary_key ~foreign_keys @@
     Row.(unit row * reference' * doi')
@@ -429,7 +430,36 @@ module Cites = struct
     Ok ()
 end
 
-include Entity.Publicable_queries (Reference)
+module Doc = struct
+  let ref_table = table
+  type t = { reference : id; blob : Blob.id }
+  let make ~reference ~blob = { reference; blob }
+  let row reference blob = { reference; blob }
+  let reference d = d.reference
+  let blob d = d.blob
+
+  let reference' = Col.make "reference" Type.int reference
+  let blob' = Col.make "blob" Type.text blob
+  let table =
+    let primary_key = Table.Primary_key.make [Def reference'; Def blob'] in
+    let foreign_keys =
+      [ Table.Foreign_key.make
+          ~cols:[Def reference']
+          ~parent:(Table (table, [Def id']))
+          ~on_delete:`Cascade ();
+        Table.Foreign_key.make
+          ~cols:[Def blob']
+          ~parent:(Table (Blob.table, [Def Blob.id']))
+          ~on_delete:`Cascade ();
+      ]
+    in
+    Table.make "reference_doc" ~primary_key ~foreign_keys @@
+    Row.(unit row * reference' * blob')
+
+  let create d = Rel_sql.insert_into Db.dialect table d
+end
+
+include Entity.Publicable_queries (Id) (Reference)
 
 open Rel_query.Syntax
 

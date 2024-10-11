@@ -8,6 +8,8 @@
 Bibliography
 Bibliography_service
 Bibtex
+Blobstore
+Blob
 Cli_kit
 Cmd_db
 Cmd_export
@@ -21,7 +23,6 @@ Container_service
 Crossref
 Date
 Db
-Docstore
 Doi
 Doi_html
 Entity

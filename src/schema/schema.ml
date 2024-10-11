@@ -19,7 +19,7 @@ let tables =
   Table.[ Def conf;
           Def Container.Label.table;
           Def Container.table;
-          Def Doc.table;
+          Def Blob.table;
           Def Label.table;
           Def Person.Label.table;
           Def Person.table;
@@ -27,6 +27,7 @@ let tables =
           Def Reference.Contributor.table;
           Def Reference.Label.table;
           Def Reference.Subject.table;
+          Def Reference.Doc.table;
           Def Reference.table;
           Def Subject.Label.table;
           Def Subject.See_also.table;

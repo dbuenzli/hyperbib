@@ -3,17 +3,33 @@
    SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
-(** Database entities model commonalities. *)
+(** Database entities model commonalities.
+
+    {b XXX.} If we get to make {!Id} abstract we likely
+    want to fold {!ID} into {!IDENTIFIABLE}. In turn this will
+    make functors handier to use. *)
 
 open Hyperbib_std
 open Rel
+
+(** The type for identifiers. *)
+module type ID = sig
+  type t
+
+  module Rel : sig
+    val type' : t Rel.Type.t
+    val v : t -> t Rel_query.value
+    val equal : t Rel_query.value -> t Rel_query.value -> bool Rel_query.value
+    val ( = ) : t Rel_query.value -> t Rel_query.value -> bool Rel_query.value
+  end
+end
 
 (** {1:sigs Entity signatures} *)
 
 (** The type for identifiable entities. *)
 module type IDENTIFIABLE = sig
 
-  type id = Id.t
+  type id
   (** The type for entity identifiers. *)
 
   type t
@@ -91,7 +107,8 @@ end
 
 (** The type for basic queries on identifiable entities. *)
 module type IDENTIFIABLE_QUERIES = sig
-  type id = Id.t
+
+  type id
   (** The type for entity identifiers. *)
 
   type t
@@ -128,11 +145,13 @@ end
 (** The type for identifiable entities and their queries. *)
 module type IDENTIFIABLE_WITH_QUERIES = sig
   include IDENTIFIABLE
-  include IDENTIFIABLE_QUERIES with type t := t and type id = id
+  include IDENTIFIABLE_QUERIES with type t := t and type id := id
 end
 
 (** Functor for identifiable queries *)
-module Identifiable_queries (E : IDENTIFIABLE) : IDENTIFIABLE_QUERIES
+module
+  Identifiable_queries (Id : ID) (E : IDENTIFIABLE with type id = Id.t) :
+  IDENTIFIABLE_QUERIES
   with type t := E.t and type id := E.id
 
 
@@ -153,11 +172,12 @@ end
 (** The type for publicable entities and their queries. *)
 module type PUBLICABLE_WITH_QUERIES = sig
   include PUBLICABLE
-  include PUBLICABLE_QUERIES with type t := t and type id = id
+  include PUBLICABLE_QUERIES with type t := t and type id := id
 end
 
 (** Functor for pubicable queries. *)
-module Publicable_queries (E : PUBLICABLE) : PUBLICABLE_QUERIES
+module Publicable_queries (Id : ID) (E : PUBLICABLE with type id = Id.t) :
+  PUBLICABLE_QUERIES
   with type t := E.t and type id := E.id
 
 (** {1:urls Entity URLs} *)

@@ -30,3 +30,10 @@ module Map = struct
 
   let of_list id l = List.fold_left (fun acc v -> add (id v) v acc) empty l
 end
+
+module Rel = struct
+  let type' = Rel.Type.int
+  let v = Rel_query.Int.v
+  let equal = Rel_query.Int.equal
+  let ( = ) = Rel_query.Int.( = )
+end

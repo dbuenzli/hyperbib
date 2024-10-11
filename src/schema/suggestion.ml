@@ -50,7 +50,7 @@ module Suggestion = struct
 end
 
 include Suggestion
-include Entity.Identifiable_queries (Suggestion)
+include Entity.Identifiable_queries (Id) (Suggestion)
 
 open Rel_query.Syntax
 

@@ -14,20 +14,20 @@ val check_edit_authorized : Service_env.t -> (unit, Http.Response.t) result
 (** {1:data Data lookups} *)
 
 val get_entity :
-  (module Entity.IDENTIFIABLE_WITH_QUERIES with type t = 't) ->
-  Db.t -> Id.t -> ('t, Http.Response.t) result
+  (module Entity.IDENTIFIABLE_WITH_QUERIES with type t = 't and type id = 'id)
+  -> Db.t -> 'id -> ('t, Http.Response.t) result
 
 (** {1:responses Request responses} *)
 
 val create :
-  (module Entity.IDENTIFIABLE_WITH_QUERIES with type t = 't) ->
-  entity_page_url:(Id.t -> Kurl.t) ->
-  Service_env.t -> Http.Request.t -> (Http.Response.t, Http.Response.t) result
+  (module Entity.IDENTIFIABLE_WITH_QUERIES with type t = 't and type id = int)
+  -> entity_page_url:(int -> Kurl.t) -> Service_env.t -> Http.Request.t ->
+  (Http.Response.t, Http.Response.t) result
 
 val delete :
-  (module Entity.IDENTIFIABLE_WITH_QUERIES with type t = 't) ->
-  deleted_html:(Page.Gen.t -> 't -> El.html) ->
-  Service_env.t -> Id.t -> (Http.Response.t, Http.Response.t) result
+  (module Entity.IDENTIFIABLE_WITH_QUERIES with type t = 't and type id = 'id)
+  -> deleted_html:(Page.Gen.t -> 't -> El.html) ->
+  Service_env.t -> 'id -> (Http.Response.t, Http.Response.t) result
 
 (** {1:pagerefs Page references} *)
 

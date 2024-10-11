@@ -107,11 +107,11 @@ end
 include Person
 type person = t
 
-module Label = Label.For_entity (Person)
+module Label = Label.For_entity (Id) (Person)
 
 (* Queries *)
 
-include Entity.Publicable_queries (Person)
+include Entity.Publicable_queries (Id) (Person)
 
 open Rel_query.Syntax
 

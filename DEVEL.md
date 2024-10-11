@@ -88,6 +88,14 @@ To visualize the schema diagram use
 b0 -- hyperbib db schema -f dot app | dot -Tsvg | show-url -t s.svg
 ```
 
+# Document storage 
+
+Documents associated to bibiographic records are stored on the file
+system by using the [`src/blobstorage.mli`](src/blobstorage.mli)
+abstraction which stores blobs indexed by their XXH3-128 hash. The
+metadata is stored in the database in the
+[`src/schema/doc.mli`](src/schema/doc.mli) table.
+
 # Web service
 
 The webservice uses the HTTP/1.1 `Webs` connector, each connection is

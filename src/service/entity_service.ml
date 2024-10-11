@@ -18,7 +18,8 @@ let check_edit_authorized env =
 (* Data lookups *)
 
 let get_entity
-    (type t) (module E : Entity.IDENTIFIABLE_WITH_QUERIES with type t = t)
+    (type t) (type id) (module E : Entity.IDENTIFIABLE_WITH_QUERIES
+               with type t = t and type id = id)
     db id
   =
   let* s = Db.first' db (E.find_id_stmt id) in
@@ -29,7 +30,9 @@ let get_entity
 (* Responses *)
 
 let create
-    (type t) (module E : Entity.IDENTIFIABLE_WITH_QUERIES with type t = t)
+    (type t)
+    (module E : Entity.IDENTIFIABLE_WITH_QUERIES
+      with type t = t and type id = int)
     ~entity_page_url env req
   =
   let* () = check_edit_authorized env in
@@ -42,7 +45,9 @@ let create
   Ok (Http.Response.empty ~headers Http.Status.ok_200)
 
 let delete
-    (type t) (module E : Entity.IDENTIFIABLE_WITH_QUERIES with type t = t)
+    (type t) (type id)
+    (module E : Entity.IDENTIFIABLE_WITH_QUERIES with
+      type t = t and type id = id)
     ~deleted_html env id
   =
   let* () = check_edit_authorized env in
