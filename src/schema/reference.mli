@@ -18,7 +18,7 @@ type t
 type reference = t
 (** See {!t}. *)
 
-val v :
+val make :
   id:id -> abstract:string -> container:Container.id option ->
   date:Date.partial option -> doi:Doi.t option -> isbn:string -> issue:string ->
   note:string -> pages:string -> private_note:string ->
@@ -30,7 +30,7 @@ val row :
   id -> string -> Container.id option -> Date.year option ->
   Date.md_partial option -> Doi.t option -> string -> string -> string ->
   string -> string -> bool -> string -> string -> string -> string -> t
-(** [row] is {!v} unlabelled. *)
+(** [row] is {!make} unlabelled. *)
 
 val new' : t
 (** [new'] is a new reference. *)
@@ -139,13 +139,13 @@ module Contributor : sig
   type t
   (** The type for reference contributor relation. *)
 
-  val v :
+  val make :
     reference:id -> person:Person.id -> role:Person.role -> position:int -> t
-  (** [v ~reference ~person ~role ~position] is a contributor with
+  (** [make ~reference ~person ~role ~position] is a contributor with
       given attributes. See accessors for semantics. *)
 
   val row : id -> Person.id -> Person.role -> int ->  t
-  (** [row] is unlabelled {!v}. *)
+  (** [row] is unlabelled {!make}. *)
 
   val reference : t -> id
   (** [reference] is the reference contributed to. *)
@@ -205,11 +205,11 @@ module Subject : sig
   type t
   (** The type for the reference subject relation. *)
 
-  val v : reference:id -> subject:Subject.id -> t
-  (** [v reference subject] indicates [reference] has subject [subject]. *)
+  val make : reference:id -> subject:Subject.id -> t
+  (** [make reference subject] indicates [reference] has subject [subject]. *)
 
   val row : id -> Person.id -> t
-  (** [row] is unabelled {!v}. *)
+  (** [row] is unabelled {!make}. *)
 
   val reference : t -> id
   (** [reference s] is the subjected reference. *)
@@ -264,11 +264,11 @@ module Cites : sig
   type t
   (** The type for the reference subject relation. *)
 
-  val v : reference:id -> doi:Doi.t -> t
-  (** [v reference doi] indicates [reference] cites document [doi]. *)
+  val make : reference:id -> doi:Doi.t -> t
+  (** [make reference doi] indicates [reference] cites document [doi]. *)
 
   val row : id -> Doi.t -> t
-  (** [row] is unlabelled {!v}.  *)
+  (** [row] is unlabelled {!make}.  *)
 
   val reference : t -> id
   (** [reference s] is the subjected reference. *)
@@ -314,7 +314,7 @@ module Doc : sig
       [reference]. *)
 
   val row : id -> Blob.id -> t
-  (** [row] is unlabelled {!v}.  *)
+  (** [row] is unlabelled {!make}.  *)
 
   val reference : t -> id
   (** [reference s] is the documented reference. *)

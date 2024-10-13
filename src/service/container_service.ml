@@ -185,7 +185,7 @@ let input_finder env ~input_name =
 let creatable_container_of_sel sel =
   let sel = String.trim sel in
   if sel = "" then None else
-  Option.some @@ Container.v
+  Option.some @@ Container.make
     ~id:0 ~title:sel ~isbn:"" ~issn:"" ~note:"" ~private_note:""
     ~public:false ()
 

@@ -114,13 +114,13 @@ let creatable_person_of_sel sel =
   match String.cut_left ~sep:"," sel with
   | None ->
       Option.some @@
-      Person.v ~id:0 ~last_name:sel ~first_names:"" ~orcid:""
+      Person.make ~id:0 ~last_name:sel ~first_names:"" ~orcid:""
         ~note:"" ~private_note:"" ~public:true ()
   | Some (last_name, first_names) ->
       let last_name = String.trim last_name in
       let first_names = String.trim first_names in
       Option.some @@
-      Person.v ~id:0 ~last_name ~first_names ~orcid:""
+      Person.make ~id:0 ~last_name ~first_names ~orcid:""
         ~note:"" ~private_note:"" ~public:true ()
 
 let input env ~for_list ~input_name ~role id =

@@ -116,7 +116,7 @@ module Doi = struct
 
   let reference_of_ref ?(note = "") ~public ~container_id:container r =
     let isbn = if Option.is_some container then "" else r.isbn in
-    Reference.v ~id:0 ~abstract:r.abstract ~container ~date:(Some r.issued)
+    Reference.make ~id:0 ~abstract:r.abstract ~container ~date:(Some r.issued)
       ~doi:r.doi ~isbn ~issue:r.issue ~note ~pages:r.page
       ~private_note:"" ~public ~publisher:r.publisher ~title:r.title
       ~type':r.type' ~volume:r.volume
@@ -127,7 +127,7 @@ module Doi = struct
     if ref.container_title = "" then Ok None else
     let title = ref.container_title and isbn = ref.isbn and issn = ref.issn in
     let new_container () =
-      Container.v
+      Container.make
         ~id:0 ~title ~isbn ~issn ~note:"" ~private_note:"" ~public ()
     in
     let c = Container.match_stmt ~title ~isbn ~issn in
@@ -154,7 +154,7 @@ module Doi = struct
 
   let get_person ~create_public:public db p =
     let new_person () =
-      Person.v ~id:0 ~last_name:p.family ~first_names:p.given
+      Person.make ~id:0 ~last_name:p.family ~first_names:p.given
         ~orcid:p.orcid ~note:"" ~private_note:"" ~public ()
     in
     let m = Person.match_stmt ~last:p.family ~first:p.given ~orcid:p.orcid in

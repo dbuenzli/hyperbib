@@ -228,7 +228,8 @@ let find_create_container q =
       let isbn = get @@ Http.Query.find_first create_container_isbn q in
       let public = Http.Query.mem "public" q (* XXX Brittle *) in
       Option.some @@
-      Container.v ~id:0 ~title ~isbn ~issn ~note:"" ~private_note:"" ~public ()
+      Container.make
+        ~id:0 ~title ~isbn ~issn ~note:"" ~private_note:"" ~public ()
 
 let person_key = function
 | None -> Reference.Contributor.(key_for_rel table person')
@@ -264,7 +265,7 @@ let find_create_person ~public ~role q =
   let* first_names = Http.Query.find_first first q in
   let* last_name = Http.Query.find_first last q in
   let* orcid = Http.Query.find_first orcid q in
-  Option.some @@ Person.v
+  Option.some @@ Person.make
     ~id:0 ~last_name ~first_names ~orcid ~note:"" ~private_note:"" ~public ()
 
 
@@ -272,7 +273,7 @@ let find_create_persons ~public role q =
   let rec loop acc fs ls os = match fs, ls, os with
   | first_names :: fs, last_name :: ls, orcid :: os ->
       let p =
-        Person.v ~id:0 ~last_name ~first_names ~orcid
+        Person.make ~id:0 ~last_name ~first_names ~orcid
           ~note:"" ~private_note:"" ~public ()
       in
       loop (`To_create p :: acc) fs ls os

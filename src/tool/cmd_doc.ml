@@ -65,7 +65,7 @@ let add_reference_doc
       Log.if_error ~use:() @@ Db.string_error @@ Result.join @@
       Db.with_transaction `Deferred db @@ fun db ->
       let* () = Db.exec db (Blob.create ~ignore_id:false blob) in
-      ylet* () = Db.exec db (Reference.Doc.create doc) in
+      let* () = Db.exec db (Reference.Doc.create doc) in
       Log.app (fun m -> m "%a: added doc from %s" Doi.pp doi origin);
       Ok ()
 

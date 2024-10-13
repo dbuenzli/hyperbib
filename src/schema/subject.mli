@@ -20,14 +20,14 @@ type t
 type subject = t
 (** See {!t}. *)
 
-val v :
+val make :
   id:id -> name:string -> parent:id option -> see:id option ->
   description:string -> private_note:string -> public:bool -> unit ->  t
-(** [v …] is a subject with given attributes, see accessors for semantics. *)
+(** [make …] is a subject with given attributes, see accessors for semantics. *)
 
 val row :
   id -> string -> id option -> id option -> string -> string -> bool -> t
-(** [row] is unlabelled {!v}. *)
+(** [row] is unlabelled {!make}. *)
 
 val new' : t
 (** [new'] is a new subject. *)
@@ -105,12 +105,12 @@ module See_also : sig
   type t
   (** The type for the see also subject relation. *)
 
-  val v : given:id -> that:id -> unit -> t
-  (** [v given see] indicates interest in [given] subject should
+  val make : given:id -> that:id -> unit -> t
+  (** [make given see] indicates interest in [given] subject should
       also consult [that]. *)
 
   val row : id -> id -> t
-  (** [row] is unlabelled {!v}. *)
+  (** [row] is unlabelled {!make}. *)
 
   val given : t -> id
   (** [given s] is the source subject. *)

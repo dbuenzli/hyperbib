@@ -21,14 +21,15 @@ type t
 type container = t
 (** See {!t}. *)
 
-val v :
+val make :
   id:id -> title:string -> isbn:string -> issn:string ->
   note:string -> private_note:string -> public:bool ->
   unit -> t
-(** [v …] is a container with given attributes, see accessors for semantics. *)
+(** [make …] is a container with given attributes, see accessors for
+    semantics. *)
 
 val row : id -> string -> string -> string -> string -> string -> bool -> t
-(** [row] is {!v} unlabelled. *)
+(** [row] is {!make} unlabelled. *)
 
 val new' : t
 (** [new'] is a new container. *)

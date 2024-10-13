@@ -132,7 +132,7 @@ let adjust_env_and_session env sess =
       in
       let user_view = user_view' ~private' in
       let private_data = private_data ~private' in
-      let caps = User.Caps.v ~edit:true in
+      let caps = User.Caps.make ~edit:true in
       let env = env' caps ~auth_ui:None ~user_view ~private_data in
       env, sess
   | `With_login ->
@@ -143,7 +143,7 @@ let adjust_env_and_session env sess =
           let env = env' caps ~auth_ui ~user_view ~private_data:false in
           env, None
       | Some (Session.User { private_view; _ }) as sess ->
-          let caps = User.Caps.v ~edit:true in
+          let caps = User.Caps.make ~edit:true in
           let auth_ui = Some `Logout in
           let user_view = user_view' ~private':private_view in
           let private_data = private_data ~private':private_view in

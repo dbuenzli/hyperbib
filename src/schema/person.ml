@@ -29,7 +29,7 @@ module Person = struct
       private_note : string;
       public : bool; }
 
-  let v ~id ~last_name ~first_names ~orcid ~note ~private_note ~public () =
+  let make ~id ~last_name ~first_names ~orcid ~note ~private_note ~public () =
     { id; last_name; first_names; orcid; note; private_note; public }
 
   let row id last_name first_names orcid note private_note public =
@@ -169,7 +169,7 @@ module Url = struct
           match Http.Query.find_first orcid q with
           | None -> Http.Response.bad_request_400 ~reason:"No person found" ()
           | Some orcid ->
-              Ok (Person.v ~id:0 ~last_name:l ~first_names:f ~orcid
+              Ok (Person.make ~id:0 ~last_name:l ~first_names:f ~orcid
                     ~note:"" ~private_note:"" ~public:true ())
 
   let person_to_query ?(init = Http.Query.empty) p =

@@ -40,7 +40,7 @@ module Reference = struct
       type' : string;
       volume : string; }
 
-  let v
+  let make
       ~id ~abstract ~container ~date ~doi ~isbn ~issue ~note
       ~pages ~private_note ~public ~publisher ~title ~type' ~volume
     =
@@ -172,7 +172,7 @@ module Contributor = struct
       role : Person.role;
       position : int }
 
-  let v ~reference ~person ~role ~position =
+  let make ~reference ~person ~role ~position =
     { reference; person; role; position }
 
   let row reference person role position =
@@ -246,7 +246,7 @@ module Contributor = struct
     let ref_col = Col.Value (reference', id) in
     let delete_all id = Rel_sql.delete_from Db.dialect table ~where:[ref_col] in
     let contributor role i pid =
-      v ~reference:id ~person:pid ~role ~position:i
+      make ~reference:id ~person:pid ~role ~position:i
     in
     let authors = List.mapi (contributor Author) authors in
     let editors = List.mapi (contributor Editor) editors in
@@ -265,7 +265,7 @@ module Subject = struct
     { reference : id;
       subject : Subject.id }
 
-  let v ~reference ~subject = { reference; subject }
+  let make ~reference ~subject = { reference; subject }
   let row reference subject = { reference; subject }
   let reference a = a.reference
   let subject a = a.subject
@@ -376,7 +376,7 @@ module Cites = struct
   let ref_doi' = doi'
 
   type t = { reference : id; doi : Doi.t }
-  let v ~reference ~doi = { reference; doi }
+  let make ~reference ~doi = { reference; doi }
   let row reference doi = { reference; doi }
   let reference c = c.reference
   let doi c = c.doi
@@ -421,7 +421,7 @@ module Cites = struct
        easier this way. *)
     let ref_col = Col.Value (reference', id) in
     let delete_all id = Rel_sql.delete_from Db.dialect table ~where:[ref_col] in
-    let cite doi = v ~reference:id ~doi in
+    let cite doi = make ~reference:id ~doi in
     let cites = List.map cite dois in
     let insert c = Db.exec db @@ create c in
     let open Result.Syntax in

@@ -31,14 +31,14 @@ type t
 type person = t
 (**  See {!t}. *)
 
-val v :
+val make :
   id:id -> last_name:string -> first_names:string ->
   orcid:string -> note:string -> private_note:string ->
   public:bool -> unit -> t
-(** [v …] is a person with given attributes, see accessors for semantics. *)
+(** [make …] is a person with given attributes, see accessors for semantics. *)
 
 val row : id -> string -> string -> string -> string -> string -> bool -> t
-(** [row] is {!v} unlabelled. *)
+(** [row] is {!make} unlabelled. *)
 
 val new' : t
 (** [new'] is a new person. *)

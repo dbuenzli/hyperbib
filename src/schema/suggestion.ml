@@ -17,7 +17,7 @@ module Suggestion = struct
       comment : string;
       email : string }
 
-  let v ~id ~timestamp ~doi ~suggestion ~comment ~email () =
+  let make ~id ~timestamp ~doi ~suggestion ~comment ~email () =
     { id; timestamp; doi; suggestion; comment; email }
 
   let row id timestamp doi suggestion comment email =

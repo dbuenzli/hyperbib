@@ -79,8 +79,8 @@ module Caps : sig
   type t
   (** The type for user capabilities. *)
 
-  val v : edit:bool -> t
-  (** [v ~edit] are capabilities with given attributes. See
+  val make : edit:bool -> t
+  (** [make ~edit] are capabilities with given attributes. See
       corresponding accessors for semantics. *)
 
   val edit : t -> bool

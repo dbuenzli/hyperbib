@@ -17,7 +17,7 @@ module Subject = struct
       private_note : string;
       public : bool; }
 
-  let v ~id ~name ~parent ~see ~description ~private_note ~public () =
+  let make ~id ~name ~parent ~see ~description ~private_note ~public () =
     { id; name; parent; see; description; private_note; public }
 
   let row id name parent see description private_note public =
@@ -87,7 +87,7 @@ type subject = t
 
 module See_also = struct
   type t = { given : id; that : id; }
-  let v ~given ~that () = { given; that }
+  let make ~given ~that () = { given; that }
   let row given that = { given; that }
   let given s = s.given
   let that s = s.that
@@ -197,7 +197,7 @@ module Url = struct
   | None -> Http.Response.bad_request_400 ~reason:"No subject found" ()
   | Some name ->
       Result.ok @@
-      Subject.v ~id:0 ~name ~parent:None ~see:None
+      Subject.make ~id:0 ~name ~parent:None ~see:None
         ~description:"" ~private_note:"" ~public:false ()
 
   let subject_to_query ?(init = Http.Query.empty) s =

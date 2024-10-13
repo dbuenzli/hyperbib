@@ -1,5 +1,5 @@
 (*---------------------------------------------------------------------------
-   Copyright (c) 2021 University of Bern. All rights reserved.
+val    Copyright (c) 2021 University of Bern. All rights reserved.
    SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
@@ -22,14 +22,14 @@ type name = string
 type t
 (** The type for labels *)
 
-val v :
+val make :
   id:id -> name:name -> synopsis:string -> color:color ->
   note:string -> private_note:string -> public:bool -> t
-(** [v] constructs a label with the given attributes, see accessors
+(** [make …] constructs a label with the given attributes, see accessors
     for semantics. *)
 
 val row : id -> name -> string -> color -> string -> string -> bool -> t
-(** [row] is {!v} unlaballed. *)
+(** [row] is {!make} unlaballed. *)
 
 val id : t -> id
 (** [id l] is the label identifier. *)
@@ -101,12 +101,12 @@ module type APPLICATION = sig
   type t
   (** The type for relating entites and labels. *)
 
-  val v : entity:entity_id -> label:label_id -> t
-  (** [v entity label] applies label [label] to the entity identified by
+  val make : entity:entity_id -> label:label_id -> t
+  (** [make entity label] applies label [label] to the entity identified by
       [entity]. *)
 
   val row : entity_id -> id -> t
-  (** [row] is {!v} unlabelled. *)
+  (** [row] is {!make} unlabelled. *)
 
   val entity : t -> entity_id
   (** [entity a] is the entity to which the label is applied. *)

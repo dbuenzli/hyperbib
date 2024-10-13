@@ -78,7 +78,7 @@ let validate_suggestion db env req s =
   let* doi, suggestion, msg, explain = lookup_doi db env req s in
   let s =
     let comment = Suggestion.comment s and email = Suggestion.email s in
-    Suggestion.v ~id:0 ~timestamp:0 ~doi ~suggestion ~comment ~email ()
+    Suggestion.make ~id:0 ~timestamp:0 ~doi ~suggestion ~comment ~email ()
   in
   match msg with
   | None -> Ok (Ok s)
@@ -100,7 +100,7 @@ let suggestion_of_req req =
     Option.value ~default:0 @@ Ptime.Span.to_int_s @@
     Ptime.to_span (Ptime_clock.now ())
   in
-  Ok (Suggestion.v ~id:0 ~timestamp ~doi ~suggestion ~comment ~email ())
+  Ok (Suggestion.make ~id:0 ~timestamp ~doi ~suggestion ~comment ~email ())
 
 (* Responses *)
 
@@ -146,7 +146,7 @@ let fill_in env req =
   in
   let s =
     let comment = Suggestion.comment s and email = Suggestion.email s in
-    Suggestion.v ~id:0 ~timestamp:0 ~doi ~suggestion ~comment ~email ()
+    Suggestion.make ~id:0 ~timestamp:0 ~doi ~suggestion ~comment ~email ()
   in
   let html = Suggestion_html.suggest_form ~force_rescue:true ?msg g s in
   Ok (Page.part_response ?explain html)

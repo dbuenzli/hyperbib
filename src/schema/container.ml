@@ -17,7 +17,7 @@ module Container = struct
       private_note : string;
       public : bool; }
 
-  let v ~id ~title ~isbn ~issn ~note ~private_note ~public () =
+  let make ~id ~title ~isbn ~issn ~note ~private_note ~public () =
     { id; title; note; isbn; issn; private_note; public }
 
   let row id title isbn issn note private_note public =
@@ -137,7 +137,7 @@ module Url = struct
   | None -> Http.Response.bad_request_400 ~reason:"No container found" ()
   | Some title ->
       Result.ok @@
-      Container.v
+      Container.make
         ~id:0 ~title ~isbn:"" ~issn:"" ~note:"" ~private_note:""
         ~public:false ()
 

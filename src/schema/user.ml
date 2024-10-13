@@ -96,7 +96,7 @@ let load file =
 
 module Caps = struct
   type t = { edit : bool }
-  let v ~edit = { edit }
+  let make ~edit = { edit }
   let none = { edit = false }
   let edit c = c.edit
 end

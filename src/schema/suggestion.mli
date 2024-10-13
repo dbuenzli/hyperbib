@@ -15,14 +15,14 @@ type doi = string
 type t
 (** The type for suggestions. *)
 
-val v :
+val make :
   id:id -> timestamp:int -> doi:doi -> suggestion:string -> comment:string ->
   email:string -> unit -> t
-(** [v …] is a suggestion with given properties. See accessors for
+(** [make …] is a suggestion with given properties. See accessors for
     semantics. *)
 
 val row : id -> int -> doi -> string -> string -> string -> t
-(** [row …] is unlabelled {!v}. *)
+(** [row …] is unlabelled {!make}. *)
 
 val new' : t
 (** [new] is a new suggestion. *)

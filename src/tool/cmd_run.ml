@@ -102,7 +102,7 @@ let check_reference_dois db ~repair =
                reference doi doi'
            end;
            (if not repair then () else
-            let newr = Reference.Cites.v ~reference ~doi:doi' in
+            let newr = Reference.Cites.make ~reference ~doi:doi' in
             Log.if_error ~use:() @@ Db.string_error @@ do_update r newr);
            n + 1
          end

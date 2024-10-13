@@ -23,7 +23,7 @@ module Label = struct
 
   type label = t
 
-  let v ~id ~name ~synopsis ~color ~note ~private_note ~public =
+  let make ~id ~name ~synopsis ~color ~note ~private_note ~public =
     { id; name; synopsis; color; note; private_note; public }
 
   let row id name synopsis color note private_note public =
@@ -67,7 +67,7 @@ module type APPLICATION = sig
   type entity
   type entity_id
   type t
-  val v : entity:entity_id -> label:id -> t
+  val make : entity:entity_id -> label:id -> t
   val row : entity_id -> id -> t
   val entity : t -> entity_id
   val label : t -> id
@@ -90,7 +90,7 @@ struct
   type entity_id = E.id
   type t = { entity : E.id; label : id; }
 
-  let v ~entity ~label = { entity; label }
+  let make ~entity ~label = { entity; label }
   let row entity label = { entity; label }
   let entity e = e.entity
   let label e = e.label
