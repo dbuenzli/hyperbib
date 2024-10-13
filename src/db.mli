@@ -18,7 +18,8 @@ type error
 val error_message : error -> string
 (** [error_message e] is an english error message for [e]. *)
 
-val error_rc_message : error -> string
+val error_code_message : error -> string
+(** [error_code_message e] is the error code message of [e]. *)
 
 val string_error : ('a, error) result -> ('a, string) result
 (** [string_error] is [Result.map_error error_message]. *)
@@ -59,7 +60,7 @@ val pool : ?read_only:bool -> Fpath.t -> size:int -> pool
 
 val stamped_backup_file : Fpath.t -> Fpath.t
 (** [stamped_backup_file file] appends a second precision local time stamp
-    to the basename of [file]. *)
+    to the basename of [file]. This respects the (multi)extension. *)
 
 val backup : Fpath.t -> t -> (unit, string) result
 (** [backup file db] backups [db] to [file]. [file] is replaced
@@ -80,6 +81,7 @@ type transaction_kind = [ `Deferred | `Immediate | `Exclusive ]
 val with_transaction :
   transaction_kind ->  t ->
   (t -> ('a, 'b) result) -> (('a, 'b) result, error) result
+(** [with_transaction] abstracts {!Rel_sqlite3.with_transaction}. *)
 
 (** {1:schema Schema handling} *)
 
@@ -104,6 +106,7 @@ val with_open_schema :
 (** {1:queries Queries} *)
 
 val exec_sql : t -> string -> (unit, error) result
+(** [exec_sql] abstracts {!Rel_sqlite3.exec_sql}. *)
 
 val exec : t -> unit Rel_sql.Stmt.t -> (unit, error) result
 (** [exec] abstracts {!Rel_sqlite3.exec}. *)
@@ -116,12 +119,16 @@ val fold : t ->
 (** [fold] abstracts {!Rel_sqlite3.fold}. *)
 
 val list : t -> 'a Rel_sql.Stmt.t -> ('a list, error) result
+(** [list] is {!fold} with {!List.cons}. *)
 
-val insert :
-  t -> unit Rel_sql.Stmt.t -> (Id.t, error) result
+val insert : t -> unit Rel_sql.Stmt.t -> (Id.t, error) result
+(** [insert db stmt] executes [stmt] and returns the value of
+    {!Rel_sqlite3.last_insert_rowid}. *)
 
 val id_map :
   t -> 'a Rel_sql.Stmt.t -> ('a -> Id.t) -> ('a Id.Map.t, error) result
+(** [id_map db stmt id] queries with [stmt] identifies result with
+    [id] and constructs a map for them. *)
 
 val id_map_related_list :
   ?order:('b -> 'b -> int) ->
@@ -138,21 +145,32 @@ val show_plan : ?name:string -> t -> 'a Rel_sql.Stmt.t -> 'a Rel_sql.Stmt.t
 (** [explain_plan ~name db st] dumps a query plan explanation of [st]
     on the program log and returns [st]. *)
 
-(** {1:webs Webs responses} *)
+(** {1:webs Webs responses}
+
+    These functions are those of {!queries} but composed with
+    {!http_error_resp}. *)
 
 val http_resp_error :
   ?retry_after_s:int -> ('a, error) result -> ('a, Http.Response.t) result
 (** [http_resp_error e] is a webs response for [Error e].
     {!Rel.Error.busy_time_out} errors are mapped to a
-    {!Webs.Http.service_unavailable_503} with a {!Webs.Http.retry_after}
-    header of [retry_after_s] seconds (default to [2]). *)
-
-(** Same as {!queries} but composed with {!error_resp}. *)
+    {!Webs.Http.service_unavailable_503} with a
+    {!Webs.Http.retry_after} header of [retry_after_s] seconds
+    (default to [2]). *)
 
 val exec' : t -> unit Rel_sql.Stmt.t -> (unit, Webs.Http.Response.t) result
+(** See {!exec}. *)
+
 val insert' : t -> unit Rel_sql.Stmt.t -> (Id.t, Webs.Http.Response.t) result
+(** See {!insert}. *)
+
 val first' : t -> 'a Rel_sql.Stmt.t -> ('a option, Webs.Http.Response.t) result
+(** See {!first}. *)
+
 val list' : t -> 'a Rel_sql.Stmt.t -> ('a list, Webs.Http.Response.t) result
+(** See {!list'}. *)
+
 val with_transaction' :
   transaction_kind ->
   t -> (t -> ('a, 'b) result) -> (('a, 'b) result, Webs.Http.Response.t) result
+(** See {!with_transaction}. *)

@@ -12,7 +12,7 @@ let dialect = Rel_sqlite3.dialect
 
 type error = Rel_sqlite3.error
 let error_message = Rel_sqlite3.Error.message
-let error_rc_message e = Rel_sqlite3.Error.(code_to_string (code e))
+let error_code_message e = Rel_sqlite3.Error.(code_to_string (code e))
 let string_error = Rel_sqlite3.string_error
 
 type t = Rel_sqlite3.t
@@ -103,7 +103,7 @@ let restore ~backup dst =
 
 (* Transactions *)
 
-type transaction_kind = [ `Deferred | `Immediate | `Exclusive ]
+type transaction_kind = Rel_sqlite3.transaction_kind
 let with_transaction k db f = Rel_sqlite3.with_transaction k db f
 
 (* Schema handling *)

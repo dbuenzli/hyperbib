@@ -134,7 +134,7 @@ let test () conf =
   let stmt = "-- ha\n#pragma nop;" in
   let* () = Db.exec_sql db stmt |> Db.string_error in
   let stmt = Rel_sql.Stmt.(func stmt unit) in
-  let* () = Result.map_error Db.error_rc_message (Db.exec db stmt) in
+  let* () = Result.map_error Db.error_code_message (Db.exec db stmt) in
   Log.app (fun m -> m "Ok");
   Ok Cli_kit.Exit.ok
 
