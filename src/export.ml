@@ -35,7 +35,7 @@ module Static_html = struct
 
   let write_reference ~dir db g r =
     let only_public = Rel_query.Bool.true' in
-    let rid = Rel_query.Int.v (Reference.id r) in
+    let rid = Reference.Id.v (Reference.id r) in
     let ref = Reference.find_id rid in
     let* render_data =
       Reference.render_data ~only_public ref db |> Db.string_error
@@ -62,8 +62,8 @@ module Static_html = struct
   let write_container ~dir db g c =
     let only_public = Rel_query.Bool.true' in
     let all = Reference.list ~only_public in
-    let id = Container.id c in
-    let refs = Reference.filter_container_id (Rel_query.Int.v id) all in
+    let id = Container.Id.v (Container.id c) in
+    let refs = Reference.filter_container_id id all in
     let* refs = refs_render_data ~only_public refs db in
     write_page ~dir g (Container_html.page g c refs)
 
@@ -71,7 +71,7 @@ module Static_html = struct
     let containers = Container.list_stmt ~only_public:true in
     let* cs = Db.list db containers |> Db.string_error in
     let ref_count = Reference.container_public_ref_count_stmt in
-    let* ref_count = Db.id_map db ref_count fst |> Db.string_error in
+    let* ref_count = Container.id_map db ref_count fst |> Db.string_error in
     let index = Container_html.index g cs ~ref_count in
     let* () = write_page ~dir g index in
     let write_container = write_container ~dir db g in
@@ -81,8 +81,8 @@ module Static_html = struct
   let write_person ~dir db g p =
     let only_public = Rel_query.Bool.true' in
     let all = Reference.list ~only_public in
-    let id = Person.id p in
-    let refs = Reference.filter_person_id (Rel_query.Int.v id) all in
+    let id = Person.Id.v (Person.id p) in
+    let refs = Reference.filter_person_id id all in
     let* refs = refs_render_data ~only_public refs db  in
     write_page ~dir g (Person_html.page g p refs)
 
@@ -90,7 +90,7 @@ module Static_html = struct
     let persons = Person.list_stmt ~only_public:true in
     let* ps = Db.list db persons |> Db.string_error in
     let ref_count = Reference.persons_public_ref_count_stmt in
-    let* ref_count = Db.id_map db ref_count fst |> Db.string_error in
+    let* ref_count = Person.id_map db ref_count fst |> Db.string_error in
     let index = Person_html.index g ps ~ref_count in
     let* () = write_page ~dir g index in
     let write_person = write_person ~dir db g in
@@ -100,8 +100,8 @@ module Static_html = struct
   let write_subject ~dir db g s =
     let only_public = Rel_query.Bool.true' in
     let all = Reference.list ~only_public in
-    let id = Subject.id s in
-    let refs = Reference.Subject.filter_subject_id (Rel_query.Int.v id) all in
+    let id = Subject.Id.v (Subject.id s) in
+    let refs = Reference.Subject.filter_subject_id id all in
     let* parent = match Subject.parent s with
     | None -> Ok None
     | Some pid -> Db.first db (Subject.find_id_stmt pid) |> Db.string_error
@@ -113,7 +113,7 @@ module Static_html = struct
     let subjects = Rel_query.Sql.of_bag' Subject.table Subject.visible_list in
     let* ss = Db.list db subjects |> Db.string_error in
     let ref_count = Reference.subject_public_ref_count_stmt in
-    let* ref_count = Db.id_map db ref_count fst |> Db.string_error in
+    let* ref_count = Subject.id_map db ref_count fst |> Db.string_error in
     let index = Subject_html.index g ss ~ref_count in
     let* () = write_page ~dir g index in
     let write_subject = write_subject ~dir db g in
@@ -220,9 +220,12 @@ module Bibtex = struct
       if Char.Ascii.is_white n then '-' else
       if not (Char.Ascii.is_alphanum n) then 'X' else n
     in
-    let name = match Id.Map.get_list (Reference.id r) rs.Reference.authors with
-    | [] -> "Anonymous"
-    | auths -> Person.last_name @@ List.hd auths
+    let name =
+      match
+        Reference.Id.Map.get_list (Reference.id r) rs.Reference.authors
+      with
+      | [] -> "Anonymous"
+      | auths -> Person.last_name @@ List.hd auths
     in
     String.map mangle (String.Ascii.lowercase name)
 
@@ -271,17 +274,17 @@ module Bibtex = struct
   | last, firsts -> Fmt.str "%s %s" firsts last
 
   let ref_author rs r =
-    match Id.Map.get_list (Reference.id r) rs.Reference.authors with
+    match Reference.Id.Map.get_list (Reference.id r) rs.Reference.authors with
     | [] -> ""
     | authors -> String.concat " and " (List.map person_to_bib authors)
 
   let ref_editor rs r =
-    match Id.Map.get_list (Reference.id r) rs.Reference.editors with
+    match Reference.Id.Map.get_list (Reference.id r) rs.Reference.editors with
     | [] -> ""
     | editors -> String.concat " and " (List.map person_to_bib editors)
 
   let ref_keywords rs r =
-    match Id.Map.get_list (Reference.id r) rs.Reference.subjects with
+    match Reference.Id.Map.get_list (Reference.id r) rs.Reference.subjects with
     | [] -> "" | ss -> String.concat ", " (List.map Subject.name ss)
 
   let ref_year r = match Reference.date r with
@@ -296,7 +299,9 @@ module Bibtex = struct
     | None -> m | Some v -> String.Map.add k v m
     in
     let container =
-      let find_container c = Id.Map.find_opt c rs.Reference.containers in
+      let find_container c =
+        Container.Id.Map.find_opt c rs.Reference.containers
+      in
       Option.bind (Reference.container r) find_container
     in
     let container_title =

@@ -7,8 +7,9 @@
 
 open Hyperbib_std
 
-type id = Id.t
+
 (** The type for suggestion ids. These are allocated by the database. *)
+module Id : Rel_kit.INT_ID
 
 type doi = string
 
@@ -16,18 +17,18 @@ type t
 (** The type for suggestions. *)
 
 val make :
-  id:id -> timestamp:int -> doi:doi -> suggestion:string -> comment:string ->
+  id:Id.t -> timestamp:int -> doi:doi -> suggestion:string -> comment:string ->
   email:string -> unit -> t
 (** [make …] is a suggestion with given properties. See accessors for
     semantics. *)
 
-val row : id -> int -> doi -> string -> string -> string -> t
+val row : Id.t -> int -> doi -> string -> string -> string -> t
 (** [row …] is unlabelled {!make}. *)
 
 val new' : t
 (** [new] is a new suggestion. *)
 
-val id : t -> id
+val id : t -> Id.t
 (** [id s] is the unique identifier of [s]. *)
 
 val timestamp : t -> int
@@ -47,7 +48,7 @@ val email : t -> string
 
 (** {1:table Table and queries} *)
 
-val id' : (t, id) Rel.Col.t
+val id' : (t, Id.t) Rel.Col.t
 val timestamp' : (t, int) Rel.Col.t
 val doi' : (t, doi) Rel.Col.t
 val suggestion' : (t, string) Rel.Col.t
@@ -55,7 +56,7 @@ val comment' : (t, string) Rel.Col.t
 val email' : (t, string) Rel.Col.t
 val table : t Rel.Table.t
 
-include Entity.IDENTIFIABLE_WITH_QUERIES with type t := t and type id := id
+include Entity.IDENTIFIABLE_WITH_QUERIES with type t := t and module Id := Id
 (** @inline *)
 
 val list : (t, Bag.unordered) Rel_query.Bag.t
@@ -68,12 +69,12 @@ val find_doi : string Rel_query.value -> (t, Bag.unordered) Bag.t
 module Url : sig
   type t =
   | Create
-  | Confirm_delete of id
-  | Delete of id
+  | Confirm_delete of Id.t
+  | Delete of Id.t
   | Fill_in
   | Index
-  | Page of { id : id; created : bool }
-  | View_fields of id
+  | Page of { id : Id.t; created : bool }
+  | View_fields of Id.t
 
   val kind : t Kurl.kind
   val v : t -> Kurl.t

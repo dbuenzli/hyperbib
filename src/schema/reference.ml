@@ -22,11 +22,11 @@ open Rel
    Bonus point if we can check the date is valid. *)
 
 module Reference = struct
-  type id = int
+  module Id = Rel_kit.Id.MakeInt ()
   type t =
-    { id : id;
+    { id : Id.t;
       abstract : string;
-      container : Container.id option;
+      container : Container.Id.t option;
       date : Date.partial option;
       doi : Doi.t option;
       isbn : string;
@@ -61,7 +61,7 @@ module Reference = struct
       pages; private_note; public; publisher; title; type'; volume; }
 
   let new' =
-    { id = 0; abstract = ""; container = None; date = None; doi = None;
+    { id = Id.zero; abstract = ""; container = None; date = None; doi = None;
       isbn = ""; issue = ""; note = ""; pages = ""; private_note = "";
       public = false; publisher = ""; title = Uimsg.untitled;
       type' = ""; volume = ""; }
@@ -98,9 +98,11 @@ module Reference = struct
 
   (* Table *)
 
-  let id' = Col.make "id" Type.int id
+  let id' = Col.make "id" Id.type' id
   let abstract' = Col.make "abstract" Type.text abstract
-  let container' = Col.make "container" Type.(option int) container
+  let container' =
+    Col.make "container" Type.(option Container.Id.type') container
+
   let date_year' = Col.make "date_year" Type.(option int) date_year
   let date_md' =
     Col.make "date_md" Type.(option Schema_kit.date_md_partial_type) date_md
@@ -150,25 +152,34 @@ type render_data =
   { list : t list;
     labels : Label.t list Id.Map.t;
     authors : Person.t list Id.Map.t;
-    containers : Container.t Id.Map.t; (* mapped by container id *)
+    containers : Container.t Container.Id.Map.t; (* mapped by container id *)
     editors : Person.t list Id.Map.t;
     subjects : Subject.t list Id.Map.t; }
 
 (* ../Module would be nice *)
 let label_table = Label.table
 let label_id = Label.id
+let label_id_map = Label.id_map
+let label_id_map_find_opt = Label.Id.Map.find_opt
+
+type subject_id = Subject.Id.t
+let subject_id_type = Subject.Id.type'
+let subject_id_map = Subject.id_map
+let subject_id_map_find_opt = Subject.Id.Map.find_opt
 let subject_table = Subject.table
 let subject_id = Subject.id
+let subject_order_by_name = Subject.order_by_name
+
 
 (* Relations *)
 
 let label_order_by_name = Label.order_by_name
-module Label = Label.For_entity (Id) (Reference)
+module Label = Label.For_entity (Reference)
 
 module Contributor = struct
   type t =
-    { reference : id;
-      person : Person.id;
+    { reference : Id.t;
+      person : Person.Id.t;
       role : Person.role;
       position : int }
 
@@ -184,8 +195,8 @@ module Contributor = struct
   let position c = c.position
   let order_by_position c0 c1 = Int.compare c0.position c1.position
 
-  let reference' = Col.make "reference" Type.int reference
-  let person' = Col.make "person" Type.int person
+  let reference' = Col.make "reference" Id.type' reference
+  let person' = Col.make "person" Person.Id.type' person
   let role' = Col.make "role" Person.role_type role
   let position' = Col.make "position" Type.int position
   let table =
@@ -215,14 +226,14 @@ module Contributor = struct
   let of_ref_ids rids =
     let* rid = rids in
     let* c = Bag.table table in
-    Bag.where Int.(rid = c #. reference') (Bag.yield c)
+    Bag.where Id.(rid = c #. reference') (Bag.yield c)
 
   let persons ~only_public cs =
     let* p = Bag.table Person.table in
     let is_used =
       Bag.exists @@
       let* c = cs in
-      let is_used = Int.(c #. person' = p #. Person.id') in
+      let is_used = Person.Id.(c #. person' = p #. Person.id') in
       let filter = Bool.(not only_public || p #. Person.public') in
       Bag.where Bool.(is_used && filter) (Bag.yield Bool.true')
     in
@@ -237,7 +248,9 @@ module Contributor = struct
        FROM reference_contributor as c
        WHERE c.person = ?2"
     in
-    let stmt = Rel_sql.Stmt.(func sql @@ int @-> int @-> unit) in
+    let stmt =
+      Rel_sql.Stmt.(func sql @@ Person.Id.type' @-> Person.Id.type' @-> unit)
+    in
     fun ~src ~dst -> stmt dst src
 
   let set_list ~reference:id ~authors ~editors = fun db ->
@@ -258,20 +271,18 @@ module Contributor = struct
     Ok ()
 end
 
-let subject_order_by_name = Subject.order_by_name
-
 module Subject = struct
   type t =
-    { reference : id;
-      subject : Subject.id }
+    { reference : Id.t;
+      subject : Subject.Id.t }
 
   let make ~reference ~subject = { reference; subject }
   let row reference subject = { reference; subject }
   let reference a = a.reference
   let subject a = a.subject
 
-  let reference' = Col.make "reference" Type.int reference
-  let subject' = Col.make "subject" Type.int subject
+  let reference' = Col.make "reference" Id.type' reference
+  let subject' = Col.make "subject" Subject.Id.type' subject
   let table =
     let primary_key = Table.Primary_key.make [Def reference'; Def subject'] in
     let foreign_keys = [
@@ -294,14 +305,14 @@ module Subject = struct
   let of_ref_ids rids =
     let* rid = rids in
     let* rel = Bag.table table in
-    Bag.where Int.(rid = rel #. reference') (Bag.yield rel)
+    Bag.where Id.(rid = rel #. reference') (Bag.yield rel)
 
   let subjects ~only_public rs =
     let* s = Bag.table Subject.table in
     let is_used =
       Bag.exists @@
       let* r = rs in
-      let is_used = Int.(r #. subject' = s #. Subject.id') in
+      let is_used = Subject.Id.(r #. subject' = s #. Subject.id') in
       let filter = Bool.(not only_public || s #. Subject.public') in
       Bag.where Bool.(is_used && filter) (Bag.yield Bool.true')
     in
@@ -313,8 +324,8 @@ module Subject = struct
     let* ref = refs in
     let* app = Bag.table table in
     let has_subj =
-      Int.(subj #. Subject.id' = app #. subject' &&
-           ref #. Reference.id' = app #. reference')
+      Subject.Id.(subj #. Subject.id' = app #. subject') &&
+      Id.(ref #. Reference.id' = app #. reference')
     in
     Bag.where has_subj (Bag.yield ref)
 
@@ -322,8 +333,8 @@ module Subject = struct
     let* app = Bag.table table in
     let* ref = refs in
     let has_subj =
-      Int.(app #. subject' = sid &&
-           app #. reference' = ref #. Reference.id')
+      Subject.Id.(app #. subject' = sid) &&
+      Reference.Id.(app #. reference' = ref #. Reference.id')
     in
     Bag.where has_subj (Bag.yield ref)
 
@@ -334,7 +345,8 @@ module Subject = struct
        FROM reference_subject as s
        WHERE s.subject = ?1"
     in
-    Rel_sql.Stmt.(func sql @@ int @-> ret Row.(t1 @@ int "ref_count"))
+    Rel_sql.Stmt.(func sql @@
+                  Subject.Id.type' @-> ret Row.(t1 @@ int "ref_count"))
 
   let copy_applications_stmt =
     (* FIXME rel this is insert 'r table with 'r Bag.t *)
@@ -344,15 +356,17 @@ module Subject = struct
        FROM reference_subject as s
        WHERE s.subject = ?2"
     in
-    let stmt = Rel_sql.Stmt.(func sql @@ int @-> int @-> unit) in
+    let stmt =
+      Rel_sql.Stmt.(func sql @@ Subject.Id.type' @-> Subject.Id.type' @-> unit)
+    in
     fun ~src ~dst -> stmt dst src
 
   let of_ref_id id =
     let* app = Bag.table table in
-    Bag.where Int.(app #. reference' = id) (Bag.yield app)
+    Bag.where Id.(app #. reference' = id) (Bag.yield app)
 
   let ref_id_stmt =
-    Rel_query.Sql.(func @@ int @-> ret (Table.row table) of_ref_id)
+    Rel_query.Sql.(func @@ Id.type' @-> ret (Table.row table) of_ref_id)
 
   let set_list ~reference:id ss = fun db ->
     (* We could diff to devise delete and insert ops, for now it seems
@@ -375,13 +389,13 @@ module Cites = struct
   let ref_table = table
   let ref_doi' = doi'
 
-  type t = { reference : id; doi : Doi.t }
+  type t = { reference : Id.t; doi : Doi.t }
   let make ~reference ~doi = { reference; doi }
   let row reference doi = { reference; doi }
   let reference c = c.reference
   let doi c = c.doi
 
-  let reference' = Col.make "reference" Type.int reference
+  let reference' = Col.make "reference" Id.type' reference
   let doi' = Col.make "doi" Type.text doi
   let table =
     let primary_key = Table.Primary_key.make [Def reference'; Def doi'] in
@@ -400,13 +414,13 @@ module Cites = struct
   let of_ref_ids rids =
     let* rid = rids in
     let* rel = Bag.table table in
-    Bag.where Int.(rid = rel #. reference') (Bag.yield rel)
+    Bag.where Id.(rid = rel #. reference') (Bag.yield rel)
 
   let internal_of_ref_ids rids =
     let* rid = rids in
     let* rel = Bag.table table in
     let* ref = Bag.table ref_table in
-    let is_rid = Int.(rid = rel #. reference') in
+    let is_rid = Id.(rid = rel #. reference') in
     let is_internal_doi =
       Option.is_some (ref #. ref_doi') &&
       Text.(rel #. doi' = Option.get (ref #. ref_doi'))
@@ -415,7 +429,7 @@ module Cites = struct
     let rel' = pair (rel #. reference') (ref #. id') in
     Bag.where (is_rid && is_internal_doi) (Bag.yield rel')
 
-  let internal_row = Row.(t2 (int "ref") (int "cited"))
+(*  let internal_row = Row.(t2 (int "ref") (int "cited")) *)
   let set_list ~reference:id ~dois = fun db ->
     (* We could diff to devise delete and insert ops, for now it seems
        easier this way. *)
@@ -432,13 +446,13 @@ end
 
 module Doc = struct
   let ref_table = table
-  type t = { reference : id; blob : Blob.id }
+  type t = { reference : Id.t; blob : Blob.Id.t }
   let make ~reference ~blob = { reference; blob }
   let row reference blob = { reference; blob }
   let reference d = d.reference
   let blob d = d.blob
 
-  let reference' = Col.make "reference" Type.int reference
+  let reference' = Col.make "reference" Id.type' reference
   let blob' = Col.make "blob" Type.text blob
   let table =
     let primary_key = Table.Primary_key.make [Def reference'; Def blob'] in
@@ -459,7 +473,7 @@ module Doc = struct
   let create d = Rel_sql.insert_into Db.dialect table d
 end
 
-include Entity.Publicable_queries (Id) (Reference)
+include Entity.Publicable_queries (Reference)
 
 open Rel_query.Syntax
 
@@ -470,7 +484,9 @@ let containers_of_refs ~only_public refs =
   let is_used =
     Bag.exists @@
     let* ref = refs in
-    let eq_container = Option.has_value ~eq:Int.( = ) (c #. Container.id') in
+    let eq_container =
+      Option.has_value ~eq:Container.Id.( = ) (c #. Container.id')
+    in
     let is_used = eq_container (ref #. container') in
     let filter = Bool.(not only_public || c #. Container.public') in
     Bag.where Bool.(is_used && filter) (Bag.yield c)
@@ -484,14 +500,17 @@ let filter_person_id pid refs =
   let is_used =
     Bag.exists @@
     Bag.where
-      Int.(c #. Contributor.person' = pid && c #. Contributor.reference' = rid)
+      (Person.Id.(c #. Contributor.person' = pid) &&
+       Id.(c #. Contributor.reference' = rid))
       (Bag.yield Bool.true')
   in
   Bag.where is_used (Bag.yield r)
 
 let filter_container_id cid refs =
   let* r = refs in
-  let has_cid = Option.(has_value ~eq:Int.( = ) cid (r #. container')) in
+  let has_cid =
+    Option.(has_value ~eq:Container.Id.( = ) cid (r #. container'))
+  in
   Bag.where has_cid (Bag.yield r)
 
 let author_ids_stmt =
@@ -506,14 +525,15 @@ let authors refs =
     "SELECT c.person FROM reference as r, reference_contributor as c  \
      WHERE r.id = ?1 AND r.id = c.reference AND c.role = 0"
   in
-  Rel_sql.Stmt.(func sql @@ int @-> ret (Row.(t1 (int "id"))))
+  Rel_sql.Stmt.(func sql @@
+                Id.type' @-> ret (Row.(t1 (col "id" Person.Id.type'))))
 
 (* FIXME were is my nice query language ? *)
 (* FIXME also if we move to the query language we can't make a single
    query to list all and return their ref count, we'd need left join
    support. *)
 
-let ref_count_row = Row.(t2 (int "id") (int "ref_count"))
+let person_ref_count_row = Row.(t2 (col "id" Person.Id.type') (int "ref_count"))
 let persons_public_ref_count_stmt =
   let sql =
     "SELECT c.person, COUNT(*)
@@ -523,7 +543,7 @@ let persons_public_ref_count_stmt =
      WHERE r.id = c.reference AND r.public
      GROUP BY c.person"
   in
-  Rel_sql.Stmt.(func sql @@ ret ref_count_row)
+  Rel_sql.Stmt.(func sql @@ ret person_ref_count_row)
 
 let person_ref_count_stmt =
   (* FIXME rel aggregations. FIXME this is wrong if multiple contrib *)
@@ -532,7 +552,10 @@ let person_ref_count_stmt =
      FROM reference_contributor as c
      WHERE c.person = ?1"
   in
-  Rel_sql.Stmt.(func sql @@ int @-> ret Row.(t1 @@ int "ref_count"))
+  Rel_sql.Stmt.(func sql @@ Person.Id.type' @-> ret Row.(t1 @@ int "ref_count"))
+
+let container_ref_count_row =
+  Row.(t2 (col "id" Container.Id.type') (int "ref_count"))
 
 let container_public_ref_count_stmt =
   let sql =
@@ -541,7 +564,7 @@ let container_public_ref_count_stmt =
      WHERE r.public AND r.container IS NOT NULL
      GROUP BY r.container"
   in
-  Rel_sql.Stmt.(func sql @@ ret ref_count_row)
+  Rel_sql.Stmt.(func sql @@ ret container_ref_count_row)
 
 let container_ref_count_stmt =
   let sql =
@@ -549,7 +572,11 @@ let container_ref_count_stmt =
      FROM reference as r
      WHERE r.container = ?1"
   in
-  Rel_sql.Stmt.(func sql @@ int @-> ret Row.(t1 @@ int "ref_count"))
+  Rel_sql.Stmt.(func sql @@
+                Container.Id.type' @-> ret Row.(t1 @@ int "ref_count"))
+
+let subject_ref_count_row =
+  Row.(t2 (col "id" subject_id_type) (int "ref_count"))
 
 let subject_public_ref_count_stmt =
   let sql =
@@ -558,7 +585,7 @@ let subject_public_ref_count_stmt =
      WHERE r.public AND r.id = s.reference
      GROUP BY s.subject"
   in
-  Rel_sql.Stmt.(func sql @@ ret ref_count_row)
+  Rel_sql.Stmt.(func sql @@ ret subject_ref_count_row)
 
 let replace_container_stmt ~this ~by =
   let this = Col.Value (container', (Some this)) in
@@ -572,11 +599,11 @@ let ids_citing_doi doi =
 let citing_doi doi =
   let* citing = ids_citing_doi doi in
   let* r = Bag.table table in
-  Bag.where Int.(r #. id' = citing) (Bag.yield r)
+  Bag.where Id.(r #. id' = citing) (Bag.yield r)
 
 let dois_cited rid =
   let* c = Bag.table Cites.table in
-  Bag.where Int.(c #. Cites.reference' = rid) (Bag.yield (c #. Cites.doi'))
+  Bag.where Id.(c #. Cites.reference' = rid) (Bag.yield (c #. Cites.doi'))
 
 let find_dois dois =
   let* doi = dois in
@@ -590,6 +617,29 @@ let find_doi doi =
     Option.(equal (r #. doi') (some Type.text doi) ~eq:Text.equal)
   in
   Bag.where eq_doi (Bag.yield r)
+
+let id_map db st id =
+  let add r acc = Id.Map.add (id r) r acc in
+  Db.fold db st add Id.Map.empty
+
+
+
+
+let id_map_related_list :
+  ?order:('b -> 'b -> int) ->
+  Db.t -> 'a Rel_sql.Stmt.t -> id:('a -> Id.t) -> related:('a -> 'id) ->
+  related_by_id:('id -> 'b option) -> ('b list Id.Map.t, Db.error) result
+  =
+  fun ?order db rel_stmt ~id ~related ~related_by_id ->
+  let add r acc = match related_by_id (related r) with
+  | None (* if the read is not in a transaction *) -> acc
+  | Some p -> Id.Map.add_to_list (id r) p acc
+  in
+  let open Result.Syntax in
+  let* m = Db.fold db rel_stmt add Id.Map.empty in
+  match order with
+  | None -> Ok m
+  | Some order -> Ok (Id.Map.map (List.sort order) m)
 
 let render_data ~only_public refs =
   let ref_ids = ids_of_refs refs in
@@ -612,13 +662,14 @@ let render_data ~only_public refs =
   fun db ->
     let open Result.Syntax in
     let* list = Db.list db refs_stmt in
-    let* ps = Db.id_map db persons_stmt Person.id in
-    let* ss = Db.id_map db subjects_stmt subject_id in
-    let* ls = Db.id_map db labels_stmt label_id in
+    let* ps = Person.id_map db persons_stmt Person.id in
+    let* ss = subject_id_map db subjects_stmt subject_id in
+    let* ls = label_id_map db labels_stmt label_id in
     let* labels =
       let id = Label.entity and related = Label.label in
-      let related_by_id = ls and order = label_order_by_name in
-      Db.id_map_related_list
+      let related_by_id l = label_id_map_find_opt l ls in
+      let order = label_order_by_name in
+      id_map_related_list
         db ref_labels_stmt ~order ~id ~related ~related_by_id
     in
     (* Once we have sort by support with rel we can directly
@@ -629,46 +680,48 @@ let render_data ~only_public refs =
       List.sort by_rev_position contributors
     in
     let authors, editors =
-      let add (a, e) c = match Id.Map.find_opt (Contributor.person c) ps with
-      | None -> (a, e)
-      | Some p ->
-          match Contributor.role c with
-          | Author -> Id.Map.add_to_list (Contributor.reference c) p a, e
-          | Editor -> a, Id.Map.add_to_list (Contributor.reference c) p e
+      let add (a, e) c =
+        match Person.Id.Map.find_opt (Contributor.person c) ps with
+        | None -> (a, e)
+        | Some p ->
+            match Contributor.role c with
+            | Author -> Id.Map.add_to_list (Contributor.reference c) p a, e
+            | Editor -> a, Id.Map.add_to_list (Contributor.reference c) p e
       in
       List.fold_left add (Id.Map.empty, Id.Map.empty) contributors
     in
     let* subjects =
       let id = Subject.reference and related = Subject.subject in
-      let related_by_id = ss and order = subject_order_by_name in
-      Db.id_map_related_list
+      let related_by_id s = subject_id_map_find_opt s ss in
+      let order = subject_order_by_name in
+      id_map_related_list
         db ref_subjects_stmt ~order ~id ~related ~related_by_id
     in
-    let* containers = Db.id_map db containers_stmt Container.id in
+    let* containers = Container.id_map db containers_stmt Container.id in
     Ok { list; labels; authors; containers; editors; subjects }
 
 module Url = struct
   open Result.Syntax
 
-  type named_id = string option * id
+  type named_id = string option * Id.t
   type t =
-  | Change_authors_publicity of id
-  | Confirm_delete of id
+  | Change_authors_publicity of Id.t
+  | Confirm_delete of Id.t
   | Create
-  | Delete of id
+  | Delete of Id.t
 (*
-  | Duplicate of id
-  | Duplicate_form of id
+  | Duplicate of Id.t
+  | Duplicate_form of Id.t
 *)
-  | Edit_form of id
+  | Edit_form of Id.t
   | Fill_in_form of Doi.t
   | Index
   | New_form of { cancel : Entity.Url.cancel_url }
   | Page of named_id
-(*  | Replace of id
-    | Replace_form of id *)
-  | Update of id
-  | View_fields of id
+(*  | Replace of Id.t
+    | Replace_form of Id.t *)
+  | Update of Id.t
+  | View_fields of Id.t
 
   let doi = "doi"
   let get_doi u = match Http.Query.find_first doi (Kurl.Bare.query u) with
@@ -681,17 +734,17 @@ module Url = struct
       let url = match meth with `GET -> Index | `POST -> Create in
       Kurl.ok url
   | ["part"; "confirm-delete"; id] ->
-      let* `GET, id = Entity.Url.get_id u id in
+      let* `GET, id = Entity.Url.get_id (module Id) u id in
       Kurl.ok (Confirm_delete id)
   | ["part"; "edit-form"; id] ->
-      let* `GET, id = Entity.Url.get_id u id in
+      let* `GET, id = Entity.Url.get_id (module Id) u id in
       Kurl.ok (Edit_form id)
   | ["part"; "fill-in-form"] ->
       let* `GET = Kurl.allow Http.Method.[get] u in
       let* doi = get_doi u in
       Kurl.ok (Fill_in_form doi)
   | ["part"; "view-fields"; id] ->
-      let* `GET, id = Entity.Url.get_id u id in
+      let* `GET, id = Entity.Url.get_id (module Id) u id in
       Kurl.ok (View_fields id)
 (*
   | ["part"; "replace-form"; id] ->
@@ -714,13 +767,15 @@ module Url = struct
       Kurl.ok (Replace id)
 *)
   | ["action"; "change-authors-publicity"; id] ->
-      let* `POST, id = Entity.Url.meth_id u Http.Method.[post] id in
+      let* `POST, id = Entity.Url.meth_id (module Id) u Http.Method.[post] id in
       Kurl.ok (Change_authors_publicity id)
   | [name; id] ->
-      let* `GET, id = Entity.Url.get_id u id in
+      let* `GET, id = Entity.Url.get_id (module Id) u id in
       Kurl.ok (Page (Some name, id))
   | [id] ->
-      let* meth, id = Entity.Url.meth_id u Http.Method.[get; put; delete] id in
+      let* meth, id =
+        Entity.Url.meth_id (module Id) u Http.Method.[get; put; delete] id
+      in
       let url = match meth with
       | `GET -> Page (None, id) | `PUT -> Update id | `DELETE -> Delete id
       in
@@ -732,21 +787,21 @@ module Url = struct
   let enc = function
   | Change_authors_publicity id ->
       Kurl.bare `POST
-        ["action"; "change-authors-publicity"; Res.Id.to_string id]
+        ["action"; "change-authors-publicity"; Id.to_string id]
   | Confirm_delete id ->
-      Kurl.bare `GET ["part"; "confirm-delete"; Res.Id.to_string id]
+      Kurl.bare `GET ["part"; "confirm-delete"; Id.to_string id]
   | Create ->
       Kurl.bare `POST [""]
   | Delete id ->
-      Kurl.bare `DELETE [Res.Id.to_string id]
+      Kurl.bare `DELETE [Id.to_string id]
 (*
   | Duplicate id ->
-      Kurl.bare `POST ["action"; "duplicate"; Res.Id.to_string id]
+      Kurl.bare `POST ["action"; "duplicate"; Id.to_string id]
   | Duplicate_form id ->
-      Kurl.bare `GET ["part"; "duplicate-form"; Res.Id.to_string id]
+      Kurl.bare `GET ["part"; "duplicate-form"; Id.to_string id]
 *)
   | Edit_form id ->
-      Kurl.bare `GET ["part"; "edit-form"; Res.Id.to_string id]
+      Kurl.bare `GET ["part"; "edit-form"; Id.to_string id]
   | Index ->
       Kurl.bare `GET [""] ~ext:html
   | Fill_in_form d ->
@@ -760,19 +815,19 @@ module Url = struct
       let query = Entity.Url.cancel_url_to_query cancel in
       Kurl.bare `GET ["part"; "new-form"] ?query
   | Page (None, id) ->
-      Kurl.bare `GET [Res.Id.to_string id] ~ext:html
+      Kurl.bare `GET [Id.to_string id] ~ext:html
   | Page (Some n, id) ->
-      Kurl.bare `GET [n; Res.Id.to_string id] ~ext:html
+      Kurl.bare `GET [n; Id.to_string id] ~ext:html
 (*
   | Replace id ->
-      Kurl.bare `POST ["action"; "replace"; Res.Id.to_string id]
+      Kurl.bare `POST ["action"; "replace"; Id.to_string id]
   | Replace_form id ->
-      Kurl.bare `GET ["part"; "replace-form"; Res.Id.to_string id]
+      Kurl.bare `GET ["part"; "replace-form"; Id.to_string id]
 *)
   | Update id ->
-      Kurl.bare `PUT [Res.Id.to_string id]
+      Kurl.bare `PUT [Id.to_string id]
   | View_fields id  ->
-      Kurl.bare `GET ["part"; "view-fields"; Res.Id.to_string id]
+      Kurl.bare `GET ["part"; "view-fields"; Id.to_string id]
 
   let kind = Kurl.kind ~name:"reference" enc dec
   let v u = Kurl.v kind u

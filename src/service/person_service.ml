@@ -19,8 +19,8 @@ let get_page_data db g s =
   let only_public = Page.Gen.only_public g in
   let only_public = Rel_query.Bool.v only_public in
   let all = Reference.list ~only_public in
-  let id = Person.id s in
-  let refs = Reference.filter_person_id (Rel_query.Int.v id) all in
+  let id = Person.Id.v (Person.id s) in
+  let refs = Reference.filter_person_id id all in
   let* refs =
     Reference.render_data ~only_public refs db |> Db.http_resp_error
   in
@@ -60,7 +60,7 @@ let confirm_delete env id =
 
 let create =
   let entity_page_url id = Person.Url.v (Page (None, id)) in
-  Entity_service.create (module Person) ~entity_page_url
+  Entity_service.create (module Person.Id) (module Person) ~entity_page_url
 
 let delete =
   Entity_service.delete (module Person) ~deleted_html:Person_html.deleted
@@ -71,7 +71,9 @@ let duplicate env req src =
   let* q = Http.Request.to_query req in
   let ignore = Col.[Def Person.id'] in
   let* vs = Hquery.careless_find_table_cols ~ignore Person.table q in
-  let* dst = Db.insert' db (Person.create_cols ~ignore_id:true vs) in
+  let* dst =
+    Db.insert' (module Person.Id) db (Person.create_cols ~ignore_id:true vs)
+  in
   let copy_contribs = Reference.Contributor.copy_contributions_stmt ~src ~dst in
   let* () = Db.exec' db copy_contribs in
   let* () = Db.exec' db (Person.Label.copy_applications_stmt ~src ~dst) in
@@ -104,7 +106,7 @@ let index env =
   let only_public = Page.Gen.only_public g in
   let* ps = Db.list db (Person.list_stmt ~only_public) in
   let ref_count = Reference.persons_public_ref_count_stmt in
-  let* ref_count = Db.id_map db ref_count fst in
+  let* ref_count = Person.id_map db ref_count fst in
   let page = Person_html.index g ps ~ref_count in
   Ok (Page.response page)
 
@@ -114,13 +116,13 @@ let creatable_person_of_sel sel =
   match String.cut_left ~sep:"," sel with
   | None ->
       Option.some @@
-      Person.make ~id:0 ~last_name:sel ~first_names:"" ~orcid:""
+      Person.make ~id:Person.Id.zero ~last_name:sel ~first_names:"" ~orcid:""
         ~note:"" ~private_note:"" ~public:true ()
   | Some (last_name, first_names) ->
       let last_name = String.trim last_name in
       let first_names = String.trim first_names in
       Option.some @@
-      Person.make ~id:0 ~last_name ~first_names ~orcid:""
+      Person.make ~id:Person.Id.zero ~last_name ~first_names ~orcid:""
         ~note:"" ~private_note:"" ~public:true ()
 
 let input env ~for_list ~input_name ~role id =
@@ -194,7 +196,7 @@ let replace env req this =
   Service_env.with_db_transaction' `Immediate env @@ fun db ->
   let* q = Http.Request.to_query req in
   let* by =
-    let* by = Entity.Url.replace_by_of_query' q in
+    let* by = Entity.Url.replace_by_of_query' (module Person.Id) q in
     match by with
     | Some _ as by -> Ok by
     | None ->
@@ -205,7 +207,9 @@ let replace env req this =
         match Hquery.find_create_person ~public ~role:None q with
         | None -> Ok None
         | Some p ->
-            let* pid = Db.insert' db (Person.create ~ignore_id:true p) in
+            let* pid =
+              Db.insert' (module Person.Id) db (Person.create ~ignore_id:true p)
+            in
             Ok (Some pid)
   in
   match by with

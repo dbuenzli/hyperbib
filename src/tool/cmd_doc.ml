@@ -31,7 +31,7 @@ let doi_of_references_with_no_doc_stmt =
       Bag.exists @@
       let* doc = Bag.table Reference.Doc.table in
       Bag.where
-        Int.(r #. Reference.id' = doc #. Reference.Doc.reference')
+        Reference.Id.(r #. Reference.id' = doc #. Reference.Doc.reference')
         (Bag.yield doc)
     in
     let id = r #. Reference.id' in
@@ -49,14 +49,15 @@ let add_reference_doc
   | Collides ->
       Log.err begin
         fun m ->
-          m "@[<v>Reference %d: DOI:%s Origin:%s :@,\
+          m "@[<v>Reference %a: DOI:%s Origin:%s :@,\
              Collision on %a. Please report a bug to the software developers."
-            reference doi origin
+            Reference.Id.pp reference doi origin
             Blobstore.Key.pp key
       end
   | Exists | Created ->
       Log.app (fun m ->
-          m "Reference %d: lookup %a" reference (Fmt.code' Doi.pp) doi);
+          m "Reference %a: lookup %a"
+            Reference.Id.pp reference (Fmt.code' Doi.pp) doi);
       if status = Exists then
         Log.warn (fun m -> m "%a: doc found in blob store" Doi.pp doi);
       let id = Blobstore.Key.to_text key in
@@ -75,7 +76,7 @@ let fill ~doi_resolvers ~media_type ~url_only ~public conf =
   let* blobstore = Cli_kit.Conf.blobstore conf in
   Result.join @@ Cli_kit.with_db conf @@ fun db ->
   let lookup (rid, doi) () = match doi with
-  | None -> Log.app (fun m -> m "Reference %d: no DOI." rid);
+  | None -> Log.app (fun m -> m "Reference %a: no DOI." Reference.Id.pp rid);
   | Some doi ->
       match find_document httpc ~doi_resolvers ~url_only ~media_type ~doi with
       | Ok (resolver, url, doc) ->

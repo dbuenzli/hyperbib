@@ -59,32 +59,36 @@ let get_all k q =
   if not (Http.Query.mem k.name q) then no_key_400 ~kind:k.kind.kind k.name else
   find_all k q
 
-module Intset = Set.Make (Int)
 
-let uniquify_ids l =
+
+let uniquify_ids (type id) (module Id : Rel_kit.ID with type t = id) l =
   let rec loop seen acc = function
   | [] -> List.rev acc
   | i :: is ->
-      if Intset.mem i seen then loop seen acc is else
-      loop (Intset.add i seen) (i :: acc) is
+      if Id.Set.mem i seen then loop seen acc is else
+      loop (Id.Set.add i seen) (i :: acc) is
   in
-  loop Intset.empty [] l
+  loop Id.Set.empty [] l
 
-let find_ids ~uniquify key q = match Http.Query.find_all key q with
-| [] -> Ok []
-| ids ->
-    let rec loop seen acc = function
-    | [] -> Ok (List.rev acc)
-    | "" :: ids -> loop seen acc ids
-    | i :: ids ->
-        match int_of_string_opt i (* FIXME *)  with
-        | None ->
-            let reason = Fmt.str "key %s: %S is not an identifier" key i in
-            Http.Response.bad_request_400 ~reason ()
-        | Some i when uniquify && Intset.mem i seen -> loop seen acc ids
-        | Some i ->  loop (Intset.add i seen) (i :: acc) ids
-    in
-    loop Intset.empty [] ids
+
+let find_ids
+    (type id) (module Id : Rel_kit.ID with type t = id) ~uniquify key q
+  =
+  match Http.Query.find_all key q with
+  | [] -> Ok []
+  | ids ->
+      let rec loop seen acc = function
+      | [] -> Ok (List.rev acc)
+      | "" :: ids -> loop seen acc ids
+      | i :: ids ->
+          match Id.of_string i with
+          | Error e ->
+              let reason = Fmt.str "key %s: %s" key e in
+              Http.Response.bad_request_400 ~reason ()
+          | Ok i when uniquify && Id.Set.mem i seen -> loop seen acc ids
+          | Ok i ->  loop (Id.Set.add i seen) (i :: acc) ids
+      in
+      loop Id.Set.empty [] ids
 
 
 (* Generic rel *)
@@ -227,9 +231,9 @@ let find_create_container q =
       let issn = get @@ Http.Query.find_first create_container_issn q in
       let isbn = get @@ Http.Query.find_first create_container_isbn q in
       let public = Http.Query.mem "public" q (* XXX Brittle *) in
+      let id = Container.Id.zero in
       Option.some @@
-      Container.make
-        ~id:0 ~title ~isbn ~issn ~note:"" ~private_note:"" ~public ()
+      Container.make ~id ~title ~isbn ~issn ~note:"" ~private_note:"" ~public ()
 
 let person_key = function
 | None -> Reference.Contributor.(key_for_rel table person')
@@ -265,15 +269,16 @@ let find_create_person ~public ~role q =
   let* first_names = Http.Query.find_first first q in
   let* last_name = Http.Query.find_first last q in
   let* orcid = Http.Query.find_first orcid q in
-  Option.some @@ Person.make
-    ~id:0 ~last_name ~first_names ~orcid ~note:"" ~private_note:"" ~public ()
+  Option.some @@
+  Person.make ~id:Person.Id.zero
+    ~last_name ~first_names ~orcid ~note:"" ~private_note:"" ~public ()
 
 
 let find_create_persons ~public role q =
   let rec loop acc fs ls os = match fs, ls, os with
   | first_names :: fs, last_name :: ls, orcid :: os ->
       let p =
-        Person.make ~id:0 ~last_name ~first_names ~orcid
+        Person.make ~id:Person.Id.zero ~last_name ~first_names ~orcid
           ~note:"" ~private_note:"" ~public ()
       in
       loop (`To_create p :: acc) fs ls os
@@ -296,7 +301,9 @@ let find_contributor_kind ~public role q =
   | id :: ids ->
       match int_of_string_opt id (* FIXME *)  with
       | None -> Fmt.failwith "key %s: %s not an identifier" id_key id
-      | Some i -> loop (`Id i :: acc) creates ids
+      | Some i ->
+          let id = Person.Id.of_int i |> Result.get_ok' (* FIXME *) in
+          loop (`Id id :: acc) creates ids
   in
   loop [] creates (Http.Query.find_all id_key q)
 

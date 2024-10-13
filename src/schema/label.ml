@@ -9,11 +9,11 @@ open Rel
 (* Labels *)
 
 module Label = struct
-  type id = Id.t
+  module Id = Rel_kit.Id.MakeInt ()
   type name = string
   type color = int64
   type t =
-    { id : id;
+    { id : Id.t;
       name : string;
       synopsis : string;
       color : color;
@@ -41,7 +41,7 @@ module Label = struct
 
   (* Table *)
 
-  let id' = Col.make "id" Id.Rel.type' id
+  let id' = Col.make "id" Id.type' id
   let name' = Col.make "name" Type.text name
   let synopsis' = Col.make "synopsis" Type.text synopsis
   let color' = Col.make "color" Type.int64 color
@@ -61,18 +61,18 @@ include Label
 (* Labeling *)
 
 type label = t
-type label_id = id
+type label_id = Id.t
 
 module type APPLICATION = sig
   type entity
   type entity_id
   type t
-  val make : entity:entity_id -> label:id -> t
-  val row : entity_id -> id -> t
+  val make : entity:entity_id -> label:label_id -> t
+  val row : entity_id -> label_id -> t
   val entity : t -> entity_id
-  val label : t -> id
+  val label : t -> label_id
   val entity' : (t, entity_id) Col.t
-  val label' : (t, id) Col.t
+  val label' : (t, label_id) Col.t
   val table : t Table.t
   val create : t -> unit Rel_sql.Stmt.t
   val applications : (entity_id, 'a) Bag.t -> (t, Bag.unordered) Bag.t
@@ -83,20 +83,19 @@ module type APPLICATION = sig
     src:entity_id -> dst:entity_id -> unit Rel_sql.Stmt.t
 end
 
-module For_entity (Eid : Entity.ID)
-    (E : Entity.IDENTIFIABLE with type id = Eid.t) =
+module For_entity (E : Entity.IDENTIFIABLE) =
 struct
   type entity = E.t
-  type entity_id = E.id
-  type t = { entity : E.id; label : id; }
+  type entity_id = E.Id.t
+  type t = { entity : E.Id.t; label : label_id; }
 
   let make ~entity ~label = { entity; label }
   let row entity label = { entity; label }
   let entity e = e.entity
   let label e = e.label
 
-  let entity' = Col.make "entity" Eid.Rel.type' entity
-  let label' = Col.make "label" Id.Rel.type' label
+  let entity' = Col.make "entity" E.Id.type' entity
+  let label' = Col.make "label" Id.type' label
   let table =
     let name = Table.name E.table ^ "_label" in
     let primary_key = Table.Primary_key.make [Def entity'; Def label'] in
@@ -121,14 +120,14 @@ struct
   let applications eids =
     let* eid = eids in
     let* rel = Bag.table table in
-    Bag.where Eid.Rel.(eid = rel #. entity') (Bag.yield rel)
+    Bag.where E.Id.(eid = rel #. entity') (Bag.yield rel)
 
   let of_applications ~only_public apps =
     let* label = Bag.table Label.table in
     let select =
       Bag.exists @@
       let* app = apps in
-      let is_used = Int.(app #. label' = label #. id') in
+      let is_used = Id.(app #. label' = label #. id') in
       let filter = Bool.(not only_public || label #. public') in
       Bag.where Bool.(is_used && filter) (Bag.yield Bool.true')
     in
@@ -144,7 +143,7 @@ struct
          WHERE a.entity = ?2" (Table.name table) (Table.name table)
     in
     let stmt =
-      Rel_sql.Stmt.(func sql @@ Eid.Rel.type' @-> Eid.Rel.type' @-> unit)
+      Rel_sql.Stmt.(func sql @@ E.Id.type' @-> E.Id.type' @-> unit)
     in
     fun ~src ~dst -> stmt dst src
 
@@ -152,7 +151,11 @@ end
 
 (* Queries *)
 
-include Entity.Publicable_queries (Id) (Label)
+include Entity.Publicable_queries (Label)
+
+let id_map db st id =
+  let add r acc = Id.Map.add (id r) r acc in
+  Db.fold db st add Id.Map.empty
 
 (* Urls *)
 
@@ -166,22 +169,26 @@ module Url = struct
       Some (Http.Query.empty |> Http.Query.def cancel goto)
 
   type label = t
-  type named_id = string option * id
+  type named_id = string option * Id.t
   type t =
   | Create
-  | Edit of id
+  | Edit of Id.t
   | Edit_new of { cancel : string option }
   | Index
   | Page of named_id
-  | Update of id
-  | View of id
+  | Update of Id.t
+  | View of Id.t
 
   let id_meth u ms id =
     let* meth = Kurl.allow ms u in
     let* id = Res.Id.decode id in
+    let id = (* TODO likely make Res.Id a functor *)
+      Id.of_int id |> Result.get_ok'
+    in
     Ok (id, meth)
 
-  let id_get req id = let* id, `GET = id_meth req Http.Method.[get] id in Ok id
+  let id_get req id =
+    let* id, `GET = id_meth req Http.Method.[get] id in Ok id
 
   let dec u = match Kurl.Bare.path u with
   | [""] ->
@@ -204,14 +211,14 @@ module Url = struct
   let html = ".html"
   let enc = function
   | Create -> Kurl.bare `POST [""]
-  | Edit id -> Kurl.bare `GET ["api"; "ui"; "edit"; Res.Id.to_string id]
+  | Edit id -> Kurl.bare `GET ["api"; "ui"; "edit"; Id.to_string id]
   | Edit_new { cancel } ->
       Kurl.bare `GET ["edit"; "new"] ?query:(cancel_to_query cancel)
   | Index -> Kurl.bare `GET [""] ~ext:html
-  | Page (None, id) -> Kurl.bare `GET [Res.Id.to_string id] ~ext:html
-  | Page (Some n, id) -> Kurl.bare `GET [n; Res.Id.to_string id] ~ext:html
-  | Update id -> Kurl.bare `PUT [Res.Id.to_string id]
-  | View id -> Kurl.bare `GET ["api"; "ui"; "view"; Res.Id.to_string id]
+  | Page (None, id) -> Kurl.bare `GET [Id.to_string id] ~ext:html
+  | Page (Some n, id) -> Kurl.bare `GET [n; Id.to_string id] ~ext:html
+  | Update id -> Kurl.bare `PUT [Id.to_string id]
+  | View id -> Kurl.bare `GET ["api"; "ui"; "view"; Id.to_string id]
 
   let kind = Kurl.kind ~name:"label" enc dec
   let v u = Kurl.v kind u

@@ -23,5 +23,5 @@ val page_full_title : Page.Gen.t -> Container.t -> string
 val page : Page.Gen.t -> Container.t -> Reference.render_data -> Page.t
 
 val index :
-  Page.Gen.t -> Container.t list -> ref_count:(Container.id * int) Id.Map.t ->
-  Page.t
+  Page.Gen.t -> Container.t list ->
+  ref_count:(Container.Id.t * int) Container.Id.Map.t -> Page.t

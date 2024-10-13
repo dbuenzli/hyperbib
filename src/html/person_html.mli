@@ -19,4 +19,5 @@ val page_404 : Page.Gen.t -> self:Kurl.t -> Page.t
 val page_full_title : Page.Gen.t -> Person.t -> string
 val page : Page.Gen.t -> Person.t -> Reference.render_data -> Page.t
 val index :
-  Page.Gen.t -> Person.t list -> ref_count:(Person.id * int) Id.Map.t -> Page.t
+  Page.Gen.t -> Person.t list ->
+  ref_count:(Person.Id.t * int) Person.Id.Map.t -> Page.t

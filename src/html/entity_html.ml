@@ -135,15 +135,15 @@ let entity_remove_button ~req ~tip =
 let comma = El.txt ",\u{00A0}"
 
 let input_entity_id ~input_name:n eid =
-  let eid = match eid with None -> "" | Some id -> string_of_int id in
+  let eid = match eid with None -> "" | Some id -> id in
   El.input ~at:At.[hidden; name n; value eid] ()
 
 let entity_input_by_id
     (type t) (type id)
-    (module E : Entity.PUBLICABLE with type t = t and type id = int)
+    (module E : Entity.PUBLICABLE with type t = t and type Id.t = id)
     uf ~input_name ~render ~orderable ~remove ~suff e
   =
-  let input = input_entity_id ~input_name (Some (E.id e)) in
+  let input = input_entity_id ~input_name (Some (E.Id.to_string (E.id e))) in
   let entity =
     let viz = if E.public e then At.void else Hclass.private' in
     let at = [viz; Hui.Class.for_table E.table; Hclass.value] in
@@ -267,7 +267,9 @@ let subject_input uf ~for_list ~input_name s =
 
 let subject_input_finder_results uf ~for_list ~input_name ~parents ss =
   let render s =
-    let p = Option.bind (Subject.parent s) (Fun.flip Id.Map.find_opt parents) in
+    let p =
+      Option.bind (Subject.parent s) (Fun.flip Subject.Id.Map.find_opt parents)
+    in
     match p with
     | None -> El.txt (Subject.name s ^ "\u{207A}")
     | Some p ->
@@ -279,7 +281,7 @@ let subject_input_finder_results uf ~for_list ~input_name ~parents ss =
 
 let subject_input_finder uf ~for_list ~input_name =
   let res =
-    let parents = Id.Map.empty in
+    let parents = Subject.Id.Map.empty in
     subject_input_finder_results uf ~for_list ~input_name ~parents []
   in
   let input_subject_id = input_entity_id ~input_name None in

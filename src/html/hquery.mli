@@ -37,8 +37,7 @@ val get_all : 'a key -> Http.Query.t -> ('a list, Http.Response.t) result
 
 
 (* Get rid of that. *)
-
-val uniquify_ids : int list -> int list
+val uniquify_ids : (module Rel_kit.ID with type t = 'a) -> 'a list -> 'a list
 
 
 (** {1:rel Rel generic} *)
@@ -85,7 +84,9 @@ val is_undo : string
 val key_is_undo : bool key
 
 val find_ids :
-  uniquify:bool -> string -> Http.Query.t -> (int list, Http.Response.t) result
+  (module Rel_kit.ID with type t = 'id) ->
+  uniquify:bool -> string -> Http.Query.t ->
+  ('id list, Http.Response.t) result
 
 val date_key : string
 val find_date : Http.Query.t -> (Date.partial option, string) result
@@ -119,5 +120,5 @@ val create_person_keys : Person.role option -> string * string * string
 
 val find_create_contributors :
   Http.Query.t ->
-   ([`Id of Person.id | `To_create of Person.t] list *
-    [`Id of Person.id | `To_create of Person.t] list, Http.Response.t) result
+   ([`Id of Person.Id.t | `To_create of Person.t] list *
+    [`Id of Person.Id.t | `To_create of Person.t] list, Http.Response.t) result

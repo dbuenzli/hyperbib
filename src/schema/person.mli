@@ -22,8 +22,8 @@ val role_to_string : role -> string
 
 (** {1:persons Persons} *)
 
-type id = Id.t
 (** The type for person ids. These are allocated by the database. *)
+module Id : Rel_kit.INT_ID
 
 type t
 (** The type for persons. *)
@@ -32,18 +32,18 @@ type person = t
 (**  See {!t}. *)
 
 val make :
-  id:id -> last_name:string -> first_names:string ->
+  id:Id.t -> last_name:string -> first_names:string ->
   orcid:string -> note:string -> private_note:string ->
   public:bool -> unit -> t
 (** [make …] is a person with given attributes, see accessors for semantics. *)
 
-val row : id -> string -> string -> string -> string -> string -> bool -> t
+val row : Id.t -> string -> string -> string -> string -> string -> bool -> t
 (** [row] is {!make} unlabelled. *)
 
 val new' : t
 (** [new'] is a new person. *)
 
-val id : t -> id
+val id : t -> Id.t
 (** [id p] is the unique identifier of [p].  *)
 
 val last_name : t -> string
@@ -97,7 +97,7 @@ val index_letter : t -> char option
 
 open Rel
 
-val id' : (t, id) Col.t
+val id' : (t, Id.t) Col.t
 (** [id'] is the column for {!val-id}. *)
 
 val last_name' : (t, string) Col.t
@@ -123,11 +123,11 @@ val table : t Table.t
 
 (** Person label applications. *)
 module Label : Label.APPLICATION
-  with type entity := t and type entity_id := id
+  with type entity := t and type entity_id := Id.t
 
 (** {1:queries Queries} *)
 
-include Entity.PUBLICABLE_QUERIES with type t := t and type id := id
+include Entity.PUBLICABLE_QUERIES with type t := t and module Id := Id
 
 val select : string Rel_query.value -> (t, Bag.unordered) Bag.t
 val select_stmt : string -> t Rel_sql.Stmt.t
@@ -140,6 +140,9 @@ val match' :
 val match_stmt :
   last:string -> first:string -> orcid:string -> t Rel_sql.Stmt.t
 
+val id_map :
+  Db.t -> 'a Rel_sql.Stmt.t -> ('a -> Id.t) -> ('a Id.Map.t, Db.error) result
+
 (** {1:url URLs} *)
 
 (** Person URL requests *)
@@ -147,30 +150,30 @@ module Url : sig
 
   (** {1:url_req URL requests} *)
 
-  type named_id = string option * id
+  type named_id = string option * Id.t
 
   type t =
-  | Confirm_delete of id
+  | Confirm_delete of Id.t
   | Create
-  | Delete of id
-  | Duplicate of id
-  | Duplicate_form of id
-  | Edit_form of id
+  | Delete of Id.t
+  | Duplicate of Id.t
+  | Duplicate_form of Id.t
+  | Edit_form of Id.t
   | Index
   | New_form of { cancel : Entity.Url.cancel_url }
   | Page of named_id
-  | Replace of id
-  | Replace_form of id
+  | Replace of Id.t
+  | Replace_form of Id.t
   | Input of
-      Entity.Url.for_list * Entity.Url.input_name * role option * id
+      Entity.Url.for_list * Entity.Url.input_name * role option * Id.t
   | Input_create of
       Entity.Url.for_list * Entity.Url.input_name * role option * person
   | Input_finder of
       Entity.Url.for_list * Entity.Url.input_name * role option
   | Input_finder_find of
       Entity.Url.for_list * Entity.Url.input_name * role option * string
-  | Update of id
-  | View_fields of id (** *)
+  | Update of Id.t
+  | View_fields of Id.t (** *)
   (** The type for person URL requests. *)
 
   val kind : t Kurl.kind

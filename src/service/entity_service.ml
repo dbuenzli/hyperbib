@@ -19,7 +19,7 @@ let check_edit_authorized env =
 
 let get_entity
     (type t) (type id) (module E : Entity.IDENTIFIABLE_WITH_QUERIES
-               with type t = t and type id = id)
+               with type t = t and type Id.t = id)
     db id
   =
   let* s = Db.first' db (E.find_id_stmt id) in
@@ -30,16 +30,17 @@ let get_entity
 (* Responses *)
 
 let create
-    (type t)
+    (type id) (type t)
+    (module Id : Rel_kit.INT_ID with type t = id)
     (module E : Entity.IDENTIFIABLE_WITH_QUERIES
-      with type t = t and type id = int)
+      with type t = t and type Id.t = id)
     ~entity_page_url env req
   =
   let* () = check_edit_authorized env in
   Service_env.with_db_transaction' `Immediate env @@ fun db ->
   let* q = Http.Request.to_query req in
   let* vs = Hquery.careless_find_table_cols ~ignore:[Def E.id'] E.table q in
-  let* id = Db.insert' db (E.create_cols ~ignore_id:true vs) in
+  let* id = Db.insert' (module Id) db (E.create_cols ~ignore_id:true vs) in
   let uf = Service_env.url_fmt env in
   let headers = Html_kit.htmlact_redirect uf (entity_page_url id) in
   Ok (Http.Response.empty ~headers Http.Status.ok_200)
@@ -47,7 +48,7 @@ let create
 let delete
     (type t) (type id)
     (module E : Entity.IDENTIFIABLE_WITH_QUERIES with
-      type t = t and type id = id)
+      type t = t and type Id.t = id)
     ~deleted_html env id
   =
   let* () = check_edit_authorized env in

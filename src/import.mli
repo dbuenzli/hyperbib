@@ -29,7 +29,7 @@ module Doi : sig
     (Container.t entity option, Db.error) result
 
   val reference_of_ref :
-    ?note:string -> public:bool -> container_id:int option -> ref ->
+    ?note:string -> public:bool -> container_id:Container.Id.t option -> ref ->
     Reference.t
 
   val authors_editors_of_ref :

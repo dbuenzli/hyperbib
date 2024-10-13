@@ -12,23 +12,20 @@ open Hyperbib_std
     about blobs. *)
 
 (** Blob identifiers (allocated by {!Blobstore}). *)
-module Id : Entity.ID with type t = Blobstore.Key.text
-
-type id = Id.t
-(** The type for blob identifiers. *)
+module Id : Rel_kit.ID with type t = Blobstore.Key.text
 
 type t
 (** the type for blobs. *)
 
 val make :
-  id:id -> media_type:Media_type.t -> origin:string -> public:bool ->
+  id:Id.t -> media_type:Media_type.t -> origin:string -> public:bool ->
   slug:string -> t
 (** [make] is a blob with given attributes. See accessors for semantics. *)
 
-val row : id -> Media_type.t -> string -> bool -> string -> t
+val row : Id.t -> Media_type.t -> string -> bool -> string -> t
 (** [row] is unlabelled {!make}. *)
 
-val id : t -> id
+val id : t -> Id.t
 (** [id d] is the unique identifier of [d] this is the XXH3-128 hash
     of the document in hexadecimal. *)
 
@@ -51,7 +48,7 @@ val slug : t -> string
 
 open Rel
 
-val id' : (t, id) Col.t
+val id' : (t, Id.t) Col.t
 (** [id'] is the {!id} column. *)
 
 val media_type' : (t, Media_type.t) Col.t
@@ -71,4 +68,4 @@ val table : t Table.t
 
 (** {1:queries Queries} *)
 
-include Entity.PUBLICABLE_QUERIES with type t := t and type id := id
+include Entity.PUBLICABLE_QUERIES with type t := t and module Id := Id

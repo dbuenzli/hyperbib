@@ -113,7 +113,8 @@ let created g s =
   in
   let added =
     let pending = Kurl.Fmt.rel_url uf ~src:self ~dst:(Suggestion.Url.v Index) in
-    let pending = String.concat "#" [pending; string_of_int (Suggestion.id s)]in
+    let id = Suggestion.Id.to_int (Suggestion.id s) in
+    let pending = String.concat "#" [pending; string_of_int id]in
     El.p [El.txt "has been added to the list of ";
           Html_kit.link ~href:pending (El.txt "pending suggestions.")]
   in
@@ -194,7 +195,7 @@ let edit_ui g s =
   El.splice [ui; El.hr ()]
 
 let view_fields ?(no_ui = false) g ~self s =
-  let id = Int.to_string (Suggestion.id s) in
+  let id = Int.to_string (Suggestion.Id.to_int ((Suggestion.id s))) in
   let timestamp = view_timestamp g s in
   let preamble = El.p [timestamp; doi s] in
   let suggestion = view_suggestion g s in

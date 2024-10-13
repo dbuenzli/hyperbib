@@ -5,20 +5,21 @@
 
 open Hyperbib_std
 
-module Id = struct
-  type t = Blobstore.Key.text
-  module Rel = struct
-    let type' = Rel_query.Sql.text
-    let v = Rel_query.Text.v
-    let equal = Rel_query.Text.equal
-    let ( = ) = Rel_query.Text.( = )
-  end
-end
-
 module Blob = struct
-  type id = Id.t
+  module Base = struct
+    type t = Blobstore.Key.text
+    let rel_type = Rel_query.Sql.text
+    let rel_make = Rel_query.Text.v
+    let rel_equal = Rel_query.Text.equal
+    let rel_to_text = Fun.id
+    let compare = String.compare
+    let to_string = Fun.id
+    let of_string s = Ok s
+  end
+  module Id = Rel_kit.Id.Make (Base) ()
+
   type t =
-    { id : id;
+    { id : Id.t;
       media_type : Media_type.t;
       origin : string;
       public : bool;
@@ -51,4 +52,4 @@ module Blob = struct
 end
 
 include Blob
-include Entity.Publicable_queries (Id) (Blob)
+include Entity.Publicable_queries (Blob)

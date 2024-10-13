@@ -18,7 +18,6 @@ let note_brr = B0_ocaml.libname "note.brr"
 let ptime_clock = B0_ocaml.libname "ptime.clock"
 let rel = B0_ocaml.libname "rel"
 let rel_cli = B0_ocaml.libname "rel.cli"
-let rel_kit = B0_ocaml.libname "rel.kit"
 let rel_pool = B0_ocaml.libname "rel.pool"
 let rel_sqlite3 = B0_ocaml.libname "rel.sqlite3"
 let threads = B0_ocaml.libname "threads"
@@ -112,7 +111,7 @@ let write_static_file_stamp b =
 let hyperbib_base_requires =
   [ unix; threads; cmdliner; bytesrw; bytesrw_xxhash; bytesrw_unix;
     ptime_clock; b0_std; jsont; htmlit; htmlact;
-    rel; rel_kit; rel_cli; rel_sqlite3; rel_pool;
+    rel; rel_cli; rel_sqlite3; rel_pool;
     webs; webs_kit; webs_unix; webs_cli; ]
 
 let hyperbib_requires =

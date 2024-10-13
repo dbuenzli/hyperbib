@@ -155,24 +155,12 @@ let first = Rel_sqlite3.first
 let fold = Rel_sqlite3.fold
 let list db st = Rel_sqlite3.fold db st List.cons []
 
-let insert db st =
+let insert (type id) (module Id : Rel_kit.INT_ID with type t = id) db st =
   let* () = Rel_sqlite3.exec db st in
   (* FIXME might truncate, error *)
-  Ok (Int64.to_int @@ Rel_sqlite3.last_insert_rowid db)
+  let id = Int64.to_int (Rel_sqlite3.last_insert_rowid db) in
+  Ok (Id.of_int id |> Result.get_ok') (* FIXME *)
 
-let id_map db st id =
-  let add r acc = Id.Map.add (id r) r acc in
-  Rel_sqlite3.fold db st add Id.Map.empty
-
-let id_map_related_list ?order db rel_stmt ~id ~related ~related_by_id =
-  let add r acc = match Id.Map.find_opt (related r) related_by_id with
-  | None (* if the read is not in a transaction *) -> acc
-  | Some p -> Id.Map.add_to_list (id r) p acc
-  in
-  let* m = Rel_sqlite3.fold db rel_stmt add Id.Map.empty in
-  match order with
-  | None -> Ok m
-  | Some order -> Ok (Id.Map.map (List.sort order) m)
 
 (* Statement debug *)
 
@@ -208,6 +196,6 @@ let http_resp_error ?retry_after_s r =
 let first' db st = http_resp_error (first db st)
 let list' db st = http_resp_error (list db st)
 let exec' db st = http_resp_error (exec db st)
-let insert' db st = http_resp_error (insert db st)
+let insert' int_id db st = http_resp_error (insert int_id db st)
 let with_transaction' k db f =
   http_resp_error (Rel_sqlite3.with_transaction k db f)

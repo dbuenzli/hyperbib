@@ -12,8 +12,8 @@ open Hyperbib_std
 
 (** {1 Containers} *)
 
-type id = Id.t
 (** The type for container ids. These are allocated by the database. *)
+module Id : Rel_kit.INT_ID
 
 type t
 (** The type for containers. *)
@@ -22,19 +22,19 @@ type container = t
 (** See {!t}. *)
 
 val make :
-  id:id -> title:string -> isbn:string -> issn:string ->
+  id:Id.t -> title:string -> isbn:string -> issn:string ->
   note:string -> private_note:string -> public:bool ->
   unit -> t
 (** [make …] is a container with given attributes, see accessors for
     semantics. *)
 
-val row : id -> string -> string -> string -> string -> string -> bool -> t
+val row : Id.t -> string -> string -> string -> string -> string -> bool -> t
 (** [row] is {!make} unlabelled. *)
 
 val new' : t
 (** [new'] is a new container. *)
 
-val id : t -> id
+val id : t -> Id.t
 (** [id c] is the unique identifier of [c]. *)
 
 val title : t -> string
@@ -78,7 +78,7 @@ val index_letter : t -> char option
 
 open Rel
 
-val id' : (t, id) Col.t
+val id' : (t, Id.t) Col.t
 (** [id'] is the column for {!val-id}. *)
 
 val title' : (t, string) Col.t
@@ -104,11 +104,11 @@ val table : t Table.t
 
 (** Container label applications. *)
 module Label : Label.APPLICATION
-  with type entity := t and type entity_id := id
+  with type entity := t and type entity_id := Id.t
 
 (** {1:queries Queries} *)
 
-include Entity.PUBLICABLE_QUERIES with type t := t and type id := id
+include Entity.PUBLICABLE_QUERIES with type t := t and module Id := Id
 
 val match' :
   title:string Rel_query.value ->
@@ -121,6 +121,9 @@ val match_stmt :
 val select : string Rel_query.value -> (t, Bag.unordered) Rel_query.Bag.t
 val select_stmt : string -> t Rel_sql.Stmt.t
 
+val id_map :
+  Db.t -> 'a Rel_sql.Stmt.t -> ('a -> Id.t) -> ('a Id.Map.t, Db.error) result
+
 (** {1:urls URLs} *)
 
 (** Container URL requests. *)
@@ -128,26 +131,26 @@ module Url : sig
 
   (** {1:url_req URL request} *)
 
-  type named_id = string option * id
+  type named_id = string option * Id.t
 
   type t =
-  | Confirm_delete of id
+  | Confirm_delete of Id.t
   | Create
-  | Delete of id
-  | Duplicate of id
-  | Duplicate_form of id
-  | Edit_form of id
+  | Delete of Id.t
+  | Duplicate of Id.t
+  | Duplicate_form of Id.t
+  | Edit_form of Id.t
   | Index
-  | Input of Entity.Url.input_name * id
+  | Input of Entity.Url.input_name * Id.t
   | Input_create of Entity.Url.input_name * container
   | Input_finder of Entity.Url.input_name
   | Input_finder_find of Entity.Url.input_name * string
   | New_form of { cancel : Entity.Url.cancel_url }
   | Page of named_id
-  | Replace of id
-  | Replace_form of id
-  | Update of id
-  | View_fields of id (** *)
+  | Replace of Id.t
+  | Replace_form of Id.t
+  | Update of Id.t
+  | View_fields of Id.t (** *)
   (** The type for container URL requests. *)
 
   val kind : t Kurl.kind

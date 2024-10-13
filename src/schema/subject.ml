@@ -7,12 +7,12 @@ open Hyperbib_std
 open Rel
 
 module Subject = struct
-  type id = Id.t
+  module Id = Rel_kit.Id.MakeInt ()
   type t =
-    { id : id;
+    { id : Id.t;
       name : string;
-      parent : id option;
-      see : id option;
+      parent : Id.t option;
+      see : Id.t option;
       description : string;
       private_note : string;
       public : bool; }
@@ -24,7 +24,7 @@ module Subject = struct
     { id; name; parent; see; description; private_note; public }
 
   let new' =
-    { id = 0; name = Uimsg.unnamed; parent = None; see = None;
+    { id = Id.zero; name = Uimsg.unnamed; parent = None; see = None;
       description = ""; private_note = ""; public = false }
 
   let id s = s.id
@@ -58,13 +58,13 @@ module Subject = struct
 
   (* Table *)
 
-  let id' = Col.make "id" Type.int id
+  let id' = Col.make "id" Id.type' id
   let name' = Col.make "name" Type.text name
   let description' = Col.make "description" Type.text description
   let private_note' = Col.make "private_note" Type.text private_note
   let public' = Col.make "public" Type.bool public
-  let parent' = Col.make "parent" Type.(option int) parent
-  let see' = Col.make "see" Type.(option int) see
+  let parent' = Col.make "parent" Type.(option Id.type') parent
+  let see' = Col.make "see" Type.(option Id.type') see
   let table =
     let primary_key = Table.Primary_key.make [Def id'] in
     let foreign_keys =
@@ -86,13 +86,13 @@ include Subject
 type subject = t
 
 module See_also = struct
-  type t = { given : id; that : id; }
+  type t = { given : Id.t; that : Id.t; }
   let make ~given ~that () = { given; that }
   let row given that = { given; that }
   let given s = s.given
   let that s = s.that
-  let given' = Col.make "given" Type.int given
-  let that' = Col.make "that" Type.int that
+  let given' = Col.make "given" Id.type' given
+  let that' = Col.make "that" Id.type' that
   let table =
     let primary_key = Table.Primary_key.make [Def given'; Def that'] in
     let foreign_keys =
@@ -107,16 +107,16 @@ module See_also = struct
   let create r = Rel_sql.insert_into Db.dialect table r
 end
 
-module Label = Label.For_entity (Id) (Subject)
+module Label = Label.For_entity (Subject)
 
 (* Queries *)
 
-include Entity.Publicable_queries (Id) (Subject)
+include Entity.Publicable_queries (Subject)
 
 open Rel_query.Syntax
 
 let some_id_is_public id =
-  let eq_id id s = Int.(Option.get id = s #. id') in
+  let eq_id id s = Id.(Option.get id = s #. id') in
   Bag.exists @@
   let* s = Bag.table table in
   let sat = Option.is_none id || (eq_id id s && s #. public') in
@@ -153,51 +153,58 @@ let parents_stmt = Rel_query.Sql.of_bag' table parents
 
 let children id =
   let* s = Bag.table table in
-  let is_parent = Option.has_value ~eq:Int.equal id (s #. parent') in
+  let is_parent = Option.has_value ~eq:Id.equal id (s #. parent') in
   Bag.where is_parent (Bag.yield s)
 
 let children_stmt =
-  Rel_query.Sql.(func @@ int @-> ret (Table.row table) children)
+  Rel_query.Sql.(func @@ Id.type' @-> ret (Table.row table) children)
 
 let select sel =
-  (* FIXME trim spaces in both pattern and scrutinee *)
+  (* FIXME trim spaces in both pattern and scrutinee
+     TODO the structure of this query is likely wrong [select]
+     should have two args, the binding should convert to string. *)
   let* s = Bag.table table in
-  let sel_by_id = Text.(of_int (s #. id') = sel) in
+  let sel_by_id = Text.(Id.to_text (s #. id') = sel) in
   let sel_by_name = Text.(like (s #. name') (sel ^ v "%") ) in
   Bag.where (sel_by_id || sel_by_name) (Bag.yield s)
 
 let select_stmt =
   Rel_query.Sql.(func @@ text @-> ret (Table.row table) select)
 
+let id_map db st id =
+  let add r acc = Id.Map.add (id r) r acc in
+  Db.fold db st add Id.Map.empty
+
+
 module Url = struct
   open Result.Syntax
 
-  type named_id = string option * id
+  type named_id = string option * Id.t
   type t =
-  | Confirm_delete of id
+  | Confirm_delete of Id.t
   | Create
-  | Delete of id
-  | Duplicate of id
-  | Duplicate_form of id
-  | Edit_form of id
+  | Delete of Id.t
+  | Duplicate of Id.t
+  | Duplicate_form of Id.t
+  | Edit_form of Id.t
   | Index
-  | Input of Entity.Url.for_list * Entity.Url.input_name * id
+  | Input of Entity.Url.for_list * Entity.Url.input_name * Id.t
   | Input_create of Entity.Url.for_list * Entity.Url.input_name * subject
   | Input_finder of Entity.Url.for_list * Entity.Url.input_name
   | Input_finder_find of Entity.Url.for_list * Entity.Url.input_name * string
   | New_form of { cancel : Entity.Url.cancel_url }
   | Page of named_id
-  | Replace of id
-  | Replace_form of id
-  | Update of id
-  | View_fields of id
+  | Replace of Id.t
+  | Replace_form of Id.t
+  | Update of Id.t
+  | View_fields of Id.t
 
   let nameq = "name"
   let subject_of_query q = match Http.Query.find_first nameq q with
   | None -> Http.Response.bad_request_400 ~reason:"No subject found" ()
   | Some name ->
       Result.ok @@
-      Subject.make ~id:0 ~name ~parent:None ~see:None
+      Subject.make ~id:Id.zero ~name ~parent:None ~see:None
         ~description:"" ~private_note:"" ~public:false ()
 
   let subject_to_query ?(init = Http.Query.empty) s =
@@ -209,26 +216,26 @@ module Url = struct
       let url = match meth with `GET -> Index | `POST -> Create in
       Kurl.ok url
   | ["part"; "confirm-delete"; id] ->
-      let* `GET, id = Entity.Url.get_id u id in
+      let* `GET, id = Entity.Url.get_id (module Id) u id in
       Kurl.ok (Confirm_delete id)
   | ["part"; "edit-form"; id] ->
-      let* `GET, id = Entity.Url.get_id u id in
+      let* `GET, id = Entity.Url.get_id (module Id) u id in
       Kurl.ok (Edit_form id)
   | ["part"; "view-fields"; id] ->
-      let* `GET, id = Entity.Url.get_id u id in
+      let* `GET, id = Entity.Url.get_id (module Id) u id in
       Kurl.ok (View_fields id)
   | ["part"; "replace-form"; id] ->
-      let* `GET, id = Entity.Url.get_id u id in
+      let* `GET, id = Entity.Url.get_id (module Id) u id in
       Kurl.ok (Replace_form id)
   | ["part"; "duplicate-form"; id] ->
-      let* `GET, id = Entity.Url.get_id u id in
+      let* `GET, id = Entity.Url.get_id (module Id) u id in
       Kurl.ok (Duplicate_form id)
   | ["part"; "new-form"] ->
       let* `GET = Kurl.allow Http.Method.[get] u in
       let cancel = Entity.Url.cancel_url_of_query (Kurl.Bare.query u) in
       Kurl.ok (New_form { cancel })
   | ["part"; "input"; id] ->
-      let* `GET, id = Entity.Url.get_id u id in
+      let* `GET, id = Entity.Url.get_id (module Id) u id in
       let* for_list = Entity.Url.for_list_of_query (Kurl.Bare.query u) in
       let* input_name = Entity.Url.input_name_of_query (Kurl.Bare.query u) in
       Kurl.ok (Input (for_list, input_name, id))
@@ -250,16 +257,18 @@ module Url = struct
       let q = Entity.Url.select_of_query (Kurl.Bare.query u) in
       Kurl.ok (Input_finder_find (for_list, input_name, q))
   | ["action"; "duplicate"; id] ->
-      let* `POST, id = Entity.Url.meth_id u Http.Method.[post] id in
+      let* `POST, id = Entity.Url.meth_id (module Id) u Http.Method.[post] id in
       Kurl.ok (Duplicate id)
   | ["action"; "replace"; id] ->
-      let* `POST, id = Entity.Url.meth_id u Http.Method.[post] id in
+      let* `POST, id = Entity.Url.meth_id (module Id) u Http.Method.[post] id in
       Kurl.ok (Replace id)
   | [name; id] ->
-      let* `GET, id = Entity.Url.get_id u id in
+      let* `GET, id = Entity.Url.get_id (module Id) u id in
       Kurl.ok (Page (Some name, id))
   | [id] ->
-      let* meth, id = Entity.Url.meth_id u Http.Method.[get; put; delete] id in
+      let* meth, id =
+        Entity.Url.meth_id (module Id) u Http.Method.[get; put; delete] id
+      in
       let url = match meth with
       | `GET -> Page (None, id) | `PUT -> Update id | `DELETE -> Delete id
       in
@@ -270,35 +279,35 @@ module Url = struct
   let html = ".html"
   let enc = function
   | Confirm_delete id ->
-      Kurl.bare `GET ["part"; "confirm-delete"; Res.Id.to_string id]
+      Kurl.bare `GET ["part"; "confirm-delete"; Id.to_string id]
   | Create ->
       Kurl.bare `POST [""]
   | Delete id ->
-      Kurl.bare `DELETE [Res.Id.to_string id]
+      Kurl.bare `DELETE [Id.to_string id]
   | Duplicate id ->
-      Kurl.bare `POST ["action"; "duplicate"; Res.Id.to_string id]
+      Kurl.bare `POST ["action"; "duplicate"; Id.to_string id]
   | Duplicate_form id ->
-      Kurl.bare `GET ["part"; "duplicate-form"; Res.Id.to_string id]
+      Kurl.bare `GET ["part"; "duplicate-form"; Id.to_string id]
   | Edit_form id ->
-      Kurl.bare `GET ["part"; "edit-form"; Res.Id.to_string id]
+      Kurl.bare `GET ["part"; "edit-form"; Id.to_string id]
   | Index ->
       Kurl.bare `GET [""] ~ext:html
   | New_form { cancel } ->
       let query = Entity.Url.cancel_url_to_query cancel in
       Kurl.bare `GET ["part"; "new-form"] ?query
   | Page (None, id) ->
-      Kurl.bare `GET [Res.Id.to_string id] ~ext:html
+      Kurl.bare `GET [Id.to_string id] ~ext:html
   | Page (Some n, id) ->
-      Kurl.bare `GET [n; Res.Id.to_string id] ~ext:html
+      Kurl.bare `GET [n; Id.to_string id] ~ext:html
   | Replace id ->
-      Kurl.bare `POST ["action"; "replace"; Res.Id.to_string id]
+      Kurl.bare `POST ["action"; "replace"; Id.to_string id]
   | Replace_form id ->
-      Kurl.bare `GET ["part"; "replace-form"; Res.Id.to_string id]
+      Kurl.bare `GET ["part"; "replace-form"; Id.to_string id]
   | Input (for_list, n, id) ->
       let query = Http.Query.empty in
       let query = Entity.Url.for_list_to_query ~init:query for_list in
       let query = Entity.Url.input_name_to_query ~init:query n in
-      Kurl.bare `GET ["part"; "input"; Res.Id.to_string id] ~query
+      Kurl.bare `GET ["part"; "input"; Id.to_string id] ~query
   | Input_create (for_list, n, s) ->
       let query = Http.Query.empty in
       let query = Entity.Url.for_list_to_query ~init:query for_list in
@@ -316,9 +325,9 @@ module Url = struct
       let query = Entity.Url.input_name_to_query ~init:query n in
       Kurl.bare `GET ["part"; "input-finder-find"] ~query
   | Update id ->
-      Kurl.bare `PUT [Res.Id.to_string id]
+      Kurl.bare `PUT [Id.to_string id]
   | View_fields id  ->
-      Kurl.bare `GET ["part"; "view-fields"; Res.Id.to_string id]
+      Kurl.bare `GET ["part"; "view-fields"; Id.to_string id]
 
   let kind = Kurl.kind ~name:"subject" enc dec
   let v u = Kurl.v kind u

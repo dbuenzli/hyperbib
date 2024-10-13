@@ -25,7 +25,7 @@ let get_page_data db g s =
   let only_public = Rel_query.Bool.v (Page.Gen.only_public g) in
   let all = Reference.list ~only_public in
   let id = Container.id s in
-  let refs = Reference.filter_container_id (Rel_query.Int.v id) all in
+  let refs = Reference.filter_container_id (Container.Id.v id) all in
   let* refs =
     Reference.render_data ~only_public refs db |> Db.http_resp_error
   in
@@ -59,7 +59,8 @@ let confirm_delete env id =
 
 let create =
   let entity_page_url id = Container.Url.v (Page (None, id)) in
-  Entity_service.create (module Container) ~entity_page_url
+  Entity_service.create (module Container.Id) (module Container)
+    ~entity_page_url
 
 let delete =
   Entity_service.delete (module Container) ~deleted_html:Container_html.deleted
@@ -70,7 +71,10 @@ let duplicate env req src =
   let* q = Http.Request.to_query req in
   let ignore = [Col.Def Container.id'] in
   let* vs = Hquery.careless_find_table_cols ~ignore Container.table q in
-  let* dst = Db.insert' db (Container.create_cols ~ignore_id:true vs) in
+  let* dst =
+    Db.insert' (module Container.Id) db
+      (Container.create_cols ~ignore_id:true vs)
+  in
   let* () = Db.exec' db (Container.Label.copy_applications_stmt ~src ~dst) in
   let uf = Service_env.url_fmt env in
   let headers =
@@ -100,7 +104,10 @@ let index env =
   let only_public = Page.Gen.only_public g in
   let* cs = Db.list db (Container.list_stmt ~only_public) in
   let ref_count = Reference.container_public_ref_count_stmt in
-  let* ref_count = Db.id_map db ref_count fst in
+  let* ref_count =
+    let add (id, _ as r) acc = Container.Id.Map.add id r acc in
+    Db.fold db ref_count add Container.Id.Map.empty
+  in
   let page = Container_html.index g cs ~ref_count in
   Ok (Page.response page)
 
@@ -136,14 +143,17 @@ let replace env req this =
   Service_env.with_db_transaction' `Immediate env @@ fun db ->
   let* q = Http.Request.to_query req in
   let* by =
-    let* by = Entity.Url.replace_by_of_query' q in
+    let* by = Entity.Url.replace_by_of_query' (module Container.Id) q in
     match by with
     | Some _ as by -> Ok by
     | None ->
         match Hquery.find_create_container q with
         | None -> Ok None
         | Some c ->
-            let* cid = Db.insert' db (Container.create ~ignore_id:true c) in
+            let* cid =
+              Db.insert' (module Container.Id) db
+                (Container.create ~ignore_id:true c)
+            in
             Ok (Some cid)
   in
   match by with
@@ -186,7 +196,7 @@ let creatable_container_of_sel sel =
   let sel = String.trim sel in
   if sel = "" then None else
   Option.some @@ Container.make
-    ~id:0 ~title:sel ~isbn:"" ~issn:"" ~note:"" ~private_note:""
+    ~id:Container.Id.zero ~title:sel ~isbn:"" ~issn:"" ~note:"" ~private_note:""
     ~public:false ()
 
 let input_finder_find env ~input_name sel =

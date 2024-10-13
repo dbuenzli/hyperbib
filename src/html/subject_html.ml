@@ -73,12 +73,12 @@ let edit_parent s ~parents =
   let label = El.txt Uimsg.parent in
   let parents = List.sort Subject.order_by_name parents in
   let options = None :: List.map (fun s -> Some (Subject.id s)) parents in
-  let parents = Id.Map.of_list Subject.id parents in
+  let parents = Subject.Id.Map.of_elts Subject.id parents in
   let option_text = function
   | None -> Uimsg.no_parent
-  | Some id -> Subject.name (Id.Map.find id parents)
+  | Some id -> Subject.name (Subject.Id.Map.find id parents)
   in
-  let option_value = function None -> "" | Some id -> Res.Id.to_string id in
+  let option_value = function None -> "" | Some id -> Subject.Id.to_string id in
   let col = Subject.parent' in
   let select_at = At.[Hclass.subject; Hclass.value] in
   Hui.field_select ~select_at ~label ~option_text ~option_value ~options ~col s
@@ -242,9 +242,9 @@ let page_404 g ~self =
 
 let index_html g ~self ss ~ref_count =
   let uf = Page.Gen.url_fmt g in
-  let anchor_id s = Fmt.str "%d" (Subject.id s) in
+  let anchor_id s = Subject.Id.to_string (Subject.id s) in
   let subject s = Html_kit.link_subject uf ~self s in
-  let ref_count s = match Id.Map.find_opt (Subject.id s) ref_count with
+  let ref_count s = match Subject.Id.Map.find_opt (Subject.id s) ref_count with
   | None -> 0 | Some (_, c) -> c
   in
   let child s =
@@ -258,7 +258,7 @@ let index_html g ~self ss ~ref_count =
       let count = Html_kit.item_count (ref_count r) in
       El.h2 ~at:At.[id sid] [Html_kit.anchor_a sid; subject r; El.sp; count]
     in
-    let children = match Id.Map.find_opt (Subject.id r) children with
+    let children = match Subject.Id.Map.find_opt (Subject.id r) children with
     | None | Some [] -> El.void
     | Some children ->
         let children = List.sort Subject.order_by_name children in

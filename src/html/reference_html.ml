@@ -6,12 +6,18 @@
 open Hyperbib_std
 
 let find_container r rs =
-  let find_container c = Id.Map.find_opt c rs.Reference.containers in
+  let find_container c = Container.Id.Map.find_opt c rs.Reference.containers in
   Option.bind (Reference.container r) find_container
 
-let find_authors r rs = Id.Map.get_list (Reference.id r) rs.Reference.authors
-let find_editors r rs = Id.Map.get_list (Reference.id r) rs.Reference.editors
-let find_subjects r rs = Id.Map.get_list (Reference.id r) rs.Reference.subjects
+let find_authors r rs =
+  Reference.Id.Map.get_list (Reference.id r) rs.Reference.authors
+
+let find_editors r rs =
+  Reference.Id.Map.get_list (Reference.id r) rs.Reference.editors
+
+let find_subjects r rs =
+  Reference.Id.Map.get_list (Reference.id r) rs.Reference.subjects
+
 let cites_anchor = "cites"
 let cited_by_anchor = "cited-by"
 
@@ -293,7 +299,7 @@ let view_title ~linkify uf ~self r =
 
 let undo_make_all_authors_public_button uf rid ~ids =
   let id i =
-    El.input ~at:At.[hidden; name "undo"; value (string_of_int i)] ()
+    El.input ~at:At.[hidden; name "undo"; value (Person.Id.to_string i)] ()
   in
   let ids = List.map id ids in
   let is_undo = El.input ~at:At.[hidden; name Hquery.is_undo; value "true"]() in
@@ -423,7 +429,7 @@ let view_more_details ~notes g ~self r =
 
 let list_item g ~self r rs =
   let uf = Page.Gen.url_fmt g in
-  let anchor_id = Fmt.str "%d" (Reference.id r) in
+  let anchor_id = Reference.Id.to_string (Reference.id r) in
   let title = view_title ~linkify:true uf ~self r in
   let container = find_container r rs in
   let container = view_container ~details:false uf ~self r rs container in

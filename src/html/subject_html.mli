@@ -39,5 +39,5 @@ val page :
   Reference.render_data -> Page.t
 
 val index :
-  Page.Gen.t -> Subject.t list -> ref_count:(Subject.id * int) Id.Map.t ->
-  Page.t
+  Page.Gen.t -> Subject.t list ->
+  ref_count:(Subject.Id.t * int) Subject.Id.Map.t -> Page.t

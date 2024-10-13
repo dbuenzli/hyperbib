@@ -6,22 +6,11 @@
 open Hyperbib_std
 open Rel
 
-module type ID = sig
-  type t
-
-  module Rel : sig
-    val type' : t Rel.Type.t
-    val v : t -> t Rel_query.value
-    val equal : t Rel_query.value -> t Rel_query.value -> bool Rel_query.value
-    val ( = ) : t Rel_query.value -> t Rel_query.value -> bool Rel_query.value
-  end
-end
-
 module type IDENTIFIABLE = sig
-  type id
+  module Id : Rel_kit.ID
   type t
-  val id : t -> id
-  val id' : (t, id) Col.t
+  val id : t -> Id.t
+  val id' : (t, Id.t) Col.t
   val table : t Table.t
 end
 
@@ -56,29 +45,29 @@ module type DESCRIBABLE = sig
 end
 
 module type IDENTIFIABLE_QUERIES = sig
-  type id
+  module Id : Rel_kit.ID
   type t
   val create : ignore_id:bool -> t -> unit Rel_sql.Stmt.t
   val create_cols : ignore_id:bool -> t Col.value list -> unit Rel_sql.Stmt.t
-  val delete : id -> unit Rel_sql.Stmt.t
-  val update : id -> t Col.value list -> unit Rel_sql.Stmt.t
-  val find_id : id Rel_query.value -> (t, Bag.unordered) Bag.t
-  val find_id_stmt : id -> t Rel_sql.Stmt.t
-  val find_ids : (id, 'a) Bag.t -> (t, Bag.unordered) Bag.t
-  val find_id_list : id list -> (t, Bag.unordered) Bag.t
+  val delete : Id.t -> unit Rel_sql.Stmt.t
+  val update : Id.t -> t Col.value list -> unit Rel_sql.Stmt.t
+  val find_id : Id.t Rel_query.value -> (t, Bag.unordered) Bag.t
+  val find_id_stmt : Id.t -> t Rel_sql.Stmt.t
+  val find_ids : (Id.t, 'a) Bag.t -> (t, Bag.unordered) Bag.t
+  val find_id_list : Id.t list -> (t, Bag.unordered) Bag.t
 end
 
 module type IDENTIFIABLE_WITH_QUERIES = sig
   include IDENTIFIABLE
-  include IDENTIFIABLE_QUERIES with type t := t and type id := id
+  include IDENTIFIABLE_QUERIES with type t := t and module Id := Id
 end
 
-module Identifiable_queries (Id : ID) (E : IDENTIFIABLE with type id = Id.t) :
-  (IDENTIFIABLE_QUERIES with type t := E.t and type id := E.id) = struct
+module Identifiable_queries (E : IDENTIFIABLE) :
+  (IDENTIFIABLE_QUERIES with type t := E.t and module Id := E.Id) = struct
 
   open Rel_query.Syntax
 
-  type id = E.id
+  module Id = E.Id
   type t = E.t
 
   let create ~ignore_id p =
@@ -94,21 +83,21 @@ module Identifiable_queries (Id : ID) (E : IDENTIFIABLE with type id = Id.t) :
 
   let find_id id =
     let* p = Bag.table E.table in
-    let eq_id = Id.Rel.(p #. E.id' = id) in
+    let eq_id = Id.(p #. E.id' = id) in
     Bag.where eq_id (Bag.yield p)
 
   let find_id_stmt =
-    Rel_query.Sql.(func @@ Id.Rel.type' @-> ret (Table.row E.table) find_id)
+    Rel_query.Sql.(func @@ Id.type' @-> ret (Table.row E.table) find_id)
 
   let find_ids ids = let* id = ids in find_id id
 
   let find_id_list ids =
-    let add acc id = Bag.union (find_id (Id.Rel.v id)) acc in
+    let add acc id = Bag.union (find_id (Id.v id)) acc in
     match ids with
     | [] -> Bag.empty
     | id :: ids ->
         (* FIXME rel bug: we want to fold starting with Bag.empty *)
-        List.fold_left add (find_id (Id.Rel.v id)) ids
+        List.fold_left add (find_id (Id.v id)) ids
 
   let update id cols =
     Rel_sql.update Db.dialect E.table ~set:cols ~where:[Col.Value (E.id', id)]
@@ -123,13 +112,13 @@ end
 
 module type PUBLICABLE_WITH_QUERIES = sig
   include PUBLICABLE
-  include PUBLICABLE_QUERIES with type t := t and type id := id
+  include PUBLICABLE_QUERIES with type t := t and module Id := Id
 end
 
-module Publicable_queries (Id : ID) (E : PUBLICABLE with type id = Id.t) :
-  (PUBLICABLE_QUERIES with type t := E.t and type id := E.id) = struct
+module Publicable_queries (E : PUBLICABLE) :
+  (PUBLICABLE_QUERIES with type t := E.t and module Id := E.Id) = struct
 
-  include Identifiable_queries (Id) (E)
+  include Identifiable_queries (E)
 
   open Rel_query.Syntax
 
@@ -156,13 +145,23 @@ module Url = struct
   let replace_by = "replace-by"
 
   (* XXX remove eventually *)
-  let replace_by_of_query q = match Http.Query.find_first replace_by q with
-  | None -> Http.Response.bad_request_400 ()
-  | Some r -> Res.Id.decode r
+  let replace_by_of_query
+      (type id) (module Id : Rel_kit.INT_ID with type t = id) q
+    =
+    match Http.Query.find_first replace_by q with
+    | None -> Http.Response.bad_request_400 ()
+    | Some r ->
+        let* id = Res.Id.decode r in
+        Ok (Id.of_int id |> Result.get_ok' (* FIXME *))
 
-  let replace_by_of_query' q = match Http.Query.find_first replace_by q with
-  | None | Some "" -> Ok None
-  | Some r -> Result.map Option.some (Res.Id.decode r)
+  let replace_by_of_query'
+      (type id) (module Id : Rel_kit.INT_ID with type t = id) q =
+    match Http.Query.find_first replace_by q with
+    | None | Some "" -> Ok None
+    | Some r ->
+        let* id = Res.Id.decode r in
+        Ok (Some (Id.of_int id |> Result.get_ok' (* FIXME *)))
+
 
 
   type cancel_url = string option
@@ -202,10 +201,12 @@ module Url = struct
   let input_name_to_query ?(init = Http.Query.empty) n =
     init |> Http.Query.def input_name n
 
-  let meth_id u ms id =
+  let meth_id (type id) (module Id : Rel_kit.INT_ID with type t = id) u ms id =
     let* meth = Kurl.allow ms u in
     let* id = Res.Id.decode id in
+    let id = Id.of_int id |> (* TODO *) Result.get_ok' in
     Ok (meth, id)
 
-  let get_id u id = meth_id u Http.Method.[get] id
+  let get_id m u id =
+    meth_id m u Http.Method.[get] id
 end

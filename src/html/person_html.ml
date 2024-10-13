@@ -239,11 +239,11 @@ let page g p refs =
 
 let index_html g ~self ps ~ref_count =
   let uf = Page.Gen.url_fmt g in
-  let ref_count p = match Id.Map.find_opt (Person.id p) ref_count with
+  let ref_count p = match Person.Id.Map.find_opt (Person.id p) ref_count with
   | None -> 0 | Some (_, c) -> c
   in
   let person_li p =
-    let pid = Fmt.str "%d" (Person.id p) in
+    let pid = Person.Id.to_string (Person.id p) in
     let names = Html_kit.link_person uf ~self p in
     let count = Html_kit.item_count (ref_count p) and orcid = orcid_html p in
     let person = [Html_kit.anchor_a pid; names; El.sp; count; El.sp; orcid] in

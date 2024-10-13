@@ -7,10 +7,10 @@ open Hyperbib_std
 open Rel
 
 module Suggestion = struct
+  module Id = Rel_kit.Id.MakeInt ()
   type doi = string
-  type id = Id.t
   type t =
-    { id : id;
+    { id : Id.t;
       timestamp : int;
       doi : doi;
       suggestion : string;
@@ -24,7 +24,7 @@ module Suggestion = struct
     { id; timestamp; doi; suggestion; comment; email }
 
   let new' =
-    { id = 0; timestamp = 0; doi = ""; suggestion = "";  comment = "";
+    { id = Id.zero; timestamp = 0; doi = ""; suggestion = "";  comment = "";
       email = ""; }
 
   let id s = s.id
@@ -36,7 +36,7 @@ module Suggestion = struct
 
   (* Table *)
 
-  let id' = Col.make "id" Type.int id
+  let id' = Col.make "id" Id.type' id
   let timestamp' = Col.make "timestamp" Type.int timestamp
   let doi' = Col.make "doi" Type.text doi
   let suggestion' = Col.make "suggestion" Type.text suggestion
@@ -50,7 +50,7 @@ module Suggestion = struct
 end
 
 include Suggestion
-include Entity.Identifiable_queries (Id) (Suggestion)
+include Entity.Identifiable_queries (Suggestion)
 
 open Rel_query.Syntax
 
@@ -70,12 +70,12 @@ module Url = struct
 
   type t =
   | Create
-  | Confirm_delete of id
-  | Delete of id
+  | Confirm_delete of Id.t
+  | Delete of Id.t
   | Fill_in
   | Index
-  | Page of { id : id; created : bool }
-  | View_fields of id
+  | Page of { id : Id.t; created : bool }
+  | View_fields of Id.t
 
   let dec u = match Kurl.Bare.path u with
   | [""] ->
@@ -83,16 +83,18 @@ module Url = struct
       let url = match meth with `GET -> Index | `POST -> Create in
       Kurl.ok url
   | ["part"; "confirm-delete"; id] ->
-      let* `GET, id = Entity.Url.get_id u id in
+      let* `GET, id = Entity.Url.get_id (module Id) u id in
       Kurl.ok (Confirm_delete id)
   | ["part"; "fill-in"] ->
       let* `POST = Kurl.allow Http.Method.[post] u in
       Kurl.ok Fill_in
   | ["part"; "view-fields"; id] ->
-      let* `GET, id = Entity.Url.get_id u id in
+      let* `GET, id = Entity.Url.get_id (module Id) u id in
       Kurl.ok (View_fields id)
   | [id] ->
-      let* meth, id = Entity.Url.meth_id u Http.Method.[get; delete] id in
+      let* meth, id =
+        Entity.Url.meth_id (module Id) u Http.Method.[get; delete] id
+      in
       let url = match meth with
       | `DELETE -> Delete id
       | `GET ->
@@ -106,8 +108,8 @@ module Url = struct
   let enc = function
   | Create -> Kurl.bare `POST [""]
   | Confirm_delete id ->
-      Kurl.bare `GET ["part"; "confirm-delete"; Res.Id.to_string id]
-  | Delete id -> Kurl.bare `DELETE [Res.Id.to_string id]
+      Kurl.bare `GET ["part"; "confirm-delete"; Id.to_string id]
+  | Delete id -> Kurl.bare `DELETE [Id.to_string id]
   | Fill_in -> Kurl.bare `POST ["part"; "fill-in"]
   | Index -> Kurl.Bare.v `GET [""] ~ext:html
   | Page {id; created} ->
@@ -115,9 +117,9 @@ module Url = struct
       | true -> Http.Query.empty |> Http.Query.def "created" ""
       | false -> Http.Query.empty
       in
-      Kurl.bare `GET [Res.Id.to_string id] ~query ~ext:html
+      Kurl.bare `GET [Id.to_string id] ~query ~ext:html
   | View_fields id ->
-      Kurl.bare `GET ["part"; "view-fields"; Res.Id.to_string id]
+      Kurl.bare `GET ["part"; "view-fields"; Id.to_string id]
 
   let kind = Kurl.kind enc dec
   let v u = Kurl.v kind u

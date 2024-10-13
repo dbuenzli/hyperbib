@@ -9,8 +9,8 @@ open Hyperbib_std
 
 (** {1:refs References} *)
 
-type id = Id.t
 (** The type for reference ids. These are allocated by the database. *)
+module Id : Rel_kit.INT_ID
 
 type t
 (** The type for references. *)
@@ -19,7 +19,7 @@ type reference = t
 (** See {!t}. *)
 
 val make :
-  id:id -> abstract:string -> container:Container.id option ->
+  id:Id.t -> abstract:string -> container:Container.Id.t option ->
   date:Date.partial option -> doi:Doi.t option -> isbn:string -> issue:string ->
   note:string -> pages:string -> private_note:string ->
   public:bool -> publisher:string -> title:string -> type':string ->
@@ -27,7 +27,7 @@ val make :
 (** [v] is a reference with given attributes. *)
 
 val row :
-  id -> string -> Container.id option -> Date.year option ->
+  Id.t -> string -> Container.Id.t option -> Date.year option ->
   Date.md_partial option -> Doi.t option -> string -> string -> string ->
   string -> string -> bool -> string -> string -> string -> string -> t
 (** [row] is {!make} unlabelled. *)
@@ -38,7 +38,7 @@ val new' : t
 val id : t -> Id.t
 (** [id] is the reference's id. *)
 
-val container : t -> Container.id option
+val container : t -> Container.Id.t option
 (** [container_title] is the container title. *)
 
 val date : t -> Date.partial option
@@ -97,20 +97,23 @@ type render_data =
   { list : t list;
     labels : Label.t list Id.Map.t;
     authors : Person.t list Id.Map.t;
-    containers : Container.t Id.Map.t; (** Mapped by container id. *)
+    containers : Container.t Container.Id.Map.t; (** Mapped by container id. *)
     editors : Person.t list Id.Map.t;
     subjects : Subject.t list Id.Map.t; }
 (** The type for a references render data. A list of references and their
     {{!relations}relations} sorted on reference ids. This needs to be defined
     here to avoid module name mixups. See {!val-render_data}. *)
 
+val id_map :
+  Db.t -> 'a Rel_sql.Stmt.t -> ('a -> Id.t) -> ('a Id.Map.t, Db.error) result
+
 (** {1:tables Tables and queries} *)
 
 open Rel
 
-val id' : (t, id) Col.t
+val id' : (t, Id.t) Col.t
 val abstract' : (t, string) Col.t
-val container' : (t, Container.id option) Col.t
+val container' : (t, Container.Id.t option) Col.t
 val date_year' : (t, int option) Col.t
 val date_md' : (t, Date.md_partial option) Col.t
 val doi' : (t, Doi.t option) Col.t
@@ -131,7 +134,8 @@ val col_values_for_date : Date.partial option -> t Col.value * t Col.value
 (** {2:relations Relations} *)
 
 (** Reference label applications. *)
-module Label : Label.APPLICATION with type entity := t and type entity_id := id
+module Label : Label.APPLICATION with type entity := t
+                                  and type entity_id := Id.t
 
 (** Contributor relation. *)
 module Contributor : sig
@@ -140,17 +144,18 @@ module Contributor : sig
   (** The type for reference contributor relation. *)
 
   val make :
-    reference:id -> person:Person.id -> role:Person.role -> position:int -> t
+    reference:Id.t -> person:Person.Id.t -> role:Person.role ->
+    position:int -> t
   (** [make ~reference ~person ~role ~position] is a contributor with
       given attributes. See accessors for semantics. *)
 
-  val row : id -> Person.id -> Person.role -> int ->  t
+  val row : Id.t -> Person.Id.t -> Person.role -> int ->  t
   (** [row] is unlabelled {!make}. *)
 
-  val reference : t -> id
+  val reference : t -> Id.t
   (** [reference] is the reference contributed to. *)
 
-  val person : t -> Person.id
+  val person : t -> Person.Id.t
   (** [person] is the person contributing. *)
 
   val role : t -> Person.role
@@ -163,10 +168,10 @@ module Contributor : sig
 
   (** {1:table Table} *)
 
-  val reference' : (t, id) Col.t
+  val reference' : (t, Id.t) Col.t
   (** [reference'] is the column for {!val-reference}. *)
 
-  val person' : (t, Person.id) Col.t
+  val person' : (t, Person.Id.t) Col.t
   (** [person'] is the column for {!person}. *)
 
   val role' : (t, Person.role) Col.t
@@ -183,7 +188,7 @@ module Contributor : sig
   val create : ?or_action:Rel_sql.insert_or_action -> t -> unit Rel_sql.Stmt.t
   (** [create c] creates a contribution. *)
 
-  val of_ref_ids : (id, 'a) Bag.t -> (t, Bag.unordered) Bag.t
+  val of_ref_ids : (Id.t, 'a) Bag.t -> (t, Bag.unordered) Bag.t
 
   val persons :
     only_public:bool Rel_query.value -> (t, 'a) Bag.t ->
@@ -192,12 +197,14 @@ module Contributor : sig
       No duplicates. *)
 
   val copy_contributions_stmt :
-    src:Person.id -> dst:Person.id -> unit Rel_sql.Stmt.t
+    src:Person.Id.t -> dst:Person.Id.t -> unit Rel_sql.Stmt.t
 
   val set_list :
-    reference:id -> authors:Person.id list -> editors:Person.id list ->
+    reference:Id.t -> authors:Person.Id.t list -> editors:Person.Id.t list ->
     (Db.t -> (unit, Db.error) result)
 end
+
+type subject_id = Subject.Id.t
 
 (** Subject relation. *)
 module Subject : sig
@@ -205,24 +212,24 @@ module Subject : sig
   type t
   (** The type for the reference subject relation. *)
 
-  val make : reference:id -> subject:Subject.id -> t
+  val make : reference:Id.t -> subject:Subject.Id.t -> t
   (** [make reference subject] indicates [reference] has subject [subject]. *)
 
-  val row : id -> Person.id -> t
+  val row : Id.t -> Subject.Id.t -> t
   (** [row] is unabelled {!make}. *)
 
-  val reference : t -> id
+  val reference : t -> Id.t
   (** [reference s] is the subjected reference. *)
 
-  val subject : t -> Subject.id
+  val subject : t -> Subject.Id.t
   (** [subject s] is the subject. *)
 
   (** {1:table Table} *)
 
-  val reference' : (t, id) Col.t
+  val reference' : (t, Id.t) Col.t
   (** [reference'] is the column for {!val-reference}. *)
 
-  val subject' : (t, id) Col.t
+  val subject' : (t, Subject.Id.t) Col.t
   (** [person'] is the column for {!val-subject'}. *)
 
   val table : t Table.t
@@ -233,7 +240,7 @@ module Subject : sig
   val create : ?or_action:Rel_sql.insert_or_action -> t -> unit Rel_sql.Stmt.t
   (** [create sa] creates an author relationship. *)
 
-  val of_ref_ids : (id, 'a) Bag.t -> (t, Bag.unordered) Bag.t
+  val of_ref_ids : (Id.t, 'a) Bag.t -> (t, Bag.unordered) Bag.t
 
   val subjects :
     only_public:bool Rel_query.value -> (t, 'a) Bag.t ->
@@ -246,15 +253,15 @@ module Subject : sig
     (reference, 'a) Bag.t  -> (reference, Bag.unordered) Bag.t
 
   val filter_subject_id :
-    Subject.id Rel_query.value -> (reference, 'a) Bag.t ->
+    Subject.Id.t Rel_query.value -> (reference, 'a) Bag.t ->
     (reference, Bag.unordered) Bag.t
 
-  val ref_count_stmt : Subject.id -> int Rel_sql.Stmt.t
+  val ref_count_stmt : Subject.Id.t -> int Rel_sql.Stmt.t
 
   val copy_applications_stmt :
-    src:Subject.id -> dst:Subject.id -> unit Rel_sql.Stmt.t
+    src:Subject.Id.t -> dst:Subject.Id.t -> unit Rel_sql.Stmt.t
 
-  val set_list : reference:id -> Subject.id list ->
+  val set_list : reference:Id.t -> Subject.Id.t list ->
     (Db.t -> (unit, Db.error) result)
 end
 
@@ -264,13 +271,13 @@ module Cites : sig
   type t
   (** The type for the reference subject relation. *)
 
-  val make : reference:id -> doi:Doi.t -> t
+  val make : reference:Id.t -> doi:Doi.t -> t
   (** [make reference doi] indicates [reference] cites document [doi]. *)
 
-  val row : id -> Doi.t -> t
+  val row : Id.t -> Doi.t -> t
   (** [row] is unlabelled {!make}.  *)
 
-  val reference : t -> id
+  val reference : t -> Id.t
   (** [reference s] is the subjected reference. *)
 
   val doi : t -> Doi.t
@@ -278,7 +285,7 @@ module Cites : sig
 
   (** {1:table Table} *)
 
-  val reference' : (t, id) Col.t
+  val reference' : (t, Id.t) Col.t
   (** [reference'] is the column for {!val-reference}. *)
 
   val doi' : (t, Doi.t) Col.t
@@ -292,15 +299,15 @@ module Cites : sig
   val create : t -> unit Rel_sql.Stmt.t
   (** [create sa] creates a cites relationship. *)
 
-  val of_ref_ids : (id, Bag.unordered) Bag.t -> (t, Bag.unordered) Bag.t
+  val of_ref_ids : (Id.t, Bag.unordered) Bag.t -> (t, Bag.unordered) Bag.t
 
   val internal_of_ref_ids :
-    (id, Bag.unordered) Bag.t -> (id * id, Bag.unordered) Bag.t
+    (Id.t, Bag.unordered) Bag.t -> (Id.t * Id.t, Bag.unordered) Bag.t
 
-  val internal_row : (id * id) Rel.Row.t
+(*  val internal_row : (Id.t * Id.t) Rel.Row.t *)
 
   val set_list :
-    reference:id -> dois:Doi.t list -> (Db.t -> (unit, Db.error) result)
+    reference:Id.t -> dois:Doi.t list -> (Db.t -> (unit, Db.error) result)
 end
 
 (** Doc relation *)
@@ -309,25 +316,25 @@ module Doc : sig
   type t
   (** The type for the reference document relation. *)
 
-  val make : reference:id -> blob:Blob.id -> t
+  val make : reference:Id.t -> blob:Blob.Id.t -> t
   (** [make reference doc] indicates [doc] is a document for
       [reference]. *)
 
-  val row : id -> Blob.id -> t
+  val row : Id.t -> Blob.Id.t -> t
   (** [row] is unlabelled {!make}.  *)
 
-  val reference : t -> id
+  val reference : t -> Id.t
   (** [reference s] is the documented reference. *)
 
-  val blob : t -> Blob.id
+  val blob : t -> Blob.Id.t
   (** [blob s] is the document's blob. *)
 
   (** {1:table Table} *)
 
-  val reference' : (t, id) Col.t
+  val reference' : (t, Id.t) Col.t
   (** [reference'] is the column for {!val-reference}. *)
 
-  val blob' : (t, Blob.id) Col.t
+  val blob' : (t, Blob.Id.t) Col.t
   (** [blob'] is the column for {!val-blob}. *)
 
   val table : t Table.t
@@ -341,9 +348,9 @@ end
 
 (** {2:queries Queries} *)
 
-include Entity.PUBLICABLE_QUERIES with type t := t and type id := id
+include Entity.PUBLICABLE_QUERIES with type t := t and module Id := Id
 
-val ids_of_refs : (t, 'a) Bag.t -> (id, Bag.unordered) Bag.t
+val ids_of_refs : (t, 'a) Bag.t -> (Id.t, Bag.unordered) Bag.t
 (** [ids_of_refs refs] are the identifiers of [refs]. *)
 
 val containers_of_refs :
@@ -353,31 +360,31 @@ val containers_of_refs :
     No duplicates.*)
 
 val filter_person_id :
-  Person.id Rel_query.value -> (t, 'a) Bag.t -> (t, Bag.unordered) Bag.t
+  Person.Id.t Rel_query.value -> (t, 'a) Bag.t -> (t, Bag.unordered) Bag.t
 (** [filter_person_id pid refs] are the elements of [refs] that
     are have the person identified by [pid] in author or editor position. *)
 
 val filter_container_id :
-  Container.id Rel_query.value -> (t, 'a) Bag.t -> (t, Bag.unordered) Bag.t
+  Container.Id.t Rel_query.value -> (t, 'a) Bag.t -> (t, Bag.unordered) Bag.t
 
-val persons_public_ref_count_stmt : (Person.id * int) Rel_sql.Stmt.t
-val person_ref_count_stmt : Person.id -> int Rel_sql.Stmt.t
+val persons_public_ref_count_stmt : (Person.Id.t * int) Rel_sql.Stmt.t
+val person_ref_count_stmt : Person.Id.t -> int Rel_sql.Stmt.t
 
-val container_public_ref_count_stmt : (Container.id * int) Rel_sql.Stmt.t
-val container_ref_count_stmt : Container.id -> int Rel_sql.Stmt.t
+val container_public_ref_count_stmt : (Container.Id.t * int) Rel_sql.Stmt.t
+val container_ref_count_stmt : Container.Id.t -> int Rel_sql.Stmt.t
 
-val subject_public_ref_count_stmt : (int * int) Rel_sql.Stmt.t
+val subject_public_ref_count_stmt : (subject_id * int) Rel_sql.Stmt.t
 
 val replace_container_stmt :
-  this:Container.id -> by:Container.id -> unit Rel_sql.Stmt.t
+  this:Container.Id.t -> by:Container.Id.t -> unit Rel_sql.Stmt.t
 
-val ids_citing_doi : Doi.t Rel_query.value -> (id, Bag.unordered) Bag.t
+val ids_citing_doi : Doi.t Rel_query.value -> (Id.t, Bag.unordered) Bag.t
 val citing_doi : Doi.t Rel_query.value -> (t, Bag.unordered) Bag.t
-val dois_cited : id Rel_query.value -> (Doi.t, Bag.unordered) Bag.t
+val dois_cited : Id.t Rel_query.value -> (Doi.t, Bag.unordered) Bag.t
 val find_dois : (Doi.t, 'a) Bag.t -> (t, Bag.unordered) Bag.t
 val find_doi : Doi.t Rel_query.value -> (t, Bag.unordered) Bag.t
 
-val author_ids_stmt : id -> Person.id Rel_sql.Stmt.t
+val author_ids_stmt : Id.t -> Person.Id.t Rel_sql.Stmt.t
 
 (** {2:renderdata Render data} *)
 
@@ -395,26 +402,26 @@ module Url : sig
 
   (** {1:url_req URL requests} *)
 
-  type named_id = string option * id
+  type named_id = string option * Id.t
 
   type t =
-  | Change_authors_publicity of id
-  | Confirm_delete of id
+  | Change_authors_publicity of Id.t
+  | Confirm_delete of Id.t
   | Create
-  | Delete of id
+  | Delete of Id.t
 (*
-  | Duplicate of id
-  | Duplicate_form of id
+  | Duplicate of Id.t
+  | Duplicate_form of Id.t
 *)
-  | Edit_form of id
+  | Edit_form of Id.t
   | Fill_in_form of Doi.t
   | Index
   | New_form of { cancel : Entity.Url.cancel_url }
   | Page of named_id
-(*  | Replace of id
-    | Replace_form of id *)
-  | Update of id
-  | View_fields of id (** *)
+(*  | Replace of Id.t
+    | Replace_form of Id.t *)
+  | Update of Id.t
+  | View_fields of Id.t (** *)
   (** The type for reference URL requests. *)
 
   val kind : t Kurl.kind

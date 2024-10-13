@@ -102,7 +102,7 @@ val subject_input_finder :
 
 val subject_input_finder_results :
   Kurl.fmt -> for_list:bool -> input_name:Entity.Url.input_name ->
-  parents:Subject.t Id.Map.t -> Subject.t list -> El.html
+  parents:Subject.t Subject.Id.Map.t -> Subject.t list -> El.html
 (** [subject_input_finder_results] is a list of subjects to choose from
     to input a subject in a hidden input element named [input_name].
     If [creatable] is provided the given subject can be created. *)

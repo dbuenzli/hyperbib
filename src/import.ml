@@ -116,8 +116,8 @@ module Doi = struct
 
   let reference_of_ref ?(note = "") ~public ~container_id:container r =
     let isbn = if Option.is_some container then "" else r.isbn in
-    Reference.make ~id:0 ~abstract:r.abstract ~container ~date:(Some r.issued)
-      ~doi:r.doi ~isbn ~issue:r.issue ~note ~pages:r.page
+    Reference.make ~id:Reference.Id.zero ~abstract:r.abstract ~container
+      ~date:(Some r.issued) ~doi:r.doi ~isbn ~issue:r.issue ~note ~pages:r.page
       ~private_note:"" ~public ~publisher:r.publisher ~title:r.title
       ~type':r.type' ~volume:r.volume
 
@@ -126,9 +126,9 @@ module Doi = struct
   let get_container ~create_public:public db ref =
     if ref.container_title = "" then Ok None else
     let title = ref.container_title and isbn = ref.isbn and issn = ref.issn in
+    let id = Container.Id.zero in
     let new_container () =
-      Container.make
-        ~id:0 ~title ~isbn ~issn ~note:"" ~private_note:"" ~public ()
+      Container.make ~id ~title ~isbn ~issn ~note:"" ~private_note:"" ~public ()
     in
     let c = Container.match_stmt ~title ~isbn ~issn in
     let* cs = Db.list db c in
@@ -147,14 +147,15 @@ module Doi = struct
             | cs ->
                 Log.warn begin fun m ->
                   m "Could not disambiguate %a with %s %s %s"
-                    Fmt.(list ~sep:comma int) (List.map Container.id cs)
+                    Fmt.(list ~sep:comma Container.Id.pp)
+                    (List.map Container.id cs)
                     title isbn issn
                 end;
                 Ok (Some (`Exists (List.hd cs)))
 
   let get_person ~create_public:public db p =
     let new_person () =
-      Person.make ~id:0 ~last_name:p.family ~first_names:p.given
+      Person.make ~id:Person.Id.zero ~last_name:p.family ~first_names:p.given
         ~orcid:p.orcid ~note:"" ~private_note:"" ~public ()
     in
     let m = Person.match_stmt ~last:p.family ~first:p.given ~orcid:p.orcid in
@@ -171,7 +172,7 @@ module Doi = struct
         | ps ->
             Log.warn begin fun m ->
               m "Persons %a have the same orcid, taking the first one."
-                Fmt.(list ~sep:comma int) (List.map Person.id ps)
+                Fmt.(list ~sep:comma Person.Id.pp) (List.map Person.id ps)
             end;
             Ok (`Exists (List.hd ps))
 

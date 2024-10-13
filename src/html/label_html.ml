@@ -71,7 +71,7 @@ let label rf l = El.void
 
 let index_html g ~self ls =
   let uf = Page.Gen.url_fmt g in
-  let anchor_id s = Fmt.str "%d" (Label.id s) in
+  let anchor_id s = Label.Id.to_string (Label.id s) in
   let label l =
     let viz = if Label.public l then At.void else Hclass.private' in
     let label = Html_kit.link_label uf ~self l in

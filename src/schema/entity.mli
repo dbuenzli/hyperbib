@@ -3,42 +3,26 @@
    SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
-(** Database entities model commonalities.
-
-    {b XXX.} If we get to make {!Id} abstract we likely
-    want to fold {!ID} into {!IDENTIFIABLE}. In turn this will
-    make functors handier to use. *)
+(** Database entities model commonalities. *)
 
 open Hyperbib_std
 open Rel
-
-(** The type for identifiers. *)
-module type ID = sig
-  type t
-
-  module Rel : sig
-    val type' : t Rel.Type.t
-    val v : t -> t Rel_query.value
-    val equal : t Rel_query.value -> t Rel_query.value -> bool Rel_query.value
-    val ( = ) : t Rel_query.value -> t Rel_query.value -> bool Rel_query.value
-  end
-end
 
 (** {1:sigs Entity signatures} *)
 
 (** The type for identifiable entities. *)
 module type IDENTIFIABLE = sig
 
-  type id
-  (** The type for entity identifiers. *)
+  (** The type for identifiers. *)
+  module Id : Rel_kit.ID
 
   type t
   (** The type for entities. *)
 
-  val id : t -> id
+  val id : t -> Id.t
   (** [id e] the identifier of entity [e]. *)
 
-  val id' : (t, id) Col.t
+  val id' : (t, Id.t) Col.t
   (** [id'] is the column for {!val-id}. *)
 
   val table : t Table.t
@@ -108,8 +92,8 @@ end
 (** The type for basic queries on identifiable entities. *)
 module type IDENTIFIABLE_QUERIES = sig
 
-  type id
-  (** The type for entity identifiers. *)
+  (** The type for identifiers. *)
+  module Id : Rel_kit.ID
 
   type t
   (** The type for entities. *)
@@ -123,36 +107,35 @@ module type IDENTIFIABLE_QUERIES = sig
   (** [create_cols] is like {!create} but uses the given column
       values instead. *)
 
-  val delete : id -> unit Rel_sql.Stmt.t
+  val delete : Id.t -> unit Rel_sql.Stmt.t
   (** [delete id] delete the row identified by [id]. *)
 
-  val update : id -> t Col.value list -> unit Rel_sql.Stmt.t
+  val update : Id.t -> t Col.value list -> unit Rel_sql.Stmt.t
   (** [update id cols] updates the columsn [cols] of row [id]. *)
 
-  val find_id : id Rel_query.value -> (t, Bag.unordered) Bag.t
+  val find_id : Id.t Rel_query.value -> (t, Bag.unordered) Bag.t
   (** [find_id id] is the row identified by [id]. *)
 
-  val find_id_stmt : id -> t Rel_sql.Stmt.t
+  val find_id_stmt : Id.t -> t Rel_sql.Stmt.t
   (** [find_id_stmt id] is a statment for {!find_id}. *)
 
-  val find_ids : (id, 'a) Bag.t -> (t, Bag.unordered) Bag.t
+  val find_ids : (Id.t, 'a) Bag.t -> (t, Bag.unordered) Bag.t
   (** [find_ids ids] are the rows identified by [ids]. *)
 
-  val find_id_list : id list -> (t, Bag.unordered) Bag.t
+  val find_id_list : Id.t list -> (t, Bag.unordered) Bag.t
   (** [find_id_list ids] are the rows identified by [ids]. *)
 end
 
 (** The type for identifiable entities and their queries. *)
 module type IDENTIFIABLE_WITH_QUERIES = sig
   include IDENTIFIABLE
-  include IDENTIFIABLE_QUERIES with type t := t and type id := id
+  include IDENTIFIABLE_QUERIES with type t := t and module Id := Id
 end
 
 (** Functor for identifiable queries *)
 module
-  Identifiable_queries (Id : ID) (E : IDENTIFIABLE with type id = Id.t) :
-  IDENTIFIABLE_QUERIES
-  with type t := E.t and type id := E.id
+  Identifiable_queries (E : IDENTIFIABLE) : IDENTIFIABLE_QUERIES
+  with type t := E.t and module Id := E.Id
 
 
 (** The type for basic queries on publishable entities. *)
@@ -172,13 +155,12 @@ end
 (** The type for publicable entities and their queries. *)
 module type PUBLICABLE_WITH_QUERIES = sig
   include PUBLICABLE
-  include PUBLICABLE_QUERIES with type t := t and type id := id
+  include PUBLICABLE_QUERIES with type t := t and module Id := Id
 end
 
 (** Functor for pubicable queries. *)
-module Publicable_queries (Id : ID) (E : PUBLICABLE with type id = Id.t) :
-  PUBLICABLE_QUERIES
-  with type t := E.t and type id := E.id
+module Publicable_queries (E : PUBLICABLE) :
+  PUBLICABLE_QUERIES with type t := E.t and module Id := E.Id
 
 (** {1:urls Entity URLs} *)
 
@@ -190,10 +172,12 @@ module Url : sig
 
   val replace_by : string
   val replace_by_of_query :
-    Http.Query.t -> (Id.t, Http.Response.t) result
+    (module Rel_kit.INT_ID with type t = 'id) ->
+    Http.Query.t -> ('id, Http.Response.t) result
 
   val replace_by_of_query' :
-    Http.Query.t -> (Id.t option , Http.Response.t) result
+    (module Rel_kit.INT_ID with type t = 'id) ->
+    Http.Query.t -> ('id option , Http.Response.t) result
 
   type cancel_url = string option
   val cancel_url_of_query : Http.Query.t -> cancel_url
@@ -214,9 +198,11 @@ module Url : sig
   (** {1:meth Methods} *)
 
   val meth_id :
+    (module Rel_kit.INT_ID with type t = 'id) ->
     Kurl.bare -> 'a Http.Method.constraint' list -> string ->
-    ('a * Res.Id.t, Http.Response.t) result
+    ('a * 'id, Http.Response.t) result
 
-  val get_id : Kurl.bare -> string ->
-    ([> `GET ] * Res.Id.t, Http.Response.t) result
+  val get_id : (module Rel_kit.INT_ID with type t = 'id) ->
+    Kurl.bare -> string ->
+    ([> `GET ] * 'id, Http.Response.t) result
 end

@@ -31,8 +31,8 @@ let get_page_data db g s =
   let only_public = Rel_query.Bool.v only_public in
   let* parent = get_subject_parent db s in
   let all = Reference.list ~only_public in
-  let id = Subject.id s in
-  let refs = Reference.Subject.filter_subject_id (Rel_query.Int.v id) all in
+  let id = Subject.Id.v (Subject.id s) in
+  let refs = Reference.Subject.filter_subject_id id all in
   let* refs =
     Reference.render_data ~only_public refs db |> Db.http_resp_error
   in
@@ -67,7 +67,7 @@ let confirm_delete env id =
 
 let create =
   let entity_page_url id = Subject.Url.v (Page (None, id)) in
-  Entity_service.create (module Subject) ~entity_page_url
+  Entity_service.create (module Subject.Id) (module Subject) ~entity_page_url
 
 let delete =
   Entity_service.delete (module Subject) ~deleted_html:Subject_html.deleted
@@ -78,7 +78,9 @@ let duplicate env req src =
   let* q = Http.Request.to_query req in
   let ignore = [Col.Def Subject.id'] in
   let* vs = Hquery.careless_find_table_cols ~ignore Subject.table q in
-  let* dst = Db.insert' db (Subject.create_cols ~ignore_id:true vs) in
+  let* dst =
+    Db.insert' (module Subject.Id) db (Subject.create_cols ~ignore_id:true vs)
+  in
   let* () = Db.exec' db (Reference.Subject.copy_applications_stmt ~src ~dst) in
   let* () = Db.exec' db (Subject.Label.copy_applications_stmt ~src ~dst) in
   let uf = Service_env.url_fmt env in
@@ -111,7 +113,7 @@ let index env =
   let only_public = Page.Gen.only_public g in
   let* ss = Db.list db (Subject.list_stmt ~only_public) in
   let ref_count = Reference.subject_public_ref_count_stmt in
-  let* ref_count = Db.id_map db ref_count fst in
+  let* ref_count = Subject.id_map db ref_count fst in
   let page = Subject_html.index g ss ~ref_count in
   Ok (Page.response page)
 
@@ -136,7 +138,7 @@ let replace env req this =
   let* () = Entity_service.check_edit_authorized env in
   Service_env.with_db_transaction' `Immediate env @@ fun db ->
   let* q = Http.Request.to_query req in
-  let* by = Entity.Url.replace_by_of_query q in
+  let* by = Entity.Url.replace_by_of_query (module Subject.Id) q in
   if this = by then view_fields_resp env db req this else
   let copy = Reference.Subject.copy_applications_stmt ~src:this ~dst:by in
   let* () = Db.exec' db copy in
@@ -181,7 +183,7 @@ let input_finder_find env ~for_list ~input_name sel =
   let g = Service_env.page_gen env in
   let uf = Page.Gen.url_fmt g in
   let only_public = Page.Gen.only_public g in
-  let* parents = Db.id_map db Subject.parents_stmt Subject.id in
+  let* parents = Subject.id_map db Subject.parents_stmt Subject.id in
   let* ss = select_subjects db ~only_public sel in
   let finder =
     Entity_html.subject_input_finder_results uf

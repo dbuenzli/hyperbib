@@ -227,11 +227,12 @@ let page g c refs =
 
 let index_html g ~self cs ~ref_count =
   let uf = Page.Gen.url_fmt g in
-  let ref_count c = match Id.Map.find_opt (Container.id c) ref_count with
-  | None -> 0 | Some (_, c) -> c
+  let ref_count c =
+    match Container.Id.Map.find_opt (Container.id c) ref_count with
+    | None -> 0 | Some (_, c) -> c
   in
   let container_li p =
-    let cid = Fmt.str "%d" (Container.id p) in
+    let cid = Container.Id.to_string (Container.id p) in
     let cont = Html_kit.link_container uf ~self p in
     let count = Html_kit.item_count (ref_count p) in
     let container = [Html_kit.anchor_a cid; cont; El.sp; count] in

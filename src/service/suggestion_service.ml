@@ -78,7 +78,8 @@ let validate_suggestion db env req s =
   let* doi, suggestion, msg, explain = lookup_doi db env req s in
   let s =
     let comment = Suggestion.comment s and email = Suggestion.email s in
-    Suggestion.make ~id:0 ~timestamp:0 ~doi ~suggestion ~comment ~email ()
+    let id = Suggestion.Id.zero in
+    Suggestion.make ~id ~timestamp:0 ~doi ~suggestion ~comment ~email ()
   in
   match msg with
   | None -> Ok (Ok s)
@@ -100,7 +101,8 @@ let suggestion_of_req req =
     Option.value ~default:0 @@ Ptime.Span.to_int_s @@
     Ptime.to_span (Ptime_clock.now ())
   in
-  Ok (Suggestion.make ~id:0 ~timestamp ~doi ~suggestion ~comment ~email ())
+  let id = Suggestion.Id.zero in
+  Ok (Suggestion.make ~id ~timestamp ~doi ~suggestion ~comment ~email ())
 
 (* Responses *)
 
@@ -119,9 +121,13 @@ let create env req =
   match v with
   | Error html -> Ok (Page.part_response html)
   | Ok s ->
-      let* id = Db.insert' db (Suggestion.create ~ignore_id:true s) in
+      let* id =
+        Db.insert' (module Suggestion.Id) db
+          (Suggestion.create ~ignore_id:true s)
+      in
       let uf = Service_env.url_fmt env in
-      let () = suggestion_notification env id |> Log.if_error ~use:() in
+      let iid = Suggestion.Id.to_int id in
+      let () = suggestion_notification env iid |> Log.if_error ~use:() in
       let redirect = Suggestion.Url.v (Page {id; created = true}) in
       let headers = Html_kit.htmlact_redirect uf redirect in
       Ok (Http.Response.empty ~headers Http.Status.ok_200)
@@ -146,7 +152,8 @@ let fill_in env req =
   in
   let s =
     let comment = Suggestion.comment s and email = Suggestion.email s in
-    Suggestion.make ~id:0 ~timestamp:0 ~doi ~suggestion ~comment ~email ()
+    let id = Suggestion.Id.zero in
+    Suggestion.make ~id ~timestamp:0 ~doi ~suggestion ~comment ~email ()
   in
   let html = Suggestion_html.suggest_form ~force_rescue:true ?msg g s in
   Ok (Page.part_response ?explain html)

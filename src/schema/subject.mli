@@ -11,8 +11,8 @@ open Hyperbib_std
 
 (** {1:subjects Subjects} *)
 
-type id = Id.t
 (** The type for subject ids. These are allocated by the database. *)
+module Id : Rel_kit.INT_ID
 
 type t
 (** The type for subjects. *)
@@ -21,27 +21,27 @@ type subject = t
 (** See {!t}. *)
 
 val make :
-  id:id -> name:string -> parent:id option -> see:id option ->
+  id:Id.t -> name:string -> parent:Id.t option -> see:Id.t option ->
   description:string -> private_note:string -> public:bool -> unit ->  t
 (** [make …] is a subject with given attributes, see accessors for semantics. *)
 
 val row :
-  id -> string -> id option -> id option -> string -> string -> bool -> t
+  Id.t -> string -> Id.t option -> Id.t option -> string -> string -> bool -> t
 (** [row] is unlabelled {!make}. *)
 
 val new' : t
 (** [new'] is a new subject. *)
 
-val id : t -> id
+val id : t -> Id.t
 (** [id s] is the unique identifier of [s].  *)
 
 val name : t -> string
 (** [name s] is the name of [s]. *)
 
-val parent : t -> id option
+val parent : t -> Id.t option
 (** [parent s] is the identifier of the parent subject of [s] (if any). *)
 
-val see : t -> id option
+val see : t -> Id.t option
 (** [see s] is the identifier of the subject that is used instead of [s]. *)
 
 val description : t -> string
@@ -79,13 +79,13 @@ val hierarchy : t list -> t list * t list Id.Map.t
 
 open Rel
 
-val id' : (t, id) Col.t
+val id' : (t, Id.t) Col.t
 (** [id s] is the unique identifier of [s].  *)
 
 val name' : (t, string) Col.t
 (** [name'] is the column for {!name}. *)
 
-val parent' : (t, id option) Col.t
+val parent' : (t, Id.t option) Col.t
 (** [parent'] is the column for {!parent}. *)
 
 val description' : (t, string) Col.t
@@ -105,25 +105,25 @@ module See_also : sig
   type t
   (** The type for the see also subject relation. *)
 
-  val make : given:id -> that:id -> unit -> t
+  val make : given:Id.t -> that:Id.t -> unit -> t
   (** [make given see] indicates interest in [given] subject should
       also consult [that]. *)
 
-  val row : id -> id -> t
+  val row : Id.t -> Id.t -> t
   (** [row] is unlabelled {!make}. *)
 
-  val given : t -> id
+  val given : t -> Id.t
   (** [given s] is the source subject. *)
 
-  val that : t -> id
+  val that : t -> Id.t
   (** [that s] is the subject to consult. *)
 
   (** {1:table Table} *)
 
-  val given' : (t, id) Col.t
+  val given' : (t, Id.t) Col.t
   (** [given'] is the column for {!val-given}. *)
 
-  val that' : (t, id) Col.t
+  val that' : (t, Id.t) Col.t
   (** [that'] is the column for {!val-that}. *)
 
   val table : t Table.t
@@ -137,11 +137,11 @@ end
 
 (** Subject label applications. *)
 module Label : Label.APPLICATION
-  with type entity := t and type entity_id := id
+  with type entity := t and type entity_id := Id.t
 
 (** {1:queries Queries} *)
 
-include Entity.PUBLICABLE_QUERIES with type t := t and type id := id
+include Entity.PUBLICABLE_QUERIES with type t := t and module Id := Id
 
 val visible : t Rel_query.value -> bool Rel_query.value
 val visible_list : (t, Bag.unordered) Bag.t
@@ -151,11 +151,15 @@ val list_visibility_stmt : (t * bool) Rel_sql.Stmt.t
 val parents : (t, Bag.unordered) Bag.t
 val parents_stmt : t Rel_sql.Stmt.t
 
-val children : id Rel_query.value -> (t, Bag.unordered) Bag.t
-val children_stmt : id -> t Rel_sql.Stmt.t
+val children : Id.t Rel_query.value -> (t, Bag.unordered) Bag.t
+val children_stmt : Id.t -> t Rel_sql.Stmt.t
 
 val select : string Rel_query.value -> (t, Bag.unordered) Bag.t
 val select_stmt : string -> t Rel_sql.Stmt.t
+
+val id_map :
+  Db.t -> 'a Rel_sql.Stmt.t -> ('a -> Id.t) -> ('a Id.Map.t, Db.error) result
+
 
 (** {1:url Urls} *)
 
@@ -164,26 +168,26 @@ module Url : sig
 
   (** {1:url_req URL requests} *)
 
-  type named_id = string option * id
+  type named_id = string option * Id.t
 
   type t =
-  | Confirm_delete of id
+  | Confirm_delete of Id.t
   | Create
-  | Delete of id
-  | Duplicate of id
-  | Duplicate_form of id
-  | Edit_form of id
+  | Delete of Id.t
+  | Duplicate of Id.t
+  | Duplicate_form of Id.t
+  | Edit_form of Id.t
   | Index
-  | Input of Entity.Url.for_list * Entity.Url.input_name * id
+  | Input of Entity.Url.for_list * Entity.Url.input_name * Id.t
   | Input_create of Entity.Url.for_list * Entity.Url.input_name * subject
   | Input_finder of Entity.Url.for_list * Entity.Url.input_name
   | Input_finder_find of Entity.Url.for_list * Entity.Url.input_name * string
   | New_form of { cancel : Entity.Url.cancel_url }
   | Page of named_id
-  | Replace of id
-  | Replace_form of id
-  | Update of id
-  | View_fields of id (** *)
+  | Replace of Id.t
+  | Replace_form of Id.t
+  | Update of Id.t
+  | View_fields of Id.t (** *)
   (** The type for subject URL requests. *)
 
   val kind : t Kurl.kind

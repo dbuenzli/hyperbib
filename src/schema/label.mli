@@ -10,8 +10,8 @@ open Rel
 
 (** {1:labels Labels} *)
 
-type id = Id.t
 (** The type for label ids. *)
+module Id : Rel_kit.ID
 
 type color = int64
 (** The type for sRGBA colors with 16-bits per components. *)
@@ -23,15 +23,15 @@ type t
 (** The type for labels *)
 
 val make :
-  id:id -> name:name -> synopsis:string -> color:color ->
+  id:Id.t -> name:name -> synopsis:string -> color:color ->
   note:string -> private_note:string -> public:bool -> t
 (** [make …] constructs a label with the given attributes, see accessors
     for semantics. *)
 
-val row : id -> name -> string -> color -> string -> string -> bool -> t
+val row : Id.t -> name -> string -> color -> string -> string -> bool -> t
 (** [row] is {!make} unlaballed. *)
 
-val id : t -> id
+val id : t -> Id.t
 (** [id l] is the label identifier. *)
 
 val name : t -> name
@@ -56,7 +56,7 @@ val order_by_name : t -> t -> int
 
 (** {1:table Table and queries} *)
 
-val id' : (t, id) Col.t
+val id' : (t, Id.t) Col.t
 (** [id'] is the column for {!val-id}. *)
 
 val name' : (t, name) Col.t
@@ -80,11 +80,11 @@ val public' : (t, bool) Col.t
 val table : t Table.t
 (** [table] is the label table. *)
 
-include Entity.PUBLICABLE_QUERIES with type t := t and type id := id
+include Entity.PUBLICABLE_QUERIES with type t := t and module Id := Id
 
 (** {1:labeling Labeling entities} *)
 
-type label_id = id
+type label_id = Id.t
 type label = t
 
 (** The type for label application relations. *)
@@ -105,7 +105,7 @@ module type APPLICATION = sig
   (** [make entity label] applies label [label] to the entity identified by
       [entity]. *)
 
-  val row : entity_id -> id -> t
+  val row : entity_id -> label_id -> t
   (** [row] is {!make} unlabelled. *)
 
   val entity : t -> entity_id
@@ -136,24 +136,27 @@ module type APPLICATION = sig
 end
 
 (** [For_entity (E)] is a relation to apply labels to entity [E]. *)
-module For_entity
-    (Eid : Entity.ID) (E : Entity.IDENTIFIABLE with type id = Eid.t) :
-  (APPLICATION with type entity := E.t and type entity_id := E.id)
+module For_entity (E : Entity.IDENTIFIABLE) :
+  (APPLICATION with type entity := E.t and type entity_id := E.Id.t)
+
+val id_map :
+  Db.t -> 'a Rel_sql.Stmt.t -> ('a -> Id.t) -> ('a Id.Map.t, Db.error) result
+
 
 (** {1:url Url} *)
 
 (** Label URL requests. *)
 module Url : sig
   type label = t
-  type named_id = string option * id
+  type named_id = string option * Id.t
   type t =
   | Create
-  | Edit of id
+  | Edit of Id.t
   | Edit_new of { cancel : string option }
   | Index
   | Page of named_id
-  | Update of id
-  | View of id
+  | Update of Id.t
+  | View of Id.t
 
   val kind : t Kurl.kind
   val v : t -> Kurl.t

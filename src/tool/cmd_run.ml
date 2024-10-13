@@ -32,25 +32,29 @@ let check_reference_dois db ~repair =
       Rel_sql.update Db.dialect Reference.table ~set ~where
     in
     let* () = Db.exec db (update_reference_doi ~id doi) in
-    Ok (Log.app (fun m -> m "Reference %d: repaired" id))
+    Ok (Log.app (fun m -> m "Reference %a: repaired" Reference.Id.pp id))
   in
   let check (id, doi) n = match doi with
   | None -> n
   | Some "" ->
-      Log.err (fun m -> m "Reference %d: Invalid empty DOI, should be NULL" id);
+      Log.err (fun m ->
+          m "Reference %a: Invalid empty DOI, should be NULL"
+            Reference.Id.pp id);
       (if not repair then () else
        (Log.if_error ~use:() @@ Db.string_error @@ do_update ~id None));
       n + 1
   | Some doi ->
       match Doi.of_string doi with
       | Error e ->
-          Log.err (fun m -> m "Reference %d: DOI %S: %s" id doi e);
+          Log.err (fun m -> m "Reference %a: DOI %S: %s"
+                      Reference.Id.pp id doi e);
           n + 1
       | Ok doi' ->
           let doi' = Doi.to_string doi' in
           if Doi.equal doi' doi then n else begin
             Log.warn (fun m ->
-                m "Reference %d: DOI %S not normalized (%S)" id doi doi');
+                m "Reference %a: DOI %S not normalized (%S)"
+                  Reference.Id.pp id doi doi');
             (if not repair then () else
              (Log.if_error ~use:() @@ Db.string_error @@
               do_update ~id (Some doi')));
@@ -81,8 +85,8 @@ let check_reference_dois db ~repair =
      in
      let* () = Db.exec db (update oldr newr) in
      Ok (Log.app
-           (fun m -> m "Cites reference %d: repaired"
-               (Reference.Cites.reference newr)))
+           (fun m -> m "Cites reference %a: repaired"
+               Reference.Id.pp (Reference.Cites.reference newr)))
    in
    let check r n =
      let reference = Reference.Cites.reference r in
@@ -92,14 +96,15 @@ let check_reference_dois db ~repair =
        Doi.of_string (String.replace_all ~sub:" " ~by:"" doi)
      with
      | Error e ->
-         Log.err (fun m -> m "Cites reference %d: DOI %S: %s" reference doi e);
+         Log.err (fun m -> m "Cites reference %a: DOI %S: %s"
+                     Reference.Id.pp reference doi e);
          n + 1
      | Ok doi' ->
          let doi' = Doi.to_string doi' in
          if Doi.equal doi' doi then n else begin
            Log.warn begin fun m ->
-             m "Cites reference %d: DOI %S not normalized (%S)"
-               reference doi doi'
+             m "Cites reference %a: DOI %S not normalized (%S)"
+               Reference.Id.pp reference doi doi'
            end;
            (if not repair then () else
             let newr = Reference.Cites.make ~reference ~doi:doi' in

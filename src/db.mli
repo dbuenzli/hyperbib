@@ -121,19 +121,14 @@ val fold : t ->
 val list : t -> 'a Rel_sql.Stmt.t -> ('a list, error) result
 (** [list] is {!fold} with {!List.cons}. *)
 
-val insert : t -> unit Rel_sql.Stmt.t -> (Id.t, error) result
+val insert :
+  (module Rel_kit.INT_ID with type t = 'id) -> t ->
+  unit Rel_sql.Stmt.t -> ('id, error) result
 (** [insert db stmt] executes [stmt] and returns the value of
-    {!Rel_sqlite3.last_insert_rowid}. *)
+    {!Rel_sqlite3.last_insert_rowid}.
 
-val id_map :
-  t -> 'a Rel_sql.Stmt.t -> ('a -> Id.t) -> ('a Id.Map.t, error) result
-(** [id_map db stmt id] queries with [stmt] identifies result with
-    [id] and constructs a map for them. *)
-
-val id_map_related_list :
-  ?order:('b -> 'b -> int) ->
-  t -> 'a Rel_sql.Stmt.t -> id:('a -> int) -> related:('a -> int) ->
-  related_by_id:'b Id.Map.t -> ('b list Id.Map.t, error) result
+    {b TODO.} Remove this function or replace the module
+    by an [of_int] function. *)
 
 (** {1:debug Statement debug} *)
 
@@ -161,7 +156,9 @@ val http_resp_error :
 val exec' : t -> unit Rel_sql.Stmt.t -> (unit, Webs.Http.Response.t) result
 (** See {!exec}. *)
 
-val insert' : t -> unit Rel_sql.Stmt.t -> (Id.t, Webs.Http.Response.t) result
+val insert' :
+  (module Rel_kit.INT_ID with type t = 'id) ->
+  t -> unit Rel_sql.Stmt.t -> ('id, Webs.Http.Response.t) result
 (** See {!insert}. *)
 
 val first' : t -> 'a Rel_sql.Stmt.t -> ('a option, Webs.Http.Response.t) result

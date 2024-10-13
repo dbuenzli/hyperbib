@@ -23,8 +23,7 @@ let get_reference_data db g r =
   Db.http_resp_error @@
   let only_public = Page.Gen.only_public g in
   let only_public = Rel_query.Bool.v only_public in
-  let rid = Rel_query.Int.v (Reference.id r) in
-  let ref = Reference.find_id rid in
+  let ref = Reference.find_id (Reference.Id.v (Reference.id r)) in
   Reference.render_data ~only_public ref db
 
 let get_page_data db g r =
@@ -32,7 +31,7 @@ let get_page_data db g r =
   Db.http_resp_error @@
   let only_public = Page.Gen.only_public g in
   let only_public = Rel_query.Bool.v only_public in
-  let rid = Rel_query.Int.v (Reference.id r) in
+  let rid = Reference.Id.v (Reference.id r) in
   let ref = Reference.find_id rid in
   let* render_data = Reference.render_data ~only_public ref db in
   let cites = Reference.find_dois (Reference.dois_cited rid) in
@@ -48,7 +47,7 @@ let view_fields_resp ?authors_ui env db req id =
   let* r = get_reference db id in
   let g = Service_env.page_gen env in
   let* self = Html_kit.url_of_req_referer req in
-  let rid = Rel_query.Int.v (Reference.id r) in
+  let rid = Reference.Id.v (Reference.id r) in
   let ref = Reference.find_id rid in
   let only_public = Page.Gen.only_public g in
   let only_public = Rel_query.Bool.v only_public in
@@ -121,7 +120,7 @@ let change_authors_publicity env req id =
   let* is_undo = Hquery.find_first Hquery.key_is_undo ~none:false q in
   let* authors_ui = match is_undo with
   | true ->
-      let* ids = Hquery.find_ids ~uniquify:true "undo" q in
+      let* ids = Hquery.find_ids (module Person.Id) ~uniquify:true "undo" q in
       let cs = [Col.Value (Person.public', false)] in
       let upd id = Db.exec' db (Person.update id cs) in
       let* () = List.iter_stop_on_error upd ids in
@@ -154,7 +153,9 @@ let maybe_create_container db vs q =
   match Hquery.find_create_container q with
   | None -> Ok vs
   | Some c ->
-      let* cid = Db.insert' db (Container.create ~ignore_id:true c) in
+      let* cid =
+        Db.insert' (module Container.Id) db (Container.create ~ignore_id:true c)
+      in
       Ok (Col.Value (Reference.container', Some cid) :: vs)
 
 let authors_editors_maybe_create db q =
@@ -163,11 +164,13 @@ let authors_editors_maybe_create db q =
     match List.find_opt is_p created with
     | Some (_, id) -> Ok (id, created)
     | None ->
-        let* pid = Db.insert' db (Person.create ~ignore_id:true p) in
+        let* pid =
+          Db.insert' (module Person.Id) db (Person.create ~ignore_id:true p)
+        in
         Ok (pid, (p, pid) :: created)
   in
   let rec ids created acc = function
-  | [] -> Ok (Hquery.uniquify_ids (List.rev acc), created)
+  | [] -> Ok (Hquery.uniquify_ids (module Person.Id) (List.rev acc), created)
   | `Id i :: ps -> ids created (i :: acc) ps
   | `To_create p :: ps ->
       match create created p with
@@ -198,12 +201,15 @@ let create app req = (* create and update are very similar factor out a bit. *)
   in
   let* sids =
     let key = Reference.Subject.(Hquery.key_for_rel table subject') in
-    Hquery.find_ids ~uniquify:true key q
+    Hquery.find_ids (module Subject.Id) ~uniquify:true key q
   in
   let* aids, eids = authors_editors_maybe_create db q in
   let cites = Hquery.find_cites q in
   let* vs = maybe_create_container db vs q in
-  let* id = Db.insert' db (Reference.create_cols ~ignore_id:true vs) in
+  let* id =
+    Db.insert' (module Reference.Id) db
+      (Reference.create_cols ~ignore_id:true vs)
+  in
   let* () =
     Reference.Subject.set_list ~reference:id sids db |> Db.http_resp_error in
   let* () =
@@ -234,7 +240,7 @@ let update env req id =
   let uniquify = true in
   let* sids =
     let key = Reference.Subject.(Hquery.key_for_rel table subject') in
-    Hquery.find_ids ~uniquify key q
+    Hquery.find_ids (module Subject.Id) ~uniquify key q
   in
   let* aids, eids = authors_editors_maybe_create db q in
   let* vs = maybe_create_container db vs q in
