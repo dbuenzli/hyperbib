@@ -27,6 +27,7 @@ module Reference = struct
     { id : Id.t;
       abstract : string;
       container : Container.Id.t option;
+      created_ptime_s : float;
       date : Date.partial option;
       doi : Doi.t option;
       isbn : string;
@@ -41,15 +42,15 @@ module Reference = struct
       volume : string; }
 
   let make
-      ~id ~abstract ~container ~date ~doi ~isbn ~issue ~note
+      ~id ~abstract ~container ~created_ptime_s ~date ~doi ~isbn ~issue ~note
       ~pages ~private_note ~public ~publisher ~title ~type' ~volume
     =
-    { id; abstract; container; date; doi; isbn; issue; note; pages;
-      private_note; public; publisher; title; type'; volume; }
+    { id; abstract; container; created_ptime_s; date; doi; isbn; issue; note;
+      pages; private_note; public; publisher; title; type'; volume; }
 
   let row
-      id abstract container date_year date_md doi isbn issue note
-      pages private_note public publisher title type' volume
+      id abstract container created_ptime_s date_year date_md doi isbn issue
+      note pages private_note public publisher title type' volume
     =
     let date = match date_year with
     | None ->
@@ -57,18 +58,19 @@ module Reference = struct
         None
     | Some y -> Some (y, date_md)
     in
-    { id; abstract; container; date; doi; isbn; issue; note;
+    { id; abstract; container; created_ptime_s; date; doi; isbn; issue; note;
       pages; private_note; public; publisher; title; type'; volume; }
 
   let new' =
-    { id = Id.zero; abstract = ""; container = None; date = None; doi = None;
-      isbn = ""; issue = ""; note = ""; pages = ""; private_note = "";
-      public = false; publisher = ""; title = Uimsg.untitled;
+    { id = Id.zero; abstract = ""; container = None; created_ptime_s = 0.;
+      date = None; doi = None; isbn = ""; issue = ""; note = ""; pages = "";
+      private_note = ""; public = false; publisher = ""; title = Uimsg.untitled;
       type' = ""; volume = ""; }
 
   let id r = r.id
   let abstract r = r.abstract
   let container r = r.container
+  let created_ptime_s r = r.created_ptime_s
   let date r = r.date
   let doi r = r.doi
   let isbn r = r.isbn
@@ -103,6 +105,10 @@ module Reference = struct
   let container' =
     Col.make "container" Type.(option Container.Id.type') container
 
+  let created_ptime_s' =
+    let default = `Value 0. in
+    Col.make "created_ptime_s" Type.float created_ptime_s ~default
+
   let date_year' = Col.make "date_year" Type.(option int) date_year
   let date_md' =
     Col.make "date_md" Type.(option Schema_kit.date_md_partial_type) date_md
@@ -132,9 +138,9 @@ module Reference = struct
         Table.Index.make [Def date_year']; ]
     in
     Table.make "reference" ~primary_key ~foreign_keys ~indices @@
-    Row.(unit row * id' * abstract' * container' * date_year' * date_md' *
-         doi' * isbn' * issue' * note' * pages' * private_note' * public' *
-         publisher' * title' * type'' * volume')
+    Row.(unit row * id' * abstract' * container' * created_ptime_s' *
+         date_year' * date_md' * doi' * isbn' * issue' * note' * pages' *
+         private_note' * public' * publisher' * title' * type'' * volume')
 
 
   let col_values_for_date = function

@@ -117,6 +117,7 @@ module Doi = struct
   let reference_of_ref ?(note = "") ~public ~container_id:container r =
     let isbn = if Option.is_some container then "" else r.isbn in
     Reference.make ~id:Reference.Id.zero ~abstract:r.abstract ~container
+      ~created_ptime_s:(Unix.gettimeofday ())
       ~date:(Some r.issued) ~doi:r.doi ~isbn ~issue:r.issue ~note ~pages:r.page
       ~private_note:"" ~public ~publisher:r.publisher ~title:r.title
       ~type':r.type' ~volume:r.volume

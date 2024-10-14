@@ -20,14 +20,14 @@ type reference = t
 
 val make :
   id:Id.t -> abstract:string -> container:Container.Id.t option ->
-  date:Date.partial option -> doi:Doi.t option -> isbn:string -> issue:string ->
-  note:string -> pages:string -> private_note:string ->
-  public:bool -> publisher:string -> title:string -> type':string ->
-  volume:string -> t
+  created_ptime_s:float -> date:Date.partial option -> doi:Doi.t option ->
+  isbn:string -> issue:string -> note:string -> pages:string ->
+  private_note:string -> public:bool -> publisher:string -> title:string ->
+  type':string -> volume:string -> t
 (** [v] is a reference with given attributes. *)
 
 val row :
-  Id.t -> string -> Container.Id.t option -> Date.year option ->
+  Id.t -> string -> Container.Id.t option -> float -> Date.year option ->
   Date.md_partial option -> Doi.t option -> string -> string -> string ->
   string -> string -> bool -> string -> string -> string -> string -> t
 (** [row] is {!make} unlabelled. *)
@@ -40,6 +40,9 @@ val id : t -> Id.t
 
 val container : t -> Container.Id.t option
 (** [container_title] is the container title. *)
+
+val created_ptime_s : t -> float
+(** [created_ptime_s] is creation time as a POSIX timestamp. *)
 
 val date : t -> Date.partial option
 (** [date] is the publication date of the reference. *)
@@ -113,6 +116,7 @@ open Rel
 
 val id' : (t, Id.t) Col.t
 val abstract' : (t, string) Col.t
+val created_ptime_s' : (t, float) Col.t
 val container' : (t, Container.Id.t option) Col.t
 val date_year' : (t, int option) Col.t
 val date_md' : (t, Date.md_partial option) Col.t

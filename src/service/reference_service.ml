@@ -206,6 +206,8 @@ let create app req = (* create and update are very similar factor out a bit. *)
   let* aids, eids = authors_editors_maybe_create db q in
   let cites = Hquery.find_cites q in
   let* vs = maybe_create_container db vs q in
+  let created = Col.Value (Reference.created_ptime_s', Unix.gettimeofday ()) in
+  let vs = created :: vs in
   let* id =
     Db.insert' (module Reference.Id) db
       (Reference.create_cols ~ignore_id:true vs)
