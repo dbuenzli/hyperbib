@@ -144,12 +144,12 @@ module Contributor : sig
   (** The type for reference contributor relation. *)
 
   val make :
-    reference:Id.t -> person:Person.Id.t -> role:Person.role ->
+    reference:Id.t -> person:Person.Id.t -> role:Person.Role.t ->
     position:int -> t
   (** [make ~reference ~person ~role ~position] is a contributor with
       given attributes. See accessors for semantics. *)
 
-  val row : Id.t -> Person.Id.t -> Person.role -> int ->  t
+  val row : Id.t -> Person.Id.t -> Person.Role.t -> int ->  t
   (** [row] is unlabelled {!make}. *)
 
   val reference : t -> Id.t
@@ -158,7 +158,7 @@ module Contributor : sig
   val person : t -> Person.Id.t
   (** [person] is the person contributing. *)
 
-  val role : t -> Person.role
+  val role : t -> Person.Role.t
   (** [role] is the contribor's contribution role. *)
 
   val position : t -> int
@@ -174,7 +174,7 @@ module Contributor : sig
   val person' : (t, Person.Id.t) Col.t
   (** [person'] is the column for {!person}. *)
 
-  val role' : (t, Person.role) Col.t
+  val role' : (t, Person.Role.t) Col.t
   (** [role'] is the column for {!val-role}. *)
 
   val position' : (t, int) Col.t

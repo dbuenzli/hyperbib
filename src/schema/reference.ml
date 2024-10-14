@@ -180,7 +180,7 @@ module Contributor = struct
   type t =
     { reference : Id.t;
       person : Person.Id.t;
-      role : Person.role;
+      role : Person.Role.t;
       position : int }
 
   let make ~reference ~person ~role ~position =
@@ -197,7 +197,7 @@ module Contributor = struct
 
   let reference' = Col.make "reference" Id.type' reference
   let person' = Col.make "person" Person.Id.type' person
-  let role' = Col.make "role" Person.role_type role
+  let role' = Col.make "role" Person.Role.type' role
   let position' = Col.make "position" Type.int position
   let table =
     let primary_key =

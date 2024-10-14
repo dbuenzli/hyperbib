@@ -6,17 +6,19 @@
 open Hyperbib_std
 open Rel
 
-type role = Author | Editor
-let role_to_string = function Author -> "author" | Editor -> "editor"
-let pp_role ppf r = Fmt.string ppf (role_to_string r)
+module Role = struct
+  type t = Author | Editor
+  let to_string = function Author -> "author" | Editor -> "editor"
+  let pp ppf r = Fmt.string ppf (to_string r)
 
-let role_type =
-  let enc = function Author -> 0 | Editor -> 1 in
-  let dec = function
-  | 0 -> Author | 1 -> Editor | n -> Fmt.failwith "%d: Unknown role" n
-  in
-  Type.coded @@
-  Type.Coded.make ~name:"Contributor.role" Type.int ~enc ~dec ~pp:pp_role
+  let type' =
+    let enc = function Author -> 0 | Editor -> 1 in
+    let dec = function
+    | 0 -> Author | 1 -> Editor | n -> Fmt.failwith "%d: Unknown role" n
+    in
+    Type.coded @@
+    Type.Coded.make ~name:"Contributor.role" Type.int ~enc ~dec ~pp
+end
 
 module Person = struct
   module Id = Rel_kit.Id.MakeInt ()
@@ -105,7 +107,6 @@ module Person = struct
 end
 
 include Person
-type person = t
 
 module Label = Label.For_entity (Person)
 
@@ -149,19 +150,20 @@ let id_map db st id =
 
 module Url = struct
   open Result.Syntax
+  type person = t
 
   let role = "role"
   let role_of_query q = match Http.Query.find_first role q with
   | None -> Ok None
-  | Some "editor" -> Ok (Some Editor)
-  | Some "author" -> Ok (Some Author)
+  | Some "editor" -> Ok (Some Role.Editor)
+  | Some "author" -> Ok (Some Role.Author)
   | Some r ->
       let reason = Fmt.str "key %s: unknown role '%S'" role r in
       Http.Response.bad_request_400 ~reason ()
 
   let role_to_query ?(init = Http.Query.empty) = function
   | None -> init
-  | Some r -> init |> Http.Query.def role (role_to_string r)
+  | Some r -> init |> Http.Query.def role (Role.to_string r)
 
   let first = "first"
   let last = "last"
@@ -198,13 +200,13 @@ module Url = struct
   | Replace of Id.t
   | Replace_form of Id.t
   | Input of
-      Entity.Url.for_list * Entity.Url.input_name * role option * Id.t
+      Entity.Url.for_list * Entity.Url.input_name * Role.t option * Id.t
   | Input_create of
-      Entity.Url.for_list * Entity.Url.input_name * role option * person
+      Entity.Url.for_list * Entity.Url.input_name * Role.t option * person
   | Input_finder of
-      Entity.Url.for_list * Entity.Url.input_name * role option
+      Entity.Url.for_list * Entity.Url.input_name * Role.t option
   | Input_finder_find of
-      Entity.Url.for_list * Entity.Url.input_name * role option * string
+      Entity.Url.for_list * Entity.Url.input_name * Role.t option * string
   | Update of Id.t
   | View_fields of Id.t
 

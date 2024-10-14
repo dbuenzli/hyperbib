@@ -238,7 +238,7 @@ let find_create_container q =
 let person_key = function
 | None -> Reference.Contributor.(key_for_rel table person')
 | Some role ->
-    let suff = Person.role_to_string role in
+    let suff = Person.Role.to_string role in
     Reference.Contributor.(key_for_rel table person' ~suff)
 
 (* FIXME this is retarded *)
@@ -256,7 +256,7 @@ let create_person_last = "x-person-last"
 let create_person_orcid = "x-person-orcid"
 
 let create_person_keys = function
-| Some Person.Author ->
+| Some Person.Role.Author ->
     create_author_first, create_author_last, create_author_orcid
 | Some Editor ->
     create_editor_first, create_editor_last, create_editor_orcid
@@ -283,7 +283,7 @@ let find_create_persons ~public role q =
       in
       loop (`To_create p :: acc) fs ls os
   | [], [], [] -> List.rev acc
-  | _ -> Fmt.failwith "create %s list mismatch" (Person.role_to_string role)
+  | _ -> Fmt.failwith "create %s list mismatch" (Person.Role.to_string role)
   in
   let first, last, orcid = create_person_keys (Some role) in
   let firsts = Http.Query.find_all first q in
@@ -311,6 +311,6 @@ let find_create_contributors q =
   try
     let public = Http.Query.mem "public" q (* XXX Brittle *) in
     Ok
-    (find_contributor_kind ~public Person.Author q,
-     find_contributor_kind ~public Person.Editor q)
+    (find_contributor_kind ~public Person.Role.Author q,
+     find_contributor_kind ~public Person.Role.Editor q)
   with Failure e -> Http.Response.bad_request_400 ~explain:e ()

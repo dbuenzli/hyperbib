@@ -53,7 +53,7 @@ val viz : (module Entity.PUBLICABLE with type t = 't) -> 't -> At.t
 
 val person_input :
   Kurl.fmt -> for_list:bool -> input_name:Entity.Url.input_name ->
-  role:Person.role option -> Person.t -> El.html
+  role:Person.Role.t option -> Person.t -> El.html
 (** [person_input uf ~for_list ~input_name ~role p] inputs [p] via a hidden
     field named [input_name] and whose name is [s]'s [id]. If [for_list] is
     [true] this is for a list of subjects; if [false] it's for selecting a
@@ -61,7 +61,7 @@ val person_input :
 
 val person_input_create :
   Kurl.fmt -> for_list:bool -> input_name:Entity.Url.input_name ->
-  role:Person.role option -> Person.t -> El.html
+  role:Person.Role.t option -> Person.t -> El.html
 (** [person_input_create uf ~input_name p] inputs [p] for creation
     via hidden fields listed for now in {!Hquery}. [input_name] is
     used in case the creation is removed, to replace it with a
@@ -69,7 +69,7 @@ val person_input_create :
 
 val person_input_finder :
   Kurl.fmt -> for_list:bool -> input_name:Entity.Url.input_name ->
-  role:Person.role option -> El.html
+  role:Person.Role.t option -> El.html
 (** [person_input_finder] is a text field to search for a person to input
     in an hidden input element named [input_name]. If [for_list] is [true]
     this is for a list of persons; if [false] it's for selecting a single
@@ -77,7 +77,7 @@ val person_input_finder :
 
 val person_input_finder_results :
   Kurl.fmt -> for_list:bool -> input_name:Entity.Url.input_name ->
-  role:Person.role option -> creatable:Person.t option -> Person.t list ->
+  role:Person.Role.t option -> creatable:Person.t option -> Person.t list ->
   El.html
 (** [person_input_finder_results] is a list of persons to choose from
     to input a person in a hidden input element named [input_name].

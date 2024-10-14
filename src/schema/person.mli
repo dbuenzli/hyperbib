@@ -11,14 +11,20 @@ open Hyperbib_std
 
 (** {1:roles Person roles} *)
 
-type role = Author | Editor (** *)
-(** The type for person roles. *)
+(** Person roles. *)
+module Role : sig
+  type t = Author | Editor (** *)
+  (** The type for person roles. *)
 
-val role_type : role Rel.Type.t
-(** [role_type] encodes roles in Rel values. *)
+  val type' : t Rel.Type.t
+  (** [type'] encodes roles in Rel values. *)
 
-val role_to_string : role -> string
-(** [role_to_string r] is an US-ASCII string representation of [r]. *)
+  val to_string : t -> string
+  (** [role_to_string r] is an US-ASCII string representation of [r]. *)
+
+  val pp : t Fmt.t
+  (** [pp] formats roles. *)
+end
 
 (** {1:persons Persons} *)
 
@@ -27,9 +33,6 @@ module Id : Rel_kit.INT_ID
 
 type t
 (** The type for persons. *)
-
-type person = t
-(**  See {!t}. *)
 
 val make :
   id:Id.t -> last_name:string -> first_names:string ->
@@ -60,7 +63,7 @@ val note : t -> string
 
 val private_note : t -> string
 (** [private_note p] is the private note of [p], only available
-    to loged in users. *)
+    to logged in users. *)
 
 val public : t -> bool
 (** [public p] is [true] iff [p]'s existence is made visible to the
@@ -150,6 +153,8 @@ module Url : sig
 
   (** {1:url_req URL requests} *)
 
+  type person := t
+
   type named_id = string option * Id.t
 
   type t =
@@ -165,13 +170,13 @@ module Url : sig
   | Replace of Id.t
   | Replace_form of Id.t
   | Input of
-      Entity.Url.for_list * Entity.Url.input_name * role option * Id.t
+      Entity.Url.for_list * Entity.Url.input_name * Role.t option * Id.t
   | Input_create of
-      Entity.Url.for_list * Entity.Url.input_name * role option * person
+      Entity.Url.for_list * Entity.Url.input_name * Role.t option * person
   | Input_finder of
-      Entity.Url.for_list * Entity.Url.input_name * role option
+      Entity.Url.for_list * Entity.Url.input_name * Role.t option
   | Input_finder_find of
-      Entity.Url.for_list * Entity.Url.input_name * role option * string
+      Entity.Url.for_list * Entity.Url.input_name * Role.t option * string
   | Update of Id.t
   | View_fields of Id.t (** *)
   (** The type for person URL requests. *)

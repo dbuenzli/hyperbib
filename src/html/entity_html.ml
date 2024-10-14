@@ -159,8 +159,8 @@ let entity_input_by_id
 
 let person_remove_button uf ~for_list ~input_name ~role =
   let tip = match role with
-  | Some Person.Author -> Uimsg.remove_author
-  | Some Person.Editor -> Uimsg.remove_editor
+  | Some Person.Role.Author -> Uimsg.remove_author
+  | Some Person.Role.Editor -> Uimsg.remove_editor
   | None -> Uimsg.remove_person
   in
   let req = match for_list with
@@ -202,8 +202,8 @@ let person_input_create uf ~for_list ~input_name ~role p =
 let person_creatable_result uf ~for_list ~input_name ~role p =
   let create = Uimsg.create_person in
   let tip = match role with
-  | Some Person.Author -> Uimsg.create_and_add_author
-  | Some Person.Editor -> Uimsg.create_and_add_editor
+  | Some Person.Role.Author -> Uimsg.create_and_add_author
+  | Some Person.Role.Editor -> Uimsg.create_and_add_editor
   | None -> Uimsg.create_and_add_person
   in
   let render p = El.txt (create ^ ": " ^ Person.names_lf p ^ "\u{207A}") in
@@ -216,8 +216,8 @@ let person_input_finder_results uf ~for_list ~input_name ~role ~creatable:p ps =
     Person.Url.v (Input (for_list, input_name, role, Person.id p))
   in
   let tip = match role with
-  | Some Person.Author -> Uimsg.add_author
-  | Some Person.Editor -> Uimsg.add_editor
+  | Some Person.Role.Author -> Uimsg.add_author
+  | Some Person.Role.Editor -> Uimsg.add_editor
   | None -> Uimsg.add_person
   in
   let creatable =
@@ -236,8 +236,8 @@ let person_input_finder uf ~for_list ~input_name ~role =
       Person.Url.v (Input_finder_find (for_list, input_name, role, ""))
     in
     let kind = match role with
-    | Some Person.Author -> Uimsg.author
-    | Some Person.Editor -> Uimsg.editor
+    | Some Person.Role.Author -> Uimsg.author
+    | Some Person.Role.Editor -> Uimsg.editor
     | None -> Uimsg.person
     in
     entity_input_finder ~at:[Hclass.person] ~kind uf req ~value:""

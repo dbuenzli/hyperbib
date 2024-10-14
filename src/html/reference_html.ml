@@ -143,8 +143,8 @@ let edit_contributor role uf ps =
       Entity_html.person_input uf ~for_list ~input_name ~role p
   in
   let label = match role with
-  | Some Person.Author -> Uimsg.authors
-  | Some Person.Editor -> Uimsg.editors
+  | Some Person.Role.Author -> Uimsg.authors
+  | Some Person.Role.Editor -> Uimsg.editors
   | None -> Uimsg.persons
   in
   let label = El.span ~at:[Hui.Class.label] [El.txt label] in
@@ -212,8 +212,8 @@ let edit_reference
       Hui.group ~at:[Hclass.container_loc] ~dir:`H [date; volume; issue; pages]
     in
     let edit_publisher = edit_publisher r in
-    let authors = edit_contributor (Some Person.Author) uf authors in
-    let editors = edit_contributor (Some Person.Editor) uf editors in
+    let authors = edit_contributor (Some Person.Role.Author) uf authors in
+    let editors = edit_contributor (Some Person.Role.Editor) uf editors in
     El.details ~at:[open'; Hclass.field]
       [ summary; El.hr (); ref_ids; authors; editors; El.hr (); cites;
         container_details;

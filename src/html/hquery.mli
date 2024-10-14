@@ -94,7 +94,7 @@ val find_date : Http.Query.t -> (Date.partial option, string) result
 val cite_key : string
 val find_cites : Http.Query.t -> Doi.t list
 
-val person_key : Person.role option -> string
+val person_key : Person.Role.t option -> string
 
 val create_container_title : string
 val create_container_issn : string
@@ -112,11 +112,11 @@ val create_editor_orcid : string
 
 
 val find_create_person :
-  public:bool -> role:Person.role option -> Http.Query.t -> Person.t option
+  public:bool -> role:Person.Role.t option -> Http.Query.t -> Person.t option
 
 (* val find_create_editors : Http.Query.t -> Person.t list *)
 
-val create_person_keys : Person.role option -> string * string * string
+val create_person_keys : Person.Role.t option -> string * string * string
 
 val find_create_contributors :
   Http.Query.t ->
