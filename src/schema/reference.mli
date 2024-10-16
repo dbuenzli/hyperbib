@@ -15,9 +15,6 @@ module Id : Rel_kit.INT_ID
 type t
 (** The type for references. *)
 
-type reference = t
-(** See {!t}. *)
-
 val make :
   id:Id.t -> abstract:string -> container:Container.Id.t option ->
   created_ptime_s:float -> date:Date.partial option -> doi:Doi.t option ->
@@ -96,17 +93,6 @@ val non_empty_title : t -> string
 val compare_by_date : t -> t -> int
 (** [compare_by_date r0 r1] orders [r0] and [r1] by increasing date. *)
 
-type render_data =
-  { list : t list;
-    labels : Label.t list Id.Map.t;
-    authors : Person.t list Id.Map.t;
-    containers : Container.t Container.Id.Map.t; (** Mapped by container id. *)
-    editors : Person.t list Id.Map.t;
-    subjects : Subject.t list Id.Map.t; }
-(** The type for a references render data. A list of references and their
-    {{!relations}relations} sorted on reference ids. This needs to be defined
-    here to avoid module name mixups. See {!val-render_data}. *)
-
 val id_map :
   Db.t -> 'a Rel_sql.Stmt.t -> ('a -> Id.t) -> ('a Id.Map.t, Db.error) result
 
@@ -135,7 +121,21 @@ val table : t Table.t
 
 val col_values_for_date : Date.partial option -> t Col.value * t Col.value
 
-(** {2:relations Relations} *)
+(** {2:relations Relations}
+
+    These definitions are here because we can't refer to [../] in OCaml. *)
+
+type reference = t
+(** See {!t}. *)
+
+type reference_id = Id.t
+(** See {!Id.t}. *)
+
+type subject = Subject.t
+(** See {!Subject.t} *)
+
+type label = Label.t
+(** See {!Label.t}. *)
 
 (** Reference label applications. *)
 module Label : Label.APPLICATION with type entity := t
@@ -317,37 +317,77 @@ end
 (** Doc relation *)
 module Doc : sig
 
+  (** The type for reference ids. These are allocated by the database. *)
+  module Id : Rel_kit.INT_ID
+
   type t
   (** The type for the reference document relation. *)
 
-  val make : reference:Id.t -> blob:Blob.Id.t -> t
-  (** [make reference doc] indicates [doc] is a document for
-      [reference]. *)
+  val make :
+    id:Id.t -> reference:reference_id -> blob_key:Blobstore.Key.text ->
+    media_type:Media_type.t -> name:string -> origin:string -> public:bool -> t
+  (** [make] is a new document see corresponding properties for semantics. *)
 
-  val row : Id.t -> Blob.Id.t -> t
+  val row :
+    Id.t -> reference_id -> Blobstore.Key.text -> Media_type.t -> string ->
+    string -> bool -> t
   (** [row] is unlabelled {!make}.  *)
 
-  val reference : t -> Id.t
-  (** [reference s] is the documented reference. *)
+  val id : t -> Id.t
+  (** [id doc] is the document's id. *)
 
-  val blob : t -> Blob.Id.t
-  (** [blob s] is the document's blob. *)
+  val reference : t -> Id.t
+  (** [reference s] is the reference to which the document is attached. *)
+
+  val blob_key : t -> Blobstore.Key.text
+  (** [blob_key s] is the key to the document's blob. *)
+
+  val media_type : t -> Media_type.t
+  (** [media_type d] is the media type of the document. *)
+
+  val name : t -> string
+  (** [name d] is a name for the document. If specified this is used for
+      deriving a filename. *)
+
+  val public : t -> bool
+  (** [public d] indicates if the document can be made public. *)
+
+  val origin : t -> string
+  (** [origin d] is tne origin of the document. For example the DOI
+      resolver that was used for looking it up. *)
 
   (** {1:table Table} *)
 
-  val reference' : (t, Id.t) Col.t
+  val id' : (t, Id.t) Col.t
+  (** [id'] is the column for {!val-id}. *)
+
+  val reference' : (t, reference_id) Col.t
   (** [reference'] is the column for {!val-reference}. *)
 
-  val blob' : (t, Blob.Id.t) Col.t
-  (** [blob'] is the column for {!val-blob}. *)
+  val blob_key' : (t, Blobstore.Key.text) Col.t
+  (** [blob_key'] is the column for {!val-blob_key}. *)
+
+  val media_type' : (t, Media_type.t) Col.t
+  (** [media_type'] is the {!val-media_type} column. *)
+
+  val name' : (t, string) Col.t
+  (** [name] is the {!val-name} column. *)
+
+  val origin' : (t, string) Col.t
+  (** [origin'] is the {!val-origin} column. *)
+
+  val public' : (t, bool) Col.t
+  (** [public'] is the {!val-public} column. *)
 
   val table : t Table.t
-  (** The table for blob relationships. *)
+  (** The table for document relationships. *)
 
   (** {1:queries Queries} *)
 
   val create : t -> unit Rel_sql.Stmt.t
   (** [create doc] creates a document relationship. *)
+
+  include Entity.PUBLICABLE_QUERIES with type t := t and module Id := Id
 end
 
 (** {2:queries Queries} *)
@@ -392,6 +432,17 @@ val author_ids_stmt : Id.t -> Person.Id.t Rel_sql.Stmt.t
 
 (** {2:renderdata Render data} *)
 
+type render_data =
+  { list : t list;
+    labels : label list Id.Map.t;
+    authors : Person.t list Id.Map.t;
+    containers : Container.t Container.Id.Map.t; (** Mapped by container id. *)
+    editors : Person.t list Id.Map.t;
+    subjects : subject list Id.Map.t;
+    docs : Doc.t list Id.Map.t; }
+(** The type for references render data. A list of references and their
+    {{!relations}relations} sorted on reference ids. *)
+
 val render_data :
   only_public:bool Rel_query.value -> (t, 'a) Bag.t ->
   (Db.t -> (render_data, Db.error) result)
@@ -401,7 +452,7 @@ val render_data :
 
 (** {1:urls URLs} *)
 
-(** Container URL requests. *)
+(** Reference URL requests. *)
 module Url : sig
 
   (** {1:url_req URL requests} *)
@@ -413,6 +464,7 @@ module Url : sig
   | Confirm_delete of Id.t
   | Create
   | Delete of Id.t
+  | Doc of named_id * Doc.Id.t
 (*
   | Duplicate of Id.t
   | Duplicate_form of Id.t
@@ -441,4 +493,7 @@ module Url : sig
 
   val page : reference -> Kurl.t
   (** [page r] is a {!Url.type-t.Page} URL request for [r]. *)
+
+  val doc : reference -> Doc.t -> Kurl.t
+  (** [doc r doc] is a {!Url.type-t.Doc} URL request for [r] and [doc]. *)
 end

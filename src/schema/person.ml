@@ -17,7 +17,7 @@ module Role = struct
     | 0 -> Author | 1 -> Editor | n -> Fmt.failwith "%d: Unknown role" n
     in
     Type.coded @@
-    Type.Coded.make ~name:"Contributor.role" Type.int ~enc ~dec ~pp
+    Type.Coded.make ~name:"Person.Role.t" Type.int ~enc ~dec ~pp
 end
 
 module Person = struct

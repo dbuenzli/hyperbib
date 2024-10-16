@@ -191,6 +191,13 @@ let link_label ?text uf ~self l =
   let text = match text with Some t -> t | None -> El.txt_of Label.name l in
   link ~at:[viz; Hui.Class.label; Hclass.value] ~href text
 
+let link_reference_doc ?name r ?text uf ~self doc =
+  let viz = if Reference.Doc.public doc then At.void else Hclass.private' in
+  let href = Kurl.Fmt.rel_url uf ~src:self ~dst:(Reference.Url.doc r doc) in
+  let ext = Media_type.to_file_ext (Reference.Doc.media_type doc) in
+  let text = match text with Some t -> t | None -> El.txt ext in
+  link ~at:[viz] ~href text
+
 (* Miscellaneous *)
 
 let item_count ?(at = []) count =

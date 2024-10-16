@@ -102,23 +102,24 @@ let adjust_env_and_session env sess =
   (* This adjusts the session according to the webapp edition mode: we may
      still receive sessions from when the webapp was in a different mode.
      The page rendering parameters are also defined here. *)
-  let env' caps ~auth_ui ~user_view ~private_data =
+  let env' caps ~auth_ui ~user_view =
     let page_gen =
       let g = Service_env.page_gen env in
       let now = Ptime_clock.now () (* FIXME get last db update time. *) in
       let url_fmt = Page.Gen.url_fmt g in
       let b = Page.Gen.bibliography g in
       let testing = Page.Gen.testing g in
+      let private_data = User.Caps.see_private_data caps in
       Page.Gen.v ~now b url_fmt ~auth_ui ~user_view ~private_data ~testing
     in
     Service_env.adjust env caps page_gen
   in
   let user_view' ~private' = Some (if private' then `Private else `Public) in
-  let private_data ~private' = private' in
+  let see_private_data ~private' = private' in
   match Service_env.editable env with
   | `No ->
       let caps = User.Caps.none in
-      let env = env' caps ~auth_ui:None ~user_view:None ~private_data:false in
+      let env = env' caps ~auth_ui:None ~user_view:None in
       env, None (* Drop all sessions *)
   | `Unsafe ->
       let sess, private' = match sess with
@@ -131,23 +132,22 @@ let adjust_env_and_session env sess =
           Some (Session.Unsafe { private_view }), private_view
       in
       let user_view = user_view' ~private' in
-      let private_data = private_data ~private' in
-      let caps = User.Caps.make ~edit:true in
-      let env = env' caps ~auth_ui:None ~user_view ~private_data in
+      let see_private_data = see_private_data ~private' in
+      let caps = User.Caps.make ~edit:true ~see_private_data in
+      let env = env' caps ~auth_ui:None ~user_view in
       env, sess
   | `With_login ->
       match sess with
       | None | Some (Session.Unsafe _) ->
           let caps = User.Caps.none in
           let auth_ui = Some `Login and user_view = None in
-          let env = env' caps ~auth_ui ~user_view ~private_data:false in
+          let env = env' caps ~auth_ui ~user_view in
           env, None
       | Some (Session.User { private_view; _ }) as sess ->
-          let caps = User.Caps.make ~edit:true in
+          let caps = User.Caps.make ~edit:true ~see_private_data:private_view in
           let auth_ui = Some `Logout in
           let user_view = user_view' ~private':private_view in
-          let private_data = private_data ~private':private_view in
-          let env = env' caps ~auth_ui ~user_view ~private_data in
+          let env = env' caps ~auth_ui ~user_view in
           env, sess
 
 let v ~service_path ~private_key ~secure_cookie tree ~fallback env =

@@ -95,10 +95,11 @@ let load file =
 (* User capabilities *)
 
 module Caps = struct
-  type t = { edit : bool }
-  let make ~edit = { edit }
-  let none = { edit = false }
+  type t = { edit : bool; see_private_data : bool; }
+  let make ~edit ~see_private_data = { edit; see_private_data }
+  let none = { edit = false; see_private_data = false }
   let edit c = c.edit
+  let see_private_data c = c.see_private_data
 end
 
 (* Urls *)

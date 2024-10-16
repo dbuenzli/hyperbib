@@ -19,7 +19,6 @@ let tables =
   Table.[ Def conf;
           Def Container.Label.table;
           Def Container.table;
-          Def Blob.table;
           Def Label.table;
           Def Person.Label.table;
           Def Person.table;

@@ -162,8 +162,6 @@ module Url = struct
         let* id = Res.Id.decode r in
         Ok (Some (Id.of_int id |> Result.get_ok' (* FIXME *)))
 
-
-
   type cancel_url = string option
   let cancel = "cancel"
   let cancel_url_of_query query = Http.Query.find_first cancel query

@@ -111,6 +111,8 @@ val link_label : Label.t linker
 val link_person : Person.t linker
 val link_subject : Subject.t linker
 val link_year : Date.year linker
+val link_reference_doc :
+  ?name:string -> Reference.t -> Reference.Doc.t linker
 
 (** {1:misc Miscellaneous} *)
 

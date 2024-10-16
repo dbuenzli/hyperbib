@@ -58,15 +58,17 @@ let add_reference_doc
       Log.app (fun m ->
           m "Reference %a: lookup %a"
             Reference.Id.pp reference (Fmt.code' Doi.pp) doi);
-      if status = Exists then
-        Log.warn (fun m -> m "%a: doc found in blob store" Doi.pp doi);
-      let id = Blobstore.Key.to_text key in
-      let blob = Blob.make ~id ~media_type ~origin ~slug:"" ~public in
-      let doc = Reference.Doc.make ~reference ~blob:id in
+      if status = Exists
+      then Log.warn (fun m -> m "%a: doc already in blob store" Doi.pp doi);
+      let blob_key = Blobstore.Key.to_text key in
+      let id = Reference.Doc.Id.zero in
+      let doc =
+        Reference.Doc.make
+          ~id ~reference ~media_type ~blob_key ~name:"" ~origin ~public:false
+      in
       Log.if_error ~use:() @@ Db.string_error @@ Result.join @@
       Db.with_transaction `Deferred db @@ fun db ->
-      let* () = Db.exec db (Blob.create ~ignore_id:false blob) in
-      let* () = Db.exec db (Reference.Doc.create doc) in
+      let* () = Db.exec db (Reference.Doc.create ~ignore_id:true  doc) in
       Log.app (fun m -> m "%a: added doc from %s" Doi.pp doi origin);
       Ok ()
 

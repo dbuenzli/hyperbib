@@ -79,13 +79,17 @@ module Caps : sig
   type t
   (** The type for user capabilities. *)
 
-  val make : edit:bool -> t
+  val make : edit:bool -> see_private_data:bool -> t
   (** [make ~edit] are capabilities with given attributes. See
       corresponding accessors for semantics. *)
 
   val edit : t -> bool
   (** [edit cs] is true if [cs] has the edit capability. This
       allows to edit anything on the webapp. *)
+
+  val see_private_data : t -> bool
+  (** [see_private_data cs] is [true] if [cs] has the capability
+      to access private data. *)
 
   val none : t
   (** [none] has no capability. *)

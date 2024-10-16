@@ -151,31 +151,30 @@ module Reference = struct
       Col.Value (date_year', (Some y)), Col.Value (date_md', (Some md))
 end
 
-include (Reference)
+include Reference
 
+(* These abreviations are needed because OCaml lacks ../ references *)
+
+module Reference_id = Id
+type reference_id = Reference_id.t
 type reference = t
-type render_data =
-  { list : t list;
-    labels : Label.t list Id.Map.t;
-    authors : Person.t list Id.Map.t;
-    containers : Container.t Container.Id.Map.t; (* mapped by container id *)
-    editors : Person.t list Id.Map.t;
-    subjects : Subject.t list Id.Map.t; }
+let reference_id' = id'
+let reference_table = table
 
-(* ../Module would be nice *)
+type label = Label.t
 let label_table = Label.table
 let label_id = Label.id
 let label_id_map = Label.id_map
 let label_id_map_find_opt = Label.Id.Map.find_opt
 
 type subject_id = Subject.Id.t
+type subject = Subject.t
 let subject_id_type = Subject.Id.type'
 let subject_id_map = Subject.id_map
 let subject_id_map_find_opt = Subject.Id.Map.find_opt
 let subject_table = Subject.table
 let subject_id = Subject.id
 let subject_order_by_name = Subject.order_by_name
-
 
 (* Relations *)
 
@@ -392,8 +391,7 @@ module Subject = struct
 end
 
 module Cites = struct
-  let ref_table = table
-  let ref_doi' = doi'
+  let reference_doi' = doi'
 
   type t = { reference : Id.t; doi : Doi.t }
   let make ~reference ~doi = { reference; doi }
@@ -408,7 +406,7 @@ module Cites = struct
     let foreign_keys =
       [ Table.Foreign_key.make
           ~cols:[Def reference']
-          ~parent:(Table (ref_table, [Def id']))
+          ~parent:(Table (reference_table, [Def id']))
           ~on_delete:`Cascade (); ]
     in
     Table.make "cites" ~primary_key ~foreign_keys @@
@@ -425,11 +423,11 @@ module Cites = struct
   let internal_of_ref_ids rids =
     let* rid = rids in
     let* rel = Bag.table table in
-    let* ref = Bag.table ref_table in
+    let* ref = Bag.table reference_table in
     let is_rid = Id.(rid = rel #. reference') in
     let is_internal_doi =
-      Option.is_some (ref #. ref_doi') &&
-      Text.(rel #. doi' = Option.get (ref #. ref_doi'))
+      Option.is_some (ref #. reference_doi') &&
+      Text.(rel #. doi' = Option.get (ref #. reference_doi'))
     in
     let pair x y = Bag.inj (fun x y -> x, y) $ x $ y in (* FIXME rel *)
     let rel' = pair (rel #. reference') (ref #. id') in
@@ -451,32 +449,66 @@ module Cites = struct
 end
 
 module Doc = struct
-  let ref_table = table
-  type t = { reference : Id.t; blob : Blob.Id.t }
-  let make ~reference ~blob = { reference; blob }
-  let row reference blob = { reference; blob }
-  let reference d = d.reference
-  let blob d = d.blob
+  module Doc = struct
+    module Id = Rel_kit.Id.MakeInt ()
+    type t =
+      { id : Id.t;
+        reference : reference_id;
+        blob_key : Blobstore.Key.text;
+        media_type : Media_type.t;
+        name : string;
+        origin : string;
+        public : bool; }
 
-  let reference' = Col.make "reference" Id.type' reference
-  let blob' = Col.make "blob" Type.text blob
-  let table =
-    let primary_key = Table.Primary_key.make [Def reference'; Def blob'] in
-    let foreign_keys =
-      [ Table.Foreign_key.make
-          ~cols:[Def reference']
-          ~parent:(Table (table, [Def id']))
-          ~on_delete:`Cascade ();
-        Table.Foreign_key.make
-          ~cols:[Def blob']
-          ~parent:(Table (Blob.table, [Def Blob.id']))
-          ~on_delete:`Cascade ();
-      ]
-    in
-    Table.make "reference_doc" ~primary_key ~foreign_keys @@
-    Row.(unit row * reference' * blob')
+    let make ~id ~reference ~blob_key ~media_type ~name ~origin ~public =
+      { id; reference; blob_key; media_type; name; origin; public }
 
-  let create d = Rel_sql.insert_into Db.dialect table d
+    let row id reference blob_key media_type name origin public =
+      { id; reference; blob_key; media_type; name; origin; public }
+
+    let id d = d.id
+    let reference d = d.reference
+    let blob_key d = d.blob_key
+    let media_type d = d.media_type
+    let name d = d.name
+    let origin d = d.origin
+    let public d = d.public
+
+    let order_by_media_type b0 b1 = String.compare b0.media_type b1.media_type
+
+    open Rel
+
+    let id' = Col.make "id" Id.type' id
+    let reference' = Col.make "reference" Reference_id.type' reference
+    let blob_key' = Col.make "blob_key" Type.text blob_key
+    let media_type' = Col.make "media_type" Type.text media_type
+    let name' = Col.make "name" Type.text name
+    let origin' = Col.make "origin" Type.text origin
+    let public' = Col.make "public" Type.bool public
+    let table =
+      let primary_key = Table.Primary_key.make [Def id'] in
+      let foreign_keys =
+        [ Table.Foreign_key.make
+            ~cols:[Def reference']
+            ~parent:(Table (reference_table, [Def reference_id']))
+            ~on_delete:`Cascade (); ]
+      in
+      Table.make "reference_doc" ~primary_key ~foreign_keys @@
+      Row.(unit row * id' * reference' * blob_key' * media_type' * name' *
+           origin' * public')
+  end
+
+  include Doc
+  include Entity.Publicable_queries (Doc)
+
+  open Rel_query.Syntax
+
+(*  let create d = Rel_sql.insert_into Db.dialect table d *)
+  let of_ref_ids ~only_public rids =
+    let* rid = rids in
+    let* doc = Bag.table table in
+    let filter = Bool.(not only_public || doc #. public') in
+    Bag.where Id.(rid = doc #. reference' && filter) (Bag.yield doc)
 end
 
 include Entity.Publicable_queries (Reference)
@@ -628,7 +660,9 @@ let id_map db st id =
   let add r acc = Id.Map.add (id r) r acc in
   Db.fold db st add Id.Map.empty
 
-
+let id_map_list db st id =
+  let add r acc = Id.Map.add_to_list (id r) r acc in
+  Db.fold db st add Id.Map.empty
 
 
 let id_map_related_list :
@@ -647,11 +681,21 @@ let id_map_related_list :
   | None -> Ok m
   | Some order -> Ok (Id.Map.map (List.sort order) m)
 
+type render_data =
+  { list : t list;
+    labels : label list Id.Map.t;
+    authors : Person.t list Id.Map.t;
+    containers : Container.t Container.Id.Map.t; (* mapped by container id *)
+    editors : Person.t list Id.Map.t;
+    subjects : subject list Id.Map.t;
+    docs : Doc.t list Id.Map.t }
+
 let render_data ~only_public refs =
   let ref_ids = ids_of_refs refs in
   let ref_labels = Label.applications ref_ids in
   let ref_contributors = Contributor.of_ref_ids ref_ids in
   let ref_subjects = Subject.of_ref_ids ref_ids in
+  let docs = Doc.of_ref_ids ~only_public ref_ids in
   let labels = Label.of_applications ~only_public ref_labels in
   let persons = Contributor.persons ~only_public ref_contributors in
   let subjects = Subject.subjects ~only_public ref_subjects in
@@ -660,6 +704,7 @@ let render_data ~only_public refs =
   let ref_contributors_stmt =
     Rel_query.Sql.of_bag' Contributor.table ref_contributors in
   let ref_subjects_stmt = Rel_query.Sql.of_bag' Subject.table ref_subjects in
+  let docs_stmt = Rel_query.Sql.of_bag' Doc.table docs in
   let labels_stmt = Rel_query.Sql.of_bag' label_table labels in
   let persons_stmt = Rel_query.Sql.of_bag' Person.table persons  in
   let subjects_stmt = Rel_query.Sql.of_bag' subject_table subjects in
@@ -671,6 +716,7 @@ let render_data ~only_public refs =
     let* ps = Person.id_map db persons_stmt Person.id in
     let* ss = subject_id_map db subjects_stmt subject_id in
     let* ls = label_id_map db labels_stmt label_id in
+    let* docs = id_map_list db docs_stmt Doc.reference in
     let* labels =
       let id = Label.entity and related = Label.label in
       let related_by_id l = label_id_map_find_opt l ls in
@@ -704,7 +750,7 @@ let render_data ~only_public refs =
         db ref_subjects_stmt ~order ~id ~related ~related_by_id
     in
     let* containers = Container.id_map db containers_stmt Container.id in
-    Ok { list; labels; authors; containers; editors; subjects }
+    Ok { list; labels; authors; containers; editors; subjects; docs }
 
 module Url = struct
   open Result.Syntax
@@ -715,6 +761,7 @@ module Url = struct
   | Confirm_delete of Id.t
   | Create
   | Delete of Id.t
+  | Doc of named_id * Doc.Id.t
 (*
   | Duplicate of Id.t
   | Duplicate_form of Id.t
@@ -775,6 +822,14 @@ module Url = struct
   | ["action"; "change-authors-publicity"; id] ->
       let* `POST, id = Entity.Url.meth_id (module Id) u Http.Method.[post] id in
       Kurl.ok (Change_authors_publicity id)
+  | [name; id; "docs"; docid] ->
+      let* `GET, id = Entity.Url.get_id (module Id) u id in
+      (* FIXME don't we have something to easily error here ? *)
+      let error_to_resp e =
+        Http.Response.empty ~explain:e Http.Status.bad_request_400
+      in
+      let* docid = Doc.Id.of_string docid |> Result.map_error error_to_resp in
+      Kurl.ok (Doc ((Some name, id), docid))
   | [name; id] ->
       let* `GET, id = Entity.Url.get_id (module Id) u id in
       Kurl.ok (Page (Some name, id))
@@ -800,6 +855,10 @@ module Url = struct
       Kurl.bare `POST [""]
   | Delete id ->
       Kurl.bare `DELETE [Id.to_string id]
+  | Doc ((Some n, id), docid) ->
+      Kurl.bare `GET [n; Id.to_string id; "docs"; Doc.Id.to_string docid]
+  | Doc ((None, id), docid) ->
+      Kurl.bare `GET [Id.to_string id; "docs"; Doc.Id.to_string docid]
 (*
   | Duplicate id ->
       Kurl.bare `POST ["action"; "duplicate"; Id.to_string id]
@@ -840,6 +899,10 @@ module Url = struct
 
   (* Constructors *)
 
-  let res_name s = Res.Named.name_of_string (title s)
-  let page s = Kurl.v kind (Page (Some (res_name s), id s))
+  let res_name r = Res.Named.name_of_string (title r)
+  let page r = Kurl.v kind (Page (Some (res_name r), id r))
+
+  let doc r doc =
+    let named_id = Some (res_name r), id r and docid = Doc.id doc in
+    Kurl.v kind (Doc (named_id, docid))
 end

@@ -9,6 +9,7 @@ open Rel
 
 (* Data lookups *)
 
+let get_doc = Entity_service.get_entity (module Reference.Doc)
 let get_reference = Entity_service.get_entity (module Reference)
 let get_reference_of_page_ref =
   let page_url n id = Reference.Url.v (Page (n, id)) in
@@ -269,21 +270,65 @@ let update env req id =
   let headers = Html_kit.htmlact_page_location_update uf self ~title () in
   Ok (Page.part_response ~headers html)
 
+let doc env request (_, ref_id) docid =
+  Service_env.with_db' env @@ fun db ->
+  let* doc = get_doc db docid in
+  let is_private = not (Reference.Doc.public doc) in
+  let see_private_data = User.Caps.see_private_data (Service_env.caps env) in
+  if not see_private_data && is_private (* 404 to avoid probing *)
+  then Http.Response.not_found_404 ~explain:"Not authorized" () else
+  let file =
+    let* blobstore = Cli_kit.Conf.blobstore (Service_env.conf env) in
+    let* id = Blobstore.Key.of_text (Reference.Doc.blob_key doc) in
+    Blobstore.find id blobstore
+  in
+  let* filename =
+    let name = String.trim (Reference.Doc.name doc) in
+    if name <> "" then Ok name else
+    (* TODO we could have a better name than the doi here. *)
+    let* ref = get_reference db ref_id in
+    let doi = Reference.doi ref in
+    match doi with
+    | None | Some "" -> Ok "doc"
+    | Some doi -> Ok doi
+  in
+  let media_type = Reference.Doc.media_type doc in
+  let ext = Media_type.to_file_ext media_type in
+  let filename =
+    if String.ends_with ~suffix:ext filename then filename else filename ^ ext
+  in
+  (* TODO escaping
+     TODO Webs_fs add something for content disposition. *)
+  let content_disposition = Fmt.str "inline; filename=\"%s\"" filename in
+  match file with
+  | Error e -> Http.Response.server_error_500 ~explain:e ()
+  | Ok None -> Http.Response.not_found_404 ()
+  | Ok (Some file) ->
+      let* response = Webs_fs.send_file request (Fpath.to_string file) in
+      let forever = "public, max-age=31536000, immutable" in
+      let hs = Http.Headers.(def cache_control) forever Http.Headers.empty in
+      let hs = Http.Headers.(def content_type) media_type hs in
+      let hs = Http.Headers.(def content_disposition) content_disposition hs in
+      Ok (Http.Response.override_headers ~by:hs response)
+
 let view_fields app req id =
   Service_env.with_db_transaction' `Deferred app @@ fun db ->
   view_fields_resp app db req id
 
-let resp r env sess req = match (r : Reference.Url.t) with
-| Change_authors_publicity id -> change_authors_publicity env req id
+let resp r env sess request = match (r : Reference.Url.t) with
+| Change_authors_publicity id -> change_authors_publicity env request id
 | Confirm_delete id -> confirm_delete env id
-| Create -> create env req
+| Create -> create env request
 | Delete id -> delete env id
-| Edit_form id -> edit_form env req id
-| Fill_in_form doi -> fill_in_form env req doi
+| Doc (ref, doc_id) -> doc env request ref doc_id
+| Edit_form id -> edit_form env request id
+| Fill_in_form doi -> fill_in_form env request doi
 | Index -> index env
-| New_form { cancel } -> new_form env req ~cancel
+| New_form { cancel } -> new_form env request ~cancel
 | Page ref -> page env ref
-| Update id -> update env req id
-| View_fields id  -> view_fields env req id
+| Update id -> update env request id
+| View_fields id  -> view_fields env request id
+
+
 
 let v = Kurl.service Reference.Url.kind resp

@@ -1,6 +1,5 @@
 Hyperbib — Publish annotated bibliographies
 ===========================================
-%%VERSION%%
 
 Hyperbib is a web application to edit and publish annotated
 bibliographies.

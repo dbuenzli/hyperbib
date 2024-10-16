@@ -18,6 +18,9 @@ let find_editors r rs =
 let find_subjects r rs =
   Reference.Id.Map.get_list (Reference.id r) rs.Reference.subjects
 
+let find_docs r rs =
+  Reference.Id.Map.get_list (Reference.id r) rs.Reference.docs
+
 let cites_anchor = "cites"
 let cited_by_anchor = "cited-by"
 
@@ -413,7 +416,22 @@ let view_private_note g ~in_details r =
   let cl = Hui.Class.for_col Reference.private_note' in
   note_html cl viz ~label ~in_details note
 
-let view_more_details ~notes g ~self r =
+let view_reference_docs r g ~self = function
+| [] -> El.void
+| bs ->
+    let uf = Page.Gen.url_fmt g in
+    let reference_doc b =
+      let name = match String.trim (Reference.Doc.name b) with
+      | "" ->
+          Option.value ~default:"doc" @@
+          Reference.doi r (* FIXME use Export.ref_to_cite_key *)
+      | slug -> slug
+      in
+      Html_kit.link_reference_doc r ~name ~self uf b
+    in
+    El.splice (List.map reference_doc bs)
+
+let view_more_details ~notes g ~self r docs =
   let uf = Page.Gen.url_fmt g in
   let notes = match notes with
   | false -> El.void
@@ -423,9 +441,10 @@ let view_more_details ~notes g ~self r =
       El.splice [note; private_note]
   in
   let full_text = view_doi_link r in
+  let docs = view_reference_docs r g ~self docs in
   let cites = view_cites_link uf ~self r in
   let cited_by = view_cited_by_link uf ~self r in
-  El.div ~at:[Hclass.more_details] [full_text; cites; cited_by; notes]
+  El.div ~at:[Hclass.more_details] [full_text; docs; cites; cited_by; notes]
 
 let list_item g ~self r rs =
   let uf = Page.Gen.url_fmt g in
@@ -439,7 +458,8 @@ let list_item g ~self r rs =
   let ref = El.p ~at:[Hclass.ref] [ title; El.sp; container; year; authors] in
   let subjects = find_subjects r rs in
   let subjects = view_subjects uf ~self r subjects in
-  let more_details = view_more_details ~notes:true g ~self r in
+  let docs = find_docs r rs in
+  let more_details = view_more_details ~notes:true g ~self r docs in
   let at = At.[Hclass.ref_item; id anchor_id; viz r] in
   El.li ~at [Html_kit.anchor_a anchor_id; ref; subjects; more_details]
 
@@ -500,7 +520,8 @@ let view_fields ?authors_ui g ~self r ~render_data:rd =
   in
   let subjects = find_subjects r rd in
   let subjects = view_subjects uf ~self r subjects in
-  let more_details = view_more_details ~notes:false g ~self r in
+  let docs = find_docs r rd in
+  let more_details = view_more_details ~notes:false g ~self r docs in
   let ref =
     El.div ~at:[Hclass.ref_item; viz r] [ref; subjects; more_details; ]
   in
