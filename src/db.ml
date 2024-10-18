@@ -155,7 +155,7 @@ let first = Rel_sqlite3.first
 let fold = Rel_sqlite3.fold
 let list db st = Rel_sqlite3.fold db st List.cons []
 
-let insert (type id) (module Id : Rel_kit.INT_ID with type t = id) db st =
+let insert (type id) (module Id : Rel_kit.INTABLE_ID with type t = id) db st =
   let* () = Rel_sqlite3.exec db st in
   (* FIXME might truncate, error *)
   let id = Int64.to_int (Rel_sqlite3.last_insert_rowid db) in

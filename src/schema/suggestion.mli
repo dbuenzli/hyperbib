@@ -9,7 +9,7 @@ open Hyperbib_std
 
 
 (** The type for suggestion ids. These are allocated by the database. *)
-module Id : Rel_kit.INT_ID
+module Id : Rel_kit.INTABLE_ID
 
 type doi = string
 

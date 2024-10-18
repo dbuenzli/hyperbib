@@ -146,7 +146,7 @@ module Url = struct
 
   (* XXX remove eventually *)
   let replace_by_of_query
-      (type id) (module Id : Rel_kit.INT_ID with type t = id) q
+      (type id) (module Id : Rel_kit.INTABLE_ID with type t = id) q
     =
     match Http.Query.find_first replace_by q with
     | None -> Http.Response.bad_request_400 ()
@@ -155,7 +155,7 @@ module Url = struct
         Ok (Id.of_int id |> Result.get_ok' (* FIXME *))
 
   let replace_by_of_query'
-      (type id) (module Id : Rel_kit.INT_ID with type t = id) q =
+      (type id) (module Id : Rel_kit.INTABLE_ID with type t = id) q =
     match Http.Query.find_first replace_by q with
     | None | Some "" -> Ok None
     | Some r ->
@@ -199,7 +199,9 @@ module Url = struct
   let input_name_to_query ?(init = Http.Query.empty) n =
     init |> Http.Query.def input_name n
 
-  let meth_id (type id) (module Id : Rel_kit.INT_ID with type t = id) u ms id =
+  let meth_id
+      (type id) (module Id : Rel_kit.INTABLE_ID with type t = id) u ms id
+    =
     let* meth = Kurl.allow ms u in
     let* id = Res.Id.decode id in
     let id = Id.of_int id |> (* TODO *) Result.get_ok' in

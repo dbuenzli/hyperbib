@@ -172,11 +172,11 @@ module Url : sig
 
   val replace_by : string
   val replace_by_of_query :
-    (module Rel_kit.INT_ID with type t = 'id) ->
+    (module Rel_kit.INTABLE_ID with type t = 'id) ->
     Http.Query.t -> ('id, Http.Response.t) result
 
   val replace_by_of_query' :
-    (module Rel_kit.INT_ID with type t = 'id) ->
+    (module Rel_kit.INTABLE_ID with type t = 'id) ->
     Http.Query.t -> ('id option , Http.Response.t) result
 
   type cancel_url = string option
@@ -198,11 +198,11 @@ module Url : sig
   (** {1:meth Methods} *)
 
   val meth_id :
-    (module Rel_kit.INT_ID with type t = 'id) ->
+    (module Rel_kit.INTABLE_ID with type t = 'id) ->
     Kurl.bare -> 'a Http.Method.constraint' list -> string ->
     ('a * 'id, Http.Response.t) result
 
-  val get_id : (module Rel_kit.INT_ID with type t = 'id) ->
+  val get_id : (module Rel_kit.INTABLE_ID with type t = 'id) ->
     Kurl.bare -> string ->
     ([> `GET ] * 'id, Http.Response.t) result
 end

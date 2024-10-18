@@ -508,7 +508,7 @@ module Doc = struct
     let* rid = rids in
     let* doc = Bag.table table in
     let filter = Bool.(not only_public || doc #. public') in
-    Bag.where Id.(rid = doc #. reference' && filter) (Bag.yield doc)
+    Bag.where (Reference.Id.(rid = doc #. reference') && filter) (Bag.yield doc)
 end
 
 include Entity.Publicable_queries (Reference)

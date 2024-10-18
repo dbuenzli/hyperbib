@@ -12,7 +12,7 @@ open Hyperbib_std
 (** {1:subjects Subjects} *)
 
 (** The type for subject ids. These are allocated by the database. *)
-module Id : Rel_kit.INT_ID
+module Id : Rel_kit.INTABLE_ID
 
 type t
 (** The type for subjects. *)

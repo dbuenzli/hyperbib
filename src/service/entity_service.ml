@@ -31,7 +31,7 @@ let get_entity
 
 let create
     (type id) (type t)
-    (module Id : Rel_kit.INT_ID with type t = id)
+    (module Id : Rel_kit.INTABLE_ID with type t = id)
     (module E : Entity.IDENTIFIABLE_WITH_QUERIES
       with type t = t and type Id.t = id)
     ~entity_page_url env req

@@ -13,7 +13,7 @@ open Hyperbib_std
 (** {1 Containers} *)
 
 (** The type for container ids. These are allocated by the database. *)
-module Id : Rel_kit.INT_ID
+module Id : Rel_kit.INTABLE_ID
 
 type t
 (** The type for containers. *)

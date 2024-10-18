@@ -20,7 +20,7 @@ val get_entity :
 (** {1:responses Request responses} *)
 
 val create :
-  (module Rel_kit.INT_ID with type t = 'id) ->
+  (module Rel_kit.INTABLE_ID with type t = 'id) ->
   (module Entity.IDENTIFIABLE_WITH_QUERIES with type t = 't and type Id.t = 'id)
   -> entity_page_url:('id -> Kurl.t) -> Service_env.t -> Http.Request.t ->
   (Http.Response.t, Http.Response.t) result

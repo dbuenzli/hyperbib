@@ -10,7 +10,7 @@ open Hyperbib_std
 (** {1:refs References} *)
 
 (** The type for reference ids. These are allocated by the database. *)
-module Id : Rel_kit.INT_ID
+module Id : Rel_kit.INTABLE_ID
 
 type t
 (** The type for references. *)
@@ -318,7 +318,7 @@ end
 module Doc : sig
 
   (** The type for reference ids. These are allocated by the database. *)
-  module Id : Rel_kit.INT_ID
+  module Id : Rel_kit.INTABLE_ID
 
   type t
   (** The type for the reference document relation. *)
@@ -336,7 +336,7 @@ module Doc : sig
   val id : t -> Id.t
   (** [id doc] is the document's id. *)
 
-  val reference : t -> Id.t
+  val reference : t -> reference_id
   (** [reference s] is the reference to which the document is attached. *)
 
   val blob_key : t -> Blobstore.Key.text

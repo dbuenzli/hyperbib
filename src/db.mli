@@ -122,7 +122,7 @@ val list : t -> 'a Rel_sql.Stmt.t -> ('a list, error) result
 (** [list] is {!fold} with {!List.cons}. *)
 
 val insert :
-  (module Rel_kit.INT_ID with type t = 'id) -> t ->
+  (module Rel_kit.INTABLE_ID with type t = 'id) -> t ->
   unit Rel_sql.Stmt.t -> ('id, error) result
 (** [insert db stmt] executes [stmt] and returns the value of
     {!Rel_sqlite3.last_insert_rowid}.
@@ -157,7 +157,7 @@ val exec' : t -> unit Rel_sql.Stmt.t -> (unit, Webs.Http.Response.t) result
 (** See {!exec}. *)
 
 val insert' :
-  (module Rel_kit.INT_ID with type t = 'id) ->
+  (module Rel_kit.INTABLE_ID with type t = 'id) ->
   t -> unit Rel_sql.Stmt.t -> ('id, Webs.Http.Response.t) result
 (** See {!insert}. *)
 

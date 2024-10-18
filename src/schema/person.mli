@@ -29,7 +29,7 @@ end
 (** {1:persons Persons} *)
 
 (** The type for person ids. These are allocated by the database. *)
-module Id : Rel_kit.INT_ID
+module Id : Rel_kit.INTABLE_ID
 
 type t
 (** The type for persons. *)
