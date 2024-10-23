@@ -13,6 +13,7 @@ let htmlact = B0_ocaml.libname "htmlact"
 let htmlact_page = B0_ocaml.libname "htmlact.page"
 let htmlit = B0_ocaml.libname "htmlit"
 let jsont = B0_ocaml.libname "jsont"
+let jsont_bytesrw = B0_ocaml.libname "jsont.bytesrw"
 let note = B0_ocaml.libname "note"
 let note_brr = B0_ocaml.libname "note.brr"
 let ptime_clock = B0_ocaml.libname "ptime.clock"
@@ -110,7 +111,7 @@ let write_static_file_stamp b =
 
 let hyperbib_base_requires =
   [ unix; threads; cmdliner; bytesrw; bytesrw_xxhash; bytesrw_unix;
-    ptime_clock; b0_std; jsont; htmlit; htmlact;
+    ptime_clock; b0_std; jsont; jsont_bytesrw; htmlit; htmlact;
     rel; rel_cli; rel_sqlite3; rel_pool;
     webs; webs_kit; webs_unix; webs_cli; ]
 

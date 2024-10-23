@@ -83,14 +83,14 @@ let jsont =
 
 let save file us =
   let force = true and make_path = false in
-  let* json = Jsont_codec.encode_string ~format:Jsont.Indent jsont us in
+  let* json = Jsont_bytesrw.encode_string ~format:Jsont.Indent jsont us in
   Os.File.write ~force ~make_path file json
 
 let load file =
   let* exists = Os.File.exists file in
   if not exists then Ok empty else
   let* json = Os.File.read file in
-  Jsont_codec.decode_string jsont json
+  Jsont_bytesrw.decode_string jsont json
 
 (* User capabilities *)
 
