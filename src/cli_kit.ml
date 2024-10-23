@@ -61,7 +61,7 @@ module Conf = struct
     Result.map_error (fun e -> `Msg e) @@
     (* I hate these three lines can't we do something better ? *)
     let log_level = B0_std_cli.get_log_level log_level in
-    let fmt_styler = B0_std_cli.get_tty_cap fmt_styler in
+    let fmt_styler = B0_std_cli.get_styler fmt_styler in
     B0_std_cli.setup fmt_styler log_level ~log_spawns:Log.Debug;
     let http_client = setup_http_client () in
     let* app_dir = find_app_dir app_dir in
@@ -111,7 +111,7 @@ let conf =
     B0_std_cli.log_level ~docs ~env ()
   and+ fmt_styler =
     let env = Cmd.Env.info "HYPERBIB_COLOR" in
-    B0_std_cli.tty_cap ~docs ~env ()
+    B0_std_cli.color ~docs ~env ()
   and+ app_dir =
     let doc = "Application directory." and docv = "APP_DIR" in
     let absent = "current working directory" in
