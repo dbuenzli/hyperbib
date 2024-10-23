@@ -55,7 +55,7 @@ let add_reference_doc
             Blobstore.Key.pp key
       end
   | Exists | Created ->
-      Log.app (fun m ->
+      Log.stdout (fun m ->
           m "Reference %a: lookup %a"
             Reference.Id.pp reference (Fmt.code' Doi.pp) doi);
       if status = Exists
@@ -69,7 +69,7 @@ let add_reference_doc
       Log.if_error ~use:() @@ Db.string_error @@ Result.join @@
       Db.with_transaction `Deferred db @@ fun db ->
       let* () = Db.exec db (Reference.Doc.create ~ignore_id:true  doc) in
-      Log.app (fun m -> m "%a: added doc from %s" Doi.pp doi origin);
+      Log.stdout (fun m -> m "%a: added doc from %s" Doi.pp doi origin);
       Ok ()
 
 let fill ~doi_resolvers ~media_type ~url_only ~public conf =
@@ -78,12 +78,12 @@ let fill ~doi_resolvers ~media_type ~url_only ~public conf =
   let* blobstore = Cli_kit.Conf.blobstore conf in
   Result.join @@ Cli_kit.with_db conf @@ fun db ->
   let lookup (rid, doi) () = match doi with
-  | None -> Log.app (fun m -> m "Reference %a: no DOI." Reference.Id.pp rid);
+  | None -> Log.stdout (fun m -> m "Reference %a: no DOI." Reference.Id.pp rid);
   | Some doi ->
       match find_document httpc ~doi_resolvers ~url_only ~media_type ~doi with
       | Ok (resolver, url, doc) ->
           if url_only
-          then Log.app (fun m -> m "%a %s" (Fmt.code' Doi.pp) doi url) else
+          then Log.stdout (fun m -> m "%a %s" (Fmt.code' Doi.pp) doi url) else
           (* XXX Webs: the Body error handling story is missing. *)
           let doc = Http.Body.to_bytes_reader doc |> Result.get_ok' in
           let public = match public with
@@ -113,7 +113,7 @@ let fetch ~doi_resolvers ~media_type ~doi ~url_only ~outf conf =
     find_document httpc ~url_only ~doi_resolvers ~media_type ~doi
   in
   let* () =
-    if url_only then (Log.app (fun m -> m "%s" url); Ok ()) else
+    if url_only then (Log.stdout (fun m -> m "%s" url); Ok ()) else
     let* doc = Http.Body.to_string doc in
     let* () = Os.File.write outf ~force:true ~make_path:true doc in
     Log.info (fun m -> m "Wrote file %a" (Fmt.code' Fpath.pp) outf);

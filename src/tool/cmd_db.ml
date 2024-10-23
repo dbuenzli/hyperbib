@@ -7,10 +7,10 @@ open Hyperbib_std
 open Result.Syntax
 
 let log_making_backup file =
-  Log.app (fun m -> m "Making backup to %a" (Fmt.code' Fpath.pp) file)
+  Log.stdout (fun m -> m "Making backup to %a" (Fmt.code' Fpath.pp) file)
 
 let log_restore_backup backup db =
-  Log.app (fun m -> m "@[<v>Restoring backup %a@,into %a@]"
+  Log.stdout (fun m -> m "@[<v>Restoring backup %a@,into %a@]"
               (Fmt.code' Fpath.pp) backup (Fmt.code' Fpath.pp) db)
 
 let make_backup db_file db =
@@ -32,7 +32,7 @@ let backup conf file =
 (* Changes *)
 
 let do_changes (col_renames, table_renames) db =
-  Log.app (fun m -> m "Changing live database schema…");
+  Log.stdout (fun m -> m "Changing live database schema…");
   let* (live, issues) = Db.schema db |> Db.string_error in
   let src = live and dst = Schema.v in
   let* cs = Rel.Schema.changes ~col_renames ~table_renames ~src ~dst () in
@@ -53,7 +53,7 @@ let changes conf (col_renames, table_renames as r) format exec no_backup =
   let src = live and dst = Schema.v in
   let* cs = Rel.Schema.changes ~col_renames ~table_renames ~src ~dst () in
   let* () = match exec with
-  | true when cs = [] -> Log.app (fun m -> m "Nothing to execute."); Ok ()
+  | true when cs = [] -> Log.stdout (fun m -> m "Nothing to execute."); Ok ()
   | false when cs = [] -> Ok ()
   | true ->
       (* We cannot be a transaction to do the backup, so we do it
@@ -64,11 +64,11 @@ let changes conf (col_renames, table_renames as r) format exec no_backup =
       match format with
       | None | Some `Sqlite3 ->
           let _, stmts = Rel_sql.schema_changes Rel_sqlite3.dialect cs in
-          Log.app (fun m -> m "@[<v>%a@]" (Fmt.list Rel_sql.Stmt.pp_src) stmts);
+          Log.stdout (fun m -> m "@[<v>%a@]" (Fmt.list Rel_sql.Stmt.pp_src) stmts);
           Ok ()
       | Some `Pseudo_sql ->
           let pp_changes = Fmt.list Rel.Schema.pp_change in
-          Log.app (fun m -> m "@[<v>%a@]" pp_changes cs); Ok ()
+          Log.stdout (fun m -> m "@[<v>%a@]" pp_changes cs); Ok ()
   in
   Ok Cli_kit.Exit.ok
 
@@ -106,12 +106,12 @@ let reset conf no_backup (* populate *) =
 
 let output_schema ~format s = match format with
 | `Dot rankdir ->
-    Log.app (fun m -> m "@[%a@]" (Rel.Schema.pp_dot ~rankdir) s);
+    Log.stdout (fun m -> m "@[%a@]" (Rel.Schema.pp_dot ~rankdir) s);
 | `Sqlite3 ->
     let stmts = Rel_sql.create_schema Db.dialect s in
-    Log.app (fun m -> m "@[<v>%a@]" (Fmt.list Rel_sql.Stmt.pp_src) stmts);
+    Log.stdout (fun m -> m "@[<v>%a@]" (Fmt.list Rel_sql.Stmt.pp_src) stmts);
 | `Ocaml kind ->
-    Log.app (fun m -> m "@[%a@]" (Rel.Schema.pp_ocaml kind) s)
+    Log.stdout (fun m -> m "@[%a@]" (Rel.Schema.pp_ocaml kind) s)
 
 let schema conf which format =
   Log.if_error ~use:Cli_kit.Exit.some_error @@

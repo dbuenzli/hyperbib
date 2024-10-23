@@ -26,7 +26,7 @@ let list conf =
   Log.if_error ~use:Cli_kit.Exit.some_error @@
   let users_file = Cli_kit.Conf.users_file conf in
   let* users = User.load users_file in
-  User.fold (fun u () -> Log.app (fun m -> m "%s" (User.name u))) users ();
+  User.fold (fun u () -> Log.stdout (fun m -> m "%s" (User.name u))) users ();
   Ok Cli_kit.Exit.ok
 
 let delete ~name conf =

@@ -21,7 +21,7 @@ let doi ~reset ~dois ~files ~dry_run conf =
   | true ->
       let dois = Doi.Set.to_list dois in
       let dois = List.map Doi.to_string dois in
-      Log.app (fun m -> m "@[<v>%a@]" (Fmt.iter List.iter Fmt.string) dois);
+      Log.stdout (fun m -> m "@[<v>%a@]" (Fmt.iter List.iter Fmt.string) dois);
       Ok Cli_kit.Exit.ok
   | false ->
       failwith "TODO"

@@ -84,7 +84,7 @@ let backup_thread pool ~every_s file =
   let rec loop () =
     let backup file db =
       let* () = backup file db in
-      Ok (Log.app (fun m -> m "Made stable database backup file."))
+      Ok (Log.stdout (fun m -> m "Made stable database backup file."))
     in
     Rel_pool.with' pool (backup file) |> handle_error;
     Unix.sleep every_s;
@@ -166,7 +166,7 @@ let insert (type id) (module Id : Rel_kit.INTABLE_ID with type t = id) db st =
 
 let show_sql ?(name = "") st =
   let name = if name = "" then "" else name ^ " " in
-  Log.app (fun m -> m "@[<v>%sSQL:@,%a@]" name Rel_sql.Stmt.pp_src st);
+  Log.stdout (fun m -> m "@[<v>%sSQL:@,%a@]" name Rel_sql.Stmt.pp_src st);
   st
 
 let show_plan ?(name = "") db st =
@@ -176,7 +176,7 @@ let show_plan ?(name = "") db st =
       Log.err (fun m -> m "@[explain query plan: %s@]" e); st
   | Ok s ->
       let name = if name = "" then "" else name ^ " " in
-      Log.app (fun m -> m "@[<v>%squery plan:@,%a@]" name Fmt.lines s); st
+      Log.stdout (fun m -> m "@[<v>%squery plan:@,%a@]" name Fmt.lines s); st
 
 (* Webs convenience *)
 

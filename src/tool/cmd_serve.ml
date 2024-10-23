@@ -10,7 +10,7 @@ let log_startup c env =
   let app_dir = Cli_kit.Conf.app_dir (Service_env.conf env) in
   let l = Webs_http11_gateway.listener c in
   let service_path = Webs_http11_gateway.service_path c in
-  Log.app (fun m ->
+  Log.stdout (fun m ->
       m  "@[<v>Hyperbib %s database schema v%d@,\
                Application directory: %a@,\
                Listening on http://%a%a@]"
@@ -22,7 +22,7 @@ let log_startup c env =
     Log.warn (fun m -> m "Anyone can edit the bibliography, no login required.")
 
 let log_shutdown () =
-  Log.app (fun m -> m "Everyone has been served! Goodbye.")
+  Log.stdout (fun m -> m "Everyone has been served! Goodbye.")
 
 let setup_db ~read_only ~db_pool =
   Result.join @@ Db.string_error @@ Rel_pool.with' db_pool @@ fun db ->

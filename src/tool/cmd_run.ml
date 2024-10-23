@@ -32,7 +32,7 @@ let check_reference_dois db ~repair =
       Rel_sql.update Db.dialect Reference.table ~set ~where
     in
     let* () = Db.exec db (update_reference_doi ~id doi) in
-    Ok (Log.app (fun m -> m "Reference %a: repaired" Reference.Id.pp id))
+    Ok (Log.stdout (fun m -> m "Reference %a: repaired" Reference.Id.pp id))
   in
   let check (id, doi) n = match doi with
   | None -> n
@@ -84,7 +84,7 @@ let check_reference_dois db ~repair =
        Rel_sql.update Db.dialect Reference.Cites.table ~set ~where
      in
      let* () = Db.exec db (update oldr newr) in
-     Ok (Log.app
+     Ok (Log.stdout
            (fun m -> m "Cites reference %a: repaired"
                Reference.Id.pp (Reference.Cites.reference newr)))
    in
@@ -117,15 +117,15 @@ let check_reference_dois db ~repair =
 let check_dois ~repair conf =
   let log_result ~repair n =
     if repair then () else
-    Log.app (fun m -> m "%a@." (if n > 0 then pp_fail else pp_pass) ())
+    Log.stdout (fun m -> m "%a@." (if n > 0 then pp_fail else pp_pass) ())
   in
   Log.if_error ~use:Cli_kit.Exit.some_error @@
   Cli_kit.with_db_transaction conf `Deferred @@ fun db ->
-  Log.app (fun m -> m "%a DOIs in the %a table"
+  Log.stdout (fun m -> m "%a DOIs in the %a table"
               pp_check () Fmt.code (Table.name Reference.Cites.table));
   let* n0 = check_cites_doi db ~repair in
   log_result ~repair n0;
-  Log.app (fun m -> m "%a DOIs in the %a table"
+  Log.stdout (fun m -> m "%a DOIs in the %a table"
               pp_check () Fmt.code (Table.name Reference.table));
   let* n1 = check_reference_dois db ~repair in
   log_result ~repair n1;
@@ -140,7 +140,7 @@ let test () conf =
   let* () = Db.exec_sql db stmt |> Db.string_error in
   let stmt = Rel_sql.Stmt.(func stmt unit) in
   let* () = Result.map_error Db.error_code_message (Db.exec db stmt) in
-  Log.app (fun m -> m "Ok");
+  Log.stdout (fun m -> m "Ok");
   Ok Cli_kit.Exit.ok
 
 (* Command line interface *)
