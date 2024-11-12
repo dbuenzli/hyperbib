@@ -62,18 +62,18 @@ let algo_jsont =
   Jsont.enum ~kind:"algo" ~doc:"Password hashing algorithm" assoc
 
 let password_jsont =
-  Jsont.Obj.map ~kind:"password" password
-  |> Jsont.Obj.mem "algo" algo_jsont ~enc:(fun p -> p.algo)
-  |> Jsont.Obj.mem "iterations" Jsont.int ~enc:(fun p -> p.iterations)
-  |> Jsont.Obj.mem "salt" Jsont.binary_string ~enc:(fun p -> p.salt)
-  |> Jsont.Obj.mem "key" Jsont.binary_string ~enc:(fun p -> p.key)
-  |> Jsont.Obj.finish
+  Jsont.Object.map ~kind:"password" password
+  |> Jsont.Object.mem "algo" algo_jsont ~enc:(fun p -> p.algo)
+  |> Jsont.Object.mem "iterations" Jsont.int ~enc:(fun p -> p.iterations)
+  |> Jsont.Object.mem "salt" Jsont.binary_string ~enc:(fun p -> p.salt)
+  |> Jsont.Object.mem "key" Jsont.binary_string ~enc:(fun p -> p.key)
+  |> Jsont.Object.finish
 
 let user_jsont =
-  Jsont.Obj.map ~kind:"user" user
-  |> Jsont.Obj.mem "username" Jsont.string ~enc:(fun u -> u.name)
-  |> Jsont.Obj.mem "password" password_jsont ~enc:(fun u -> u.password)
-  |> Jsont.Obj.finish
+  Jsont.Object.map ~kind:"user" user
+  |> Jsont.Object.mem "username" Jsont.string ~enc:(fun u -> u.name)
+  |> Jsont.Object.mem "password" password_jsont ~enc:(fun u -> u.password)
+  |> Jsont.Object.finish
 
 let jsont =
   let kind = "users" and key u = u.name in
@@ -82,9 +82,8 @@ let jsont =
 (* Persist *)
 
 let save file us =
-  let force = true and make_path = false in
   let* json = Jsont_bytesrw.encode_string ~format:Jsont.Indent jsont us in
-  Os.File.write ~force ~make_path file json
+  Os.File.write ~force:true ~make_path:true file json
 
 let load file =
   let* exists = Os.File.exists file in
