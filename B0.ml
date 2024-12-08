@@ -21,6 +21,7 @@ let rel_cli = B0_ocaml.libname "rel.cli"
 let rel_pool = B0_ocaml.libname "rel.pool"
 let rel_sqlite3 = B0_ocaml.libname "rel.sqlite3"
 let threads = B0_ocaml.libname "threads"
+let typegist = B0_ocaml.libname "typegist"
 let unix = B0_ocaml.libname "unix"
 let webs = B0_ocaml.libname "webs"
 let webs_cli = B0_ocaml.libname "webs.cli"
@@ -111,7 +112,7 @@ let write_static_file_stamp b =
 let hyperbib_base_requires =
   [ unix; threads; cmdliner; bytesrw; bytesrw_xxhash; bytesrw_unix;
     ptime_clock; b0_std; jsont_bytesrw; htmlit; htmlact;
-    rel; rel_cli; rel_sqlite3; rel_pool;
+    rel; rel_cli; rel_sqlite3; rel_pool; typegist;
     webs; webs_kit; webs_unix; webs_cli; ]
 
 let hyperbib_requires =
@@ -234,6 +235,7 @@ let default =
         "jsont.dev", "git+https://erratique.ch/repos/jsont.git#master";
         "htmlact.dev", "git+https://erratique.ch/repos/htmlact.git#master";
         "rel.dev", "git+https://erratique.ch/repos/rel.git#master";
+        "typegist.dev", "git+https://erratique.ch/repos/typegist.git#master";
         "webs.dev", "git+https://erratique.ch/repos/webs.git#master"]
     |> ~~ B0_opam.build {|[["b0"]]|}
     |> B0_meta.tag B0_opam.tag

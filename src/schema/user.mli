@@ -44,6 +44,8 @@ val check : name:string -> password:string -> s -> bool
 val fold : (t -> 'a -> 'a) -> s -> 'a -> 'a
 (** [fold f us] folds over the users of [us]. *)
 
+val user_type_gist : t Typegist.Type.Gist.t
+
 (** {1:serial Serialiazing} *)
 
 val jsont : s Jsont.t

@@ -57,6 +57,30 @@ let fold f us acc = String.Map.fold (fun _ u -> f u) us acc
 
 (* Serialising *)
 
+open Typegist
+
+let algo_type_gist =
+  let c0 =
+    Type.Gist.(case "pbkdf2-hmac-sha-256" @@ ctor `Pbkdf2_hmac_sha_256)
+  in
+  let proj = function `Pbkdf2_hmac_sha_256 -> c0 in
+  Type.Gist.variant "algo" proj [c0]
+
+let password_type_gist =
+  let algo = Type.Gist.(field "algo" algo_type_gist (fun p -> p.algo)) in
+  let iteration = Type.Gist.(field "iterations" int (fun p -> p.iterations)) in
+  let salt = Type.Gist.(field "string" string) (fun p -> p.salt) in
+  let key = Type.Gist.(field "key" string) (fun p -> p.key) in
+  Type.Gist.(record "password" @@ ctor password * algo * iteration * salt * key)
+
+let user_type_gist =
+  let username = Type.Gist.(field "username" string) (fun u -> u.name) in
+  let password =
+    Type.Gist.(field "password" password_type_gist) (fun u -> u.password)
+  in
+  Type.Gist.(record "user" @@ ctor user * username * password)
+
+
 let algo_jsont =
   let assoc = ["pbkdf2-hmac-sha-256", `Pbkdf2_hmac_sha_256 ] in
   Jsont.enum ~kind:"algo" ~doc:"Password hashing algorithm" assoc
