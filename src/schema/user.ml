@@ -5,32 +5,71 @@
 
 open Hyperbib_std
 open Result.Syntax
+open Typegist
 
 (* Passwords *)
 
-type algo = [ `Pbkdf2_hmac_sha_256 ]
-type password =
-  { algo : algo;
-    iterations : int;
-    salt : string; (* bytes *)
-    key : string; (* bytes *) }
+module Password = struct
+  type algo = [ `Pbkdf2_hmac_sha_256 ]
+  let algo_jsont = Jsont.enum ["pbkdf2-hmac-sha-256", `Pbkdf2_hmac_sha_256]
+  let algo_gist =
+    let pbkdf2_sha_256 =
+      Type.Gist.case0 "`Pbkdf2_hmac_sha_256" `Pbkdf2_hmac_sha_256
+    in
+    let proj = function `Pbkdf2_hmac_sha_256 -> pbkdf2_sha_256 in
+    let meta = Type.Gist.Meta.empty in
+    let meta = Jsont_typegist.Meta.Jsont.add algo_jsont meta in
+    Type.Gist.variant ~meta "algo" proj [pbkdf2_sha_256]
 
-let password algo iterations salt key = { algo; iterations; salt; key }
+  type t =
+    { algo : algo;
+      iterations : int;
+      salt : string; (* bytes *)
+      key : string; (* bytes *) }
 
-let make_password password =
-  let key_length = 32 in
-  let iterations = 600_000 in
-  let salt = Webs_hash.Sha_256.random_salt ~length:16 () in
-  let key =
-    Webs_hash.Sha_256.pbkdf2_hmac ~key_length ~iterations ~password ~salt ()
-  in
-  { algo = `Pbkdf2_hmac_sha_256; iterations; salt; key; }
+  let make' algo iterations salt key = { algo; iterations; salt; key }
+  let make password =
+    let key_length = 32 in
+    let iterations = 600_000 in
+    let salt = Webs_hash.Sha_256.random_salt ~length:16 () in
+    let key =
+      Webs_hash.Sha_256.pbkdf2_hmac ~key_length ~iterations ~password ~salt ()
+    in
+    { algo = `Pbkdf2_hmac_sha_256; iterations; salt; key; }
+
+  let check ~password p =
+    let key_length = String.length p.key in
+    let iterations = p.iterations in
+    let salt = p.salt in
+    let key =
+      Webs_hash.Sha_256.pbkdf2_hmac ~key_length ~iterations ~password ~salt ()
+    in
+    Webs_hash.Sha_256.equal_key key p.key
+
+  let gist =
+    Type.Gist.record "User.Password.t" make'
+    |> Type.Gist.field "algo" algo_gist (fun p -> p.algo)
+    |> Type.Gist.field "iterations" Type.Gist.int (fun p -> p.iterations)
+    |> Type.Gist.field "salt" Type.Gist.string_as_bytes (fun p -> p.salt)
+    |> Type.Gist.field "key" Type.Gist.string_as_bytes (fun p -> p.key)
+    |> Type.Gist.finish_record
+end
+
+(* User *)
+
+type t = { username : string; password : Password.t; }
+let user username password = { username; password }
+let name u = u.username
+let password u = u.password
+let gist =
+  Type.Gist.record "User.t" user
+  |> Type.Gist.field "username" Type.Gist.string_as_utf_8 name
+  |> Type.Gist.field "password" Password.gist password
+  |> Type.Gist.finish_record
+
+let pp = Fun.Generic.pp gist
 
 (* Users *)
-
-type t = { name : string; password : password; }
-let user name password = { name; password }
-let name u = u.name
 
 type s = t String.Map.t
 let empty = String.Map.empty
@@ -38,82 +77,35 @@ let is_empty = String.Map.is_empty
 let mem ~name us = String.Map.mem name us
 let remove ~name us = String.Map.remove name us
 let add ~name ~password us =
-  let password = make_password password in
+  let password = Password.make password in
   let user = user name password in
   String.Map.add name user us
 
 let check ~name ~password us = match String.Map.find_opt name us with
-| None -> false
-| Some u ->
-    let key_length = String.length u.password.key in
-    let iterations = u.password.iterations in
-    let salt = u.password.salt in
-    let key =
-      Webs_hash.Sha_256.pbkdf2_hmac ~key_length ~iterations ~password ~salt ()
-    in
-    Webs_hash.Sha_256.equal_key key u.password.key
+| None -> false (* XXX Maybe we should run a fake check here. *)
+| Some u -> Password.check ~password u.password
 
 let fold f us acc = String.Map.fold (fun _ u -> f u) us acc
 
-(* Serialising *)
+let s_pp =
+  let pp_user ppf (_, u) = pp ppf u in
+  Fmt.vbox (Fmt.iter_bindings String.Map.iter pp_user)
 
-open Typegist
-
-let algo_type_gist =
-  let c0 =
-    Type.Gist.(case "pbkdf2-hmac-sha-256" @@ ctor `Pbkdf2_hmac_sha_256)
-  in
-  let proj = function `Pbkdf2_hmac_sha_256 -> c0 in
-  Type.Gist.variant "algo" proj [c0]
-
-let password_type_gist =
-  let algo = Type.Gist.(field "algo" algo_type_gist (fun p -> p.algo)) in
-  let iteration = Type.Gist.(field "iterations" int (fun p -> p.iterations)) in
-  let salt = Type.Gist.(field "string" string) (fun p -> p.salt) in
-  let key = Type.Gist.(field "key" string) (fun p -> p.key) in
-  Type.Gist.(record "password" @@ ctor password * algo * iteration * salt * key)
-
-let user_type_gist =
-  let username = Type.Gist.(field "username" string) (fun u -> u.name) in
-  let password =
-    Type.Gist.(field "password" password_type_gist) (fun u -> u.password)
-  in
-  Type.Gist.(record "user" @@ ctor user * username * password)
-
-
-let algo_jsont =
-  let assoc = ["pbkdf2-hmac-sha-256", `Pbkdf2_hmac_sha_256 ] in
-  Jsont.enum ~kind:"algo" ~doc:"Password hashing algorithm" assoc
-
-let password_jsont =
-  Jsont.Object.map ~kind:"password" password
-  |> Jsont.Object.mem "algo" algo_jsont ~enc:(fun p -> p.algo)
-  |> Jsont.Object.mem "iterations" Jsont.int ~enc:(fun p -> p.iterations)
-  |> Jsont.Object.mem "salt" Jsont.binary_string ~enc:(fun p -> p.salt)
-  |> Jsont.Object.mem "key" Jsont.binary_string ~enc:(fun p -> p.key)
-  |> Jsont.Object.finish
-
-let user_jsont =
-  Jsont.Object.map ~kind:"user" user
-  |> Jsont.Object.mem "username" Jsont.string ~enc:(fun u -> u.name)
-  |> Jsont.Object.mem "password" password_jsont ~enc:(fun u -> u.password)
-  |> Jsont.Object.finish
-
-let jsont =
-  let kind = "users" and key u = u.name in
-  Jsont.array_as_string_map ~kind ~key user_jsont
+let s_jsont =
+  let kind = "User.s" and key u = u.username in
+  Jsont.array_as_string_map ~kind ~key (Jsont_typegist.to_jsont gist)
 
 (* Persist *)
 
 let save file us =
-  let* json = Jsont_bytesrw.encode_string ~format:Jsont.Indent jsont us in
+  let* json = Jsont_bytesrw.encode_string ~format:Jsont.Indent s_jsont us in
   Os.File.write ~force:true ~make_path:true file json
 
 let load file =
   let* exists = Os.File.exists file in
   if not exists then Ok empty else
   let* json = Os.File.read file in
-  Jsont_bytesrw.decode_string jsont json
+  Jsont_bytesrw.decode_string s_jsont json
 
 (* User capabilities *)
 

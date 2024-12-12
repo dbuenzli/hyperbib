@@ -134,13 +134,15 @@ let check_dois ~repair conf =
   else Ok Cli_kit.Exit.some_error
 
 let test () conf =
+  let open Typegist in
   Log.if_error ~use:Cli_kit.Exit.some_error @@
-  Cli_kit.with_db_transaction conf `Deferred @@ fun db ->
-  let stmt = "-- ha\n#pragma nop;" in
-  let* () = Db.exec_sql db stmt |> Db.string_error in
-  let stmt = Rel_sql.Stmt.(func stmt unit) in
-  let* () = Result.map_error Db.error_code_message (Db.exec db stmt) in
-  Log.stdout (fun m -> m "Ok");
+  let users_file = Cli_kit.Conf.users_file conf in
+  let* users = User.load users_file in
+  let json =
+    Jsont_bytesrw.encode_string ~format:Jsont.Indent User.s_jsont users
+  in
+  Log.stdout (fun m -> m "%a" User.s_pp users);
+  Log.stdout (fun m -> m "%s" (json |> Result.get_ok));
   Ok Cli_kit.Exit.ok
 
 (* Command line interface *)

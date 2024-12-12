@@ -15,6 +15,12 @@ type t
 val name : t -> string
 (** [name u] is the name of [u]. *)
 
+val pp : t Fmt.t
+(** [pp] formats users for inspection. *)
+
+val gist : t Typegist.Type.Gist.t
+(** [gist] is a type gist for users. *)
+
 (** {1:users Users} *)
 
 type s
@@ -44,12 +50,11 @@ val check : name:string -> password:string -> s -> bool
 val fold : (t -> 'a -> 'a) -> s -> 'a -> 'a
 (** [fold f us] folds over the users of [us]. *)
 
-val user_type_gist : t Typegist.Type.Gist.t
+val s_pp : s Fmt.t
+(** [s_pp] formats users. *)
 
-(** {1:serial Serialiazing} *)
-
-val jsont : s Jsont.t
-(** [jsont] is a JSON serializer for users. A JSON array
+val s_jsont : s Jsont.t
+(** [s_jsont] is a JSON serializer for users. A JSON array
     of objects of this form:
 {v
    {
