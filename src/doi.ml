@@ -79,7 +79,7 @@ let rec find ?(already_delimited = false) ?start s =
           Some (first, last)
 
 let extract_range ~first ~last s =
-  Webs.Http.Pct.decode (normalize (String.subrange ~first ~last s))
+  Webs.Url.Percent.decode (normalize (String.subrange ~first ~last s))
 
 let fold_text_scrape f s acc =
   let rec loop f acc start s = match find ~start s with
@@ -100,9 +100,9 @@ let extract ?start s = find ?start s
 
 let default_resolver = "https://doi.org"
 
-let as_uri d = Fmt.str "doi:%s" (Webs.Http.Pct.encode `Uri d)
+let as_uri d = Fmt.str "doi:%s" (Webs.Url.Percent.encode `Uri d)
 let as_url ?(resolver = default_resolver) d =
-  Fmt.str "%s/%s" resolver (Webs.Http.Pct.encode `Uri d)
+  Fmt.str "%s/%s" resolver (Webs.Url.Percent.encode `Uri d)
 
 let as_filename doi = String.map (function '/' | '\\' -> '_' | c -> c) doi
 
@@ -171,7 +171,7 @@ let find_document_url_candidates ~doi ~media_type urls =
   | None -> p | Some i -> String.subrange ~first:(i + 1) p
   in
   let ext = Media_type.to_file_ext media_type in
-  let add (fnames, acc as ret) url = match Webs_url.path url with
+  let add (fnames, acc as ret) url = match Webs.Url.path url with
   | None -> ret
   | Some path ->
       if not (String.ends_with ~suffix:ext url) then ret else
@@ -226,7 +226,7 @@ let to_document ?(url_only = false) ?resolver httpc ~media_type doi =
   if document_content_type_okay ~media_type ctype
   then Ok (url, if url_only then Http.Body.empty else body) else
   let* page = Http.Body.to_string body in
-  let urls = Webs_url.list_of_text_scrape ~root:url page in
+  let urls = Webs.Url.list_of_text_scrape ~root:url page in
   match find_document_url_candidates ~doi ~media_type urls with
   | [] -> Fmt.error "%s: No document URL found" url
   | [doc_url] ->

@@ -63,10 +63,10 @@ let doi e = match String.Map.find_opt "doi" e.fields with
     | doi -> Some doi
     in
     (* chop scheme and authority in case there is one *)
-    match Url.scheme doi with
+    match B0_url.scheme doi with
     | None -> ret doi
     | Some _ ->
-        match Url.path_and_query doi with
+        match B0_url.path doi with
         | None -> ret doi
         | Some p -> ret p
 

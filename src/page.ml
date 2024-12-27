@@ -262,18 +262,16 @@ let for_404 ?ui_ext g ~kind ~self ~consult =
 
 (* Responses *)
 
-let part_response
-    ?explain ?reason ?headers ?(status = Http.Status.ok_200) part
-  =
+let part_response ?headers ?log ?reason ?(status = Http.Status.ok_200) part =
   let html = El.to_string ~doctype:false part in
-  Http.Response.html ?explain ?reason ?headers status html
+  Http.Response.html ?headers ?log ?reason status html
 
-let response ?explain ?reason ?headers ?(status = Http.Status.ok_200) p =
+let response ?headers ?log ?reason ?(status = Http.Status.ok_200) p =
   let html = El.to_string ~doctype:true p.html in
-  Http.Response.html ?explain ?reason ?headers status html
+  Http.Response.html ?headers ?log ?reason status html
 
-let response_404 ?explain ?reason ?headers p =
-  response ?explain ?reason ?headers ~status:Http.Status.not_found_404 p
+let response_404 ?headers ?log ?reason p =
+  response ?headers ?log ?reason ~status:Http.Status.not_found_404 p
 
 (* Errors *)
 
@@ -308,11 +306,11 @@ let error g request response' =
   let content =
     El.section [ El.h1 [El.txt title]; El.p [El.txt descr; El.sp; goto_bib;]]
   in
-  let explain = Http.Response.explain response' in
+  let log = Http.Response.log response' in
   let headers = Http.Response.headers response' in
   let status = Http.Response.status response' in
   let reason = Http.Response.reason response' in
   if is_htmlact_req
-  then part_response ~reason ~explain ~headers ~status content else
+  then part_response ~reason ~log ~headers ~status content else
   let page = with_content g ~self ~title ~content in
-  response ~reason ~explain ~headers ~status page
+  response ~reason ~log ~headers ~status page

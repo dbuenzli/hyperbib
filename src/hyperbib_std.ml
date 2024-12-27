@@ -16,7 +16,7 @@ module Os = B0_std.Os
 
 module Bag = Rel_query.Bag
 
-module Url = Webs_url
+module Url = Webs.Url
 module Media_type = Webs.Media_type
 module Http = Webs.Http
 module Http_client = Webs.Http_client

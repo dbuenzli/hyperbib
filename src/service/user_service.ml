@@ -13,24 +13,24 @@ open Result.Syntax
 
 let auth_disabled = "auth disabled"
 
-let goto_or_service_path ~explain req ~goto =
+let goto_or_service_path ~log req ~goto =
   let goto = match goto with
   | None -> Http.Path.encode (Http.Request.service_path req)
   | Some goto -> goto
   in
-  Http.Response.redirect ~explain Http.Status.found_302 goto
+  Http.Response.redirect ~log Http.Status.found_302 goto
 
-let authenticated ~explain app username ~goto = match goto with
-| Some goto -> Http.Response.redirect ~explain Http.Status.found_302 goto
+let authenticated ~log app username ~goto = match goto with
+| Some goto -> Http.Response.redirect ~log Http.Status.found_302 goto
 | None -> Page.response (User_html.page (Service_env.page_gen app) ~username)
 
 let authenticate env sess req ~goto = match Service_env.editable env with
 | `No | `Unsafe ->
-    Ok (sess, goto_or_service_path ~explain:auth_disabled req ~goto)
+    Ok (sess, goto_or_service_path ~log:auth_disabled req ~goto)
 | `With_login ->
     Webs_session.for_error None @@
     let* q = Http.Request.to_query req in
-    let err e = Http.Response.empty ~explain:e Http.Status.server_error_500 in
+    let err e = Http.Response.empty ~log:e Http.Status.server_error_500 in
     let users_file = Cli_kit.Conf.users_file (Service_env.conf env) in
     let* users = Result.map_error err (User.load users_file) in
     let username = Http.Query.find_first User.Url.username_key q in
@@ -43,21 +43,21 @@ let authenticate env sess req ~goto = match Service_env.editable env with
     | true ->
         let username = Option.get username and private_view = false in
         let sess = Service.Session.User { username; private_view } in
-        let explain = "logged " ^ username in
-        Ok (Some sess, authenticated ~explain env username ~goto)
+        let log = "logged " ^ username in
+        Ok (Some sess, authenticated ~log env username ~goto)
     | false ->
         let log_user =
           Option.fold ~none:"" ~some:(Fmt.str " user %s") username
         in
-        let explain = Fmt.str "bad credentials%s" log_user in
+        let log = Fmt.str "bad credentials%s" log_user in
         let g = Service_env.page_gen env in
         let page = User_html.login g  ~msg:Uimsg.login_error ~goto in
         let status = Http.Status.unauthorized_401 in
-        Ok (None, Page.response ~explain ~status page)
+        Ok (None, Page.response ~log ~status page)
 
 let login env sess req ~goto = match Service_env.editable env with
 | `No | `Unsafe ->
-    Ok (sess, goto_or_service_path ~explain:auth_disabled req ~goto)
+    Ok (sess, goto_or_service_path ~log:auth_disabled req ~goto)
 | `With_login ->
     match sess with
     | None | Some (Service.Session.Unsafe _) (* can't happen *) ->
@@ -65,20 +65,20 @@ let login env sess req ~goto = match Service_env.editable env with
         let msg = Uimsg.login_descr in
         Ok (None, Page.response (User_html.login g ~msg ~goto))
     | Some (Service.Session.User { username; _ }) as s ->
-        let explain = "already logged " ^ username in
-        Ok (s, authenticated ~explain env username ~goto)
+        let log = "already logged " ^ username in
+        Ok (s, authenticated ~log env username ~goto)
 
 let logout app sess req ~goto = match Service_env.editable app with
 | `No | `Unsafe ->
-    Ok (None, goto_or_service_path ~explain:auth_disabled req ~goto)
+    Ok (None, goto_or_service_path ~log:auth_disabled req ~goto)
 | `With_login ->
-    let explain = match sess with
+    let log = match sess with
     | None -> "already logged out"
     | Some (Service.Session.Unsafe _) (* can't happen *) -> auth_disabled
     | Some (Service.Session.User { username = u; _}) ->
         Fmt.str "%s logged out" u
     in
-    Ok (None, goto_or_service_path ~explain req ~goto)
+    Ok (None, goto_or_service_path ~log req ~goto)
 
 let view app sess req private' =
   (* Update session and ask for a page reload *)

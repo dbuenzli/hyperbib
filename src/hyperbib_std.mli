@@ -22,7 +22,7 @@ module Os = B0_std.Os
 
 (** {1:lib Library shortcuts} *)
 
-module Url = Webs_url
+module Url = Webs.Url
 module Media_type = Webs.Media_type
 module Http = Webs.Http
 module Http_client = Webs.Http_client

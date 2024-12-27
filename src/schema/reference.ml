@@ -826,7 +826,7 @@ module Url = struct
       let* `GET, id = Entity.Url.get_id (module Id) u id in
       (* FIXME don't we have something to easily error here ? *)
       let error_to_resp e =
-        Http.Response.empty ~explain:e Http.Status.bad_request_400
+        Http.Response.empty ~log:e Http.Status.bad_request_400
       in
       let* docid = Doc.Id.of_string docid |> Result.map_error error_to_resp in
       Kurl.ok (Doc ((Some name, id), docid))

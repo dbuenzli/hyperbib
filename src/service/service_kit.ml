@@ -32,8 +32,7 @@ let lookup_doi env doi =
   let* httpc =
     Result.map_error
       (* Bof *)
-      (fun e ->
-         Result.get_error (Http.Response.server_error_500 ~explain:e ())) @@
+      (fun e -> Result.get_error (Http.Response.server_error_500 ~log:e ())) @@
     Result.map Option.some
       (Cli_kit.Conf.http_client (Service_env.conf env))
   in

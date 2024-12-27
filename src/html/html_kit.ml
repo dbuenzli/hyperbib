@@ -90,7 +90,7 @@ let htmlact_redirect ?(init = Http.Headers.empty) uf url =
 
 let url_of_req_referer req = match Kurl.Bare.of_req_referer req with
 | Ok ref -> Ok (Kurl.v Kurl.any ref)
-| Error e -> Http.Response.bad_request_400 ~explain:e ()
+| Error e -> Http.Response.bad_request_400 ~log:e ()
 
 (* Links and anchors *)
 
@@ -109,7 +109,7 @@ let doi_link ?(at = []) doi text = match doi with
 let mailto_link ?(at = []) ?(body = "") ?(subject = "") ~email text =
   (* Do that properly at some point https://www.rfc-editor.org/rfc/rfc6068 *)
   let esc s =
-    Http.Pct.encode `Uri_component @@
+    Webs.Url.Percent.encode `Uri_component @@
     String.concat "\r\n" (String.split_on_char '\n' s)
   in
   let subj = if subject = "" then "" else Fmt.str "subject=%s" (esc subject) in

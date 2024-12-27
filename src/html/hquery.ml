@@ -108,10 +108,8 @@ let parse_kind ~kind kind_of_string col acc k v = match kind_of_string v with
 | None -> bad_val_400 ~kind k v
 
 let unhandled key t =
-  let explain =
-    Fmt.str "key %s: unhandled column type %a" key Rel.Type.Repr.pp t
-  in
-  Http.Response.server_error_500 ~explain ()
+  let log = Fmt.str "key %s: unhandled column type %a" key Rel.Type.Repr.pp t in
+  Http.Response.server_error_500 ~log ()
 
 let decode_col_value :
   type a. ('r, a) Rel.Col.t -> string -> (a, Http.Response.t) result =
@@ -313,4 +311,4 @@ let find_create_contributors q =
     Ok
     (find_contributor_kind ~public Person.Role.Author q,
      find_contributor_kind ~public Person.Role.Editor q)
-  with Failure e -> Http.Response.bad_request_400 ~explain:e ()
+  with Failure e -> Http.Response.bad_request_400 ~log:e ()

@@ -20,7 +20,7 @@ let bibtex_file env file =
       let now = Page.Gen.now g in
       match Export.bibtex_of_refs ~now b refs with
       | Ok bib -> Ok (Http.Response.text Http.Status.ok_200 bib)
-      | Error explain -> Http.Response.server_error_500 ~explain ()
+      | Error e -> Http.Response.server_error_500 ~log:e ()
 
 let page env p =
   let page = p (Service_env.page_gen env) in

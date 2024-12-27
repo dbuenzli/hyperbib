@@ -61,12 +61,12 @@ let lookup_doi db env req s =
           Ok (doi, suggestion, msg, None)
 
 let honeypot_error fill =
-  let explain = Fmt.str "Bot honeypot triggered with fill: %s" fill in
+  let log = Fmt.str "Bot honeypot triggered with fill: %s" fill in
   let html =
     let msg = El.txt Uimsg.system_thinks_you_are_a_bot in
     El.p ~at:[Hclass.message; Hclass.error] [msg]
   in
-  Error (Page.part_response ~explain ~status:Http.Status.forbidden_403 html)
+  Error (Page.part_response ~log ~status:Http.Status.forbidden_403 html)
 
 let validate_suggestion db env req s =
   let g = Service_env.page_gen env in
@@ -145,7 +145,7 @@ let fill_in env req =
   let g = Service_env.page_gen env in
   let* s = suggestion_of_req req in
   let doi = Suggestion.doi s in
-  let* doi, suggestion, msg, explain =
+  let* doi, suggestion, msg, log =
     if doi = ""
     then Ok (doi, Suggestion.suggestion s, Some err_doi_unspecified_msg, None)
     else lookup_doi db env req s
@@ -156,7 +156,7 @@ let fill_in env req =
     Suggestion.make ~id ~timestamp:0 ~doi ~suggestion ~comment ~email ()
   in
   let html = Suggestion_html.suggest_form ~force_rescue:true ?msg g s in
-  Ok (Page.part_response ?explain html)
+  Ok (Page.part_response ?log html)
 
 let view_fields env req id =
   Service_env.with_db_transaction' `Deferred env @@ fun db ->

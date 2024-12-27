@@ -68,15 +68,15 @@ let entity_for_page_ref
   =
   fun db g ~only_public (req_name, req_id) ->
   let get_res id =
-    let resp_page_404 ?explain req_name id =
+    let resp_page_404 ?log req_name id =
       let page = page_404 g ~self:(page_url req_name id) in
-      Error (Page.response_404 ?explain page)
+      Error (Page.response_404 ?log page)
     in
     let* p = Db.first' db (entity_find_id_stmt id) in
     match p with
     | None -> resp_page_404 req_name id
     | Some p when only_public && not (entity_public p) ->
-        resp_page_404 ~explain:"not public" req_name id
+        resp_page_404 ~log:"not public" req_name id
     | Some p -> Ok p
   in
   let res_name = entity_res_name in

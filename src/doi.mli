@@ -60,7 +60,7 @@ val pp : Format.formatter -> t -> unit
 
 (** {1:presentations Presentations} *)
 
-val default_resolver : Webs_url.t
+val default_resolver : Webs.Url.t
 (** [default_resolver] is the default resolver used to resolve
     DOIs. This is {:https://doi.org}. *)
 
@@ -68,7 +68,7 @@ val as_uri : t -> string
 (** [as_uri d] is [d] prefixed by [doi:]. This percent encodes [d]
     as needed. *)
 
-val as_url : ?resolver:Webs_url.t -> t -> Webs_url.t
+val as_url : ?resolver:Webs.Url.t -> t -> Webs.Url.t
 (** [as_url ~resolver d] is [d] prefixed by [resolver] (defaults to
     {!default_resolver}). This precent encodes [d] as needed. *)
 
@@ -96,12 +96,12 @@ module Map : Map.S with type key := t
 
 val resolve_to_url :
   ?resolver:string -> Webs.Http_client.t -> t ->
-  (Webs_url.t, string) result
+  (Webs.Url.t, string) result
 (** [resolve_to_url r ~resolver doi] resolve [doi] with [resolver]
       to an URL with [resolver] (defaults to {!default_resolver}). *)
 
 val resolve_to_content_type :
-  ?resolver:Webs_url.t -> content_type:string ->
+  ?resolver:Webs.Url.t -> content_type:string ->
   Webs.Http_client.t -> t -> (string option, string) result
 (** [resolve_to_content_type ~resolver httpc ~content_type doi]
     resolves [doi] to a content_type [content_type] (the value of the
@@ -121,9 +121,9 @@ val json : string
     DOIs this seems to return the format {!Crossref}. *)
 
 val to_document :
-  ?url_only:bool -> ?resolver:Webs_url.t -> Webs.Http_client.t ->
+  ?url_only:bool -> ?resolver:Webs.Url.t -> Webs.Http_client.t ->
   media_type:Webs.Media_type.t -> t->
-  (Webs_url.t * Webs.Http.Body.t, string) result
+  (Webs.Url.t * Webs.Http.Body.t, string) result
 (** [to_document] is a best-effort resolver to try find a document of
     type [media_type] using [resolver]. It tries to resolve directly
     to the given [media_type] or if a webpage is returned tries to

@@ -103,16 +103,16 @@ let fill_in_form env req doi =
     Result.map_error
       (* Bof *)
       (fun e ->
-         Result.get_error (Http.Response.bad_request_400 ~explain:e ())) @@
+         Result.get_error (Http.Response.bad_request_400 ~log:e ())) @@
     let* bare = Kurl.Bare.of_req_referer req in
     Ok (Entity.Url.cancel_url_of_query (Kurl.Bare.query bare))
   in
   (* FIXME replace by let* self = Hfrag.url_of_req_referer req in *)
   let self (* XXX *) = Reference.Url.v (New_form { cancel }) in
-  let* explain, part =
+  let* log, part =
     Service_kit.fill_in_reference_form env db ~self ~cancel doi
   in
-  Ok (Page.part_response ?explain part)
+  Ok (Page.part_response ?log part)
 
 let change_authors_publicity env req id =
   let* () = Entity_service.check_edit_authorized env in
@@ -276,7 +276,7 @@ let doc env request (_, ref_id) docid =
   let is_private = not (Reference.Doc.public doc) in
   let see_private_data = User.Caps.see_private_data (Service_env.caps env) in
   if not see_private_data && is_private (* 404 to avoid probing *)
-  then Http.Response.not_found_404 ~explain:"Not authorized" () else
+  then Http.Response.not_found_404 ~log:"Not authorized" () else
   let file =
     let* blobstore = Cli_kit.Conf.blobstore (Service_env.conf env) in
     let* id = Blobstore.Key.of_text (Reference.Doc.blob_key doc) in
@@ -301,7 +301,7 @@ let doc env request (_, ref_id) docid =
      TODO Webs_fs add something for content disposition. *)
   let content_disposition = Fmt.str "inline; filename=\"%s\"" filename in
   match file with
-  | Error e -> Http.Response.server_error_500 ~explain:e ()
+  | Error e -> Http.Response.server_error_500 ~log:e ()
   | Ok None -> Http.Response.not_found_404 ()
   | Ok (Some file) ->
       let* response = Webs_fs.send_file request (Fpath.to_string file) in

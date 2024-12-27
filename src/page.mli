@@ -89,17 +89,17 @@ val full_title : Gen.t -> title:string -> string
 (** {1:resp Respones} *)
 
 val response :
-  ?explain:string -> ?reason:string -> ?headers:Http.Headers.t -> ?status:int ->
+  ?headers:Http.Headers.t -> ?log:string -> ?reason:string -> ?status:int ->
   t -> Http.Response.t
 (** [resp p] is an HTML page response for [p]. *)
 
 val part_response :
-  ?explain:string -> ?reason:string -> ?headers:Http.Headers.t -> ?status:int ->
+  ?headers:Http.Headers.t -> ?log:string -> ?reason:string -> ?status:int ->
   El.html -> Http.Response.t
 (** [part_response html] an HTML part response for [html] *)
 
 val response_404 :
-  ?explain:string -> ?reason:string -> ?headers:Http.Headers.t -> t ->
+  ?headers:Http.Headers.t -> ?log:string -> ?reason:string -> t ->
   Http.Response.t
 (** [resp_404] is [resp ~status:Http.not_found_404]. *)
 
