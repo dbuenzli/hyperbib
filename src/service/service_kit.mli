@@ -22,4 +22,4 @@ val empty_reference_form :
 val fill_in_reference_form :
   ?no_suggestion_dupe_check:bool->
   Service_env.t -> Db.t -> self:Kurl.t -> cancel:Entity.Url.cancel_url ->
-  Doi.t -> (string option * El.html, Http.Response.t) result
+  doi:string -> (string option * El.html, Http.Response.t) result

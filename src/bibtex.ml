@@ -4,7 +4,7 @@
   ---------------------------------------------------------------------------*)
 
 open B0_std
-open B0_text
+open B0_text (* FIXME we should get rid of this *)
 
 let escape = (* The escape rules are a bit unclear. These are those of LaTeX *)
   let tilde_esc = "\\textasciitilde" in

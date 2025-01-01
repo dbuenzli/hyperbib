@@ -3,61 +3,75 @@
    SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
-(** [Jsonq] queries for JSON CrossRef metadata.
+(** CrossRef metadata.
 
-    The format is described
+    Partial modelling of the format described
     {{:https://github.com/Crossref/rest-api-doc/blob/master/api_format.md}
-    here}. This a partial modelling of the format. *)
+    here} with [Jsont]. *)
 
-open B0_json
+open Hyperbib_std
+
+(** {1:data Data} *)
 
 type partial_date = int * (int * int option) option
-(** The type for {{:https://github.com/Crossref/rest-api-doc/blob/master/api_format.md#partial-date}partial date}. *)
+(** The type for
+    {{:https://github.com/Crossref/rest-api-doc/blob/master/api_format.md#partial-date}partial date}. *)
 
-val partial_date : partial_date Jsonq.t
-(** [partial_date] queries a partial date. *)
+val partial_date_jsont : partial_date Jsont.t
 
-(** Query contributor objects. *)
+(** {{:https://github.com/Crossref/rest-api-doc/blob/master/api_format.md#contributor}Contributor} objects. *)
 module Contributor : sig
-  val family : string Jsonq.t
-  val given : string option Jsonq.t
-  val orcid : string option Jsonq.t
+  type t =
+    { family : string;
+      given : string;
+      orcid : string }
+
+  val jsont : t Jsont.t
+  val equal : t -> t -> bool
 end
 
-(** Query reference objects. *)
+(** {{:https://github.com/Crossref/rest-api-doc/blob/master/api_format.md#reference}Reference} objects. *)
 module Reference : sig
-  val doi : string option Jsonq.t
+  type t = { doi : string option }
+  val jsont : t Jsont.t
 end
 
-(** Query work objects. *)
+(** {{:https://github.com/Crossref/rest-api-doc/blob/master/api_format.md#work}
+    Work} objects. *)
 module Work : sig
-  val author : 'a Jsonq.t -> 'a list option Jsonq.t
-  val abstract : string option Jsonq.t
-  val container_title : string list option Jsonq.t
-  val doi : string Jsonq.t
-  val editor : 'a Jsonq.t -> 'a list option Jsonq.t
-  val issn : string list option Jsonq.t
-  val isbn : string list option Jsonq.t
-  val issue : string option Jsonq.t
-  val issued : partial_date Jsonq.t
-  val page : string option Jsonq.t
-  val publisher : string Jsonq.t
-  val reference : 'a Jsonq.t -> 'a list option Jsonq.t
-  val subject : string list option Jsonq.t
-  val title : string list Jsonq.t
-  val type' : string Jsonq.t
-  val volume : string option Jsonq.t
+  type t =
+    { author : Contributor.t list;
+      abstract : string;
+      container_title : string list;
+      doi : string;
+      editor : Contributor.t list;
+      issn : string list;
+      isbn : string list;
+      issue : string option;
+      issued : partial_date;
+      page : string option;
+      publisher : string;
+      reference : Reference.t list;
+      subject : string list;
+      title : string list;
+      type' : string;
+      volume : string option; }
+
+  val jsont : t Jsont.t
 end
+
+(** {1:lookup Lookup} *)
 
 val for_doi :
   Webs.Http_client.t option ->
-  cache:B0_std.Fpath.t -> Doi.t -> (B0_json.Json.t option, string) result
-(** [for_doi httpr cache doi] looks up crossref metadata for doi [doi].
-    Looks up in the local [cache] first. [None] is returned if the
-    doi cannot be resolved (404). *)
+  cache:Fpath.t -> Doi.t -> (Work.t option, string) result
+(** [for_doi httpc cache doi] looks up crossref metadata for DOI
+    [doi].  Looks up in the local [cache] first. If [httpc] is [None]
+    looked up in the cache only. [None] is returned if the DOI cannot
+    be resolved (404). *)
 
 (** {1:types Types}
 
-    From https://api.crossref.org/v1/types *)
+    From {:https://api.crossref.org/v1/types} *)
 
 val types : (string * string) list

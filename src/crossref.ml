@@ -5,52 +5,97 @@
 
 open Hyperbib_std
 open Result.Syntax
-open B0_json
 
 type partial_date = int * (int * int option) option
-let partial_date =
+
+let partial_date_jsont  =
   let parse_date = function
-  | [y; m; d] -> Jsonq.succeed (y, Some (m, Some d))
-  | [y; m] -> Jsonq.succeed (y, Some (m, None))
-  | [y] -> Jsonq.succeed (y, None)
-  | _ -> Jsonq.fail "cannot parse partial date"
+  | [y; m; d] :: _ -> (y, Some (m, Some d))
+  | [y; m] :: _ -> (y, Some (m, None))
+  | [y] :: _ -> (y, None)
+  | _ -> Jsont.Error.msg Jsont.Meta.none "cannot parse partial date"
   in
-  Jsonq.(mem "date-parts" (bind (nth 0 (array int)) parse_date))
+  Jsont.Object.map parse_date
+  |> Jsont.Object.mem "date-parts" Jsont.(list (list int))
+  |> Jsont.Object.finish
 
 module Contributor = struct
-  let family = Jsonq.(mem "family" string)
-  let given = Jsonq.(opt_mem ~absent:None "given" (some string))
-  let orcid = Jsonq.(opt_mem ~absent:None "ORCID" (some string))
+  type t =
+    { family : string;
+      given : string;
+      orcid : string; }
+
+  let equal c0 c1 =
+    (String.equal c0.orcid c1.orcid) ||
+    (String.equal c0.family c1.family && String.equal c0.given c1.given)
+
+  let jsont =
+    Jsont.Object.map (fun family given orcid -> { family; given; orcid })
+    |> Jsont.Object.mem "family" Jsont.string
+    |> Jsont.Object.mem "given" Jsont.string ~dec_absent:""
+    |> Jsont.Object.mem "ORCID" Jsont.string ~dec_absent:""
+    |> Jsont.Object.finish
 end
 
 module Reference = struct
-  let doi = Jsonq.(opt_mem ~absent:None "DOI" (some string))
+  type t = { doi : string option }
+  let jsont =
+    Jsont.Object.map (fun doi -> { doi })
+    |> Jsont.Object.opt_mem "DOI" Jsont.string
+    |> Jsont.Object.finish
 end
 
-let string_array = (* It seems we also get them as simple strings *)
-  let string = Jsonq.(map (fun s -> [s]) string) in
-  let array = Jsonq.(array string) in
-  Jsonq.partial_fold ~string ~array ()
-
 module Work = struct
-  let author q = Jsonq.(opt_mem ~absent:None "author" (some (array q)))
-  let abstract = Jsonq.(opt_mem ~absent:None "abstract" (some string))
-  let container_title =
-    Jsonq.(opt_mem "container-title" ~absent:None (some string_array))
+  type t =
+    { author : Contributor.t list;
+      abstract : string;
+      container_title : string list;
+      doi : Doi.t;
+      editor : Contributor.t list;
+      issn : string list;
+      isbn : string list;
+      issue : string option;
+      issued : partial_date;
+      page : string option;
+      publisher : string;
+      reference : Reference.t list;
+      subject : string list;
+      title : string list;
+      type' : string;
+      volume : string option; }
 
-  let doi = Jsonq.(mem "DOI" string)
-  let editor q = Jsonq.(opt_mem ~absent:None "editor" (some (array q)))
-  let issn = Jsonq.(opt_mem ~absent:None "ISSN" (some (array string)))
-  let isbn = Jsonq.(opt_mem ~absent:None "ISBN" (some (array string)))
-  let issue = Jsonq.(opt_mem ~absent:None "issue" (some string))
-  let issued = Jsonq.(mem "issued" partial_date)
-  let page = Jsonq.(opt_mem ~absent:None "page" (some string))
-  let publisher = Jsonq.(mem "publisher" string)
-  let reference q = Jsonq.(opt_mem ~absent:None "reference" (some (array q)))
-  let subject = Jsonq.(opt_mem ~absent:None "subject" (some (array string)))
-  let title = Jsonq.(mem "title" string_array)
-  let type' = Jsonq.(mem "type" string)
-  let volume = Jsonq.(opt_mem ~absent:None "volume" (some string))
+  let make
+      author abstract container_title doi editor issn isbn issue issued page
+      publisher reference subject title type' volume
+    =
+    { author; abstract; container_title; doi; editor; issn; isbn;
+      issue; issued; page; publisher; reference; subject; title; type';
+      volume; }
+
+  let string_or_string_array = (* It seems we also get them as simple strings *)
+    let dec_array = Jsont.(list string) in
+    let dec_string = Jsont.map ~dec:(fun s -> [s]) Jsont.string in
+    Jsont.any ~dec_string ~dec_array ()
+
+  let jsont =
+    Jsont.Object.map make
+    |> Jsont.Object.mem "author" Jsont.(list Contributor.jsont) ~dec_absent:[]
+    |> Jsont.Object.mem "abstract" Jsont.string ~dec_absent:""
+    |> Jsont.Object.mem "container-title" string_or_string_array ~dec_absent:[]
+    |> Jsont.Object.mem "DOI" Jsont.string
+    |> Jsont.Object.mem "editor" Jsont.(list Contributor.jsont) ~dec_absent:[]
+    |> Jsont.Object.mem "ISSN" Jsont.(list string) ~dec_absent:[]
+    |> Jsont.Object.mem "ISBN" Jsont.(list string) ~dec_absent:[]
+    |> Jsont.Object.opt_mem "issue" Jsont.string
+    |> Jsont.Object.mem "issued" partial_date_jsont
+    |> Jsont.Object.opt_mem "page" Jsont.string
+    |> Jsont.Object.mem "publisher" Jsont.string
+    |> Jsont.Object.mem "reference" Jsont.(list Reference.jsont) ~dec_absent:[]
+    |> Jsont.Object.mem "subject" Jsont.(list string)
+    |> Jsont.Object.mem "title" string_or_string_array
+    |> Jsont.Object.mem "type" Jsont.string
+    |> Jsont.Object.opt_mem "volume" Jsont.string
+    |> Jsont.Object.finish
 end
 
 let rec for_doi httpc ~cache doi =
@@ -59,8 +104,9 @@ let rec for_doi httpc ~cache doi =
   match exists with
   | true ->
       let* contents = Os.File.read doi_file in
+      let file = Fpath.to_string doi_file in
       Result.map Option.some @@
-      Json.of_string ~file:(Fpath.to_string doi_file) contents
+      Jsont_bytesrw.decode_string ~locs:true ~file Work.jsont contents
   | false ->
       let* httpc = match httpc with
       | None -> Fmt.error "No cached metadata for %s" doi

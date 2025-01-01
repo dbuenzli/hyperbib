@@ -9,124 +9,51 @@ type 'a entity = [ `Exists of 'a | `To_create of 'a ]
 
 module Doi = struct
   open Result.Syntax
-  open B0_json
 
-  (* What we extract from DOI metadata *)
+  type person = Crossref.Contributor.t
+  type ref = Crossref.Work.t
 
-  type person = { family : string; given : string; orcid : string }
-  type ref =
-    { authors : person list;
-      abstract : string;
-      cites : Doi.t list;
-      container_title : string;
-      doi : Doi.t option;
-      editors : person list;
-      isbn : string;
-      issn : string;
-      issue : string;
-      issued : Crossref.partial_date;
-      page : string;
-      publisher : string;
-      title : string;
-      type' : string;
-      volume : string; }
+  let first = function [] -> "" | t :: _ -> String.trim t
+  let none_is_empty v = String.trim (Option.value ~default:"" v)
 
-  let ref_to_short_text_citation r =
-    let person p = Fmt.str "%s, %s" p.family p.given in
+  let title (r : ref) = first r.title
+  let container_title (r : ref) = first r.container_title
+  let cited_dois (r : ref) =
+    let doi r = Option.map String.trim (r.Crossref.Reference.doi) in
+    String.distinct @@ List.filter_map doi r.reference
+
+  let ref_to_short_text_citation (r : ref) =
+    let person (p : person) = Fmt.str "%s, %s" p.family p.given in
     let authors = function
     | [] -> "" | [p] -> person p | p :: _ -> person p ^ " et al."
     in
     Fmt.str "%s.\n%s. %d\n%s"
-      r.title r.container_title (fst r.issued) (authors r.authors)
-
-  let person_equal p0 p1 =
-    if String.equal p0.orcid p1.orcid then true else
-    String.equal p0.family p1.family &&
-    String.equal p0.given p1.given
-
-  (* DOI metadata query and extraction *)
-
-  let personq =
-    let person family given orcid =
-      let none_is_empty v = String.trim (Option.value ~default:"" v) in
-      let family = String.trim family in
-      let given = none_is_empty given in
-      let orcid = none_is_empty orcid in
-      { family; given; orcid }
-    in
-    Jsonq.(succeed person $
-           Crossref.Contributor.family $
-           Crossref.Contributor.given $
-           Crossref.Contributor.orcid)
-
-  let refq =
-    let ref
-        author abstract cited_dois container_title editor isbn issn issue issued
-        page publisher title type' volume doi
-      =
-      let none_is_empty v = String.trim (Option.value ~default:"" v) in
-      let first v = match v with
-      | None | Some [] -> "" | Some (t :: _) -> String.trim t
-      in
-      let authors = Option.value ~default:[] author in
-      let abstract = Option.value ~default:"" abstract in
-      let cites =
-        List.map String.trim @@
-        String.distinct @@
-        List.filter_map Fun.id (Option.value ~default:[] cited_dois)
-      in
-      let container_title = first (container_title) in
-      let editors = Option.value ~default:[] editor in
-      let isbn = first isbn in
-      let issn = first issn in
-      let issue = none_is_empty issue in
-      let page = none_is_empty page in
-      let title = match title with [] -> "" | t :: _ -> String.trim t in
-      let volume = none_is_empty volume in
-      { authors; abstract; cites; container_title; doi; editors; isbn;
-        issn; issue; issued; page; publisher; title; type'; volume }
-    in
-    Jsonq.(succeed ref $
-           Crossref.Work.author personq $
-           Crossref.Work.abstract $
-           Crossref.Work.reference (Crossref.Reference.doi) $
-           Crossref.Work.container_title $
-           Crossref.Work.editor personq $
-           Crossref.Work.isbn $
-           Crossref.Work.issn $
-           Crossref.Work.issue $
-           Crossref.Work.issued $
-           Crossref.Work.page $
-           Crossref.Work.publisher $
-           Crossref.Work.title $
-           Crossref.Work.type' $
-           Crossref.Work.volume)
+      (title r) (container_title r) (fst r.issued) (authors r.author)
 
   let get_ref httpr ~cache doi =
     Result.map_error (fun e -> Fmt.str "%s: %s" doi e) @@
-    let* json = Crossref.for_doi httpr ~cache doi in
-    match json with
-    | None -> Ok None
-    | Some json ->
-        let* ref = Jsonq.query refq json in
-        Ok (Some (ref (Some doi)))
+    Crossref.for_doi httpr ~cache doi
 
   (* Converting to hyperbib entities. A bit convoluted we need to check
      which entities already exists in the db. *)
 
-  let reference_of_ref ?(note = "") ~public ~container_id:container r =
-    let isbn = if Option.is_some container then "" else r.isbn in
+  let reference_of_ref ?(note = "") ~public ~container_id:container (r : ref) =
+    let isbn = if Option.is_some container then "" else (first r.isbn) in
     Reference.make ~id:Reference.Id.zero ~abstract:r.abstract ~container
       ~created_ptime_s:(Unix.gettimeofday ())
-      ~date:(Some r.issued) ~doi:r.doi ~isbn ~issue:r.issue ~note ~pages:r.page
-      ~private_note:"" ~public ~publisher:r.publisher ~title:r.title
-      ~type':r.type' ~volume:r.volume
+      ~date:(Some r.issued) ~doi:(Some r.doi) ~isbn
+      ~issue:(none_is_empty r.issue) ~note ~pages:(none_is_empty r.page)
+      ~private_note:"" ~public ~publisher:r.publisher ~title:(title r)
+      ~type':r.type' ~volume:(none_is_empty r.volume)
 
-  let cites_of_ref r = r.cites
+
+  let cites_of_ref (r : ref) = cited_dois r
 
   let get_container ~create_public:public db ref =
-    if ref.container_title = "" then Ok None else
-    let title = ref.container_title and isbn = ref.isbn and issn = ref.issn in
+    let container_title = container_title ref in
+    if container_title = "" then Ok None else
+    let title = container_title in
+    let isbn = first ref.isbn and issn = first ref.issn in
     let id = Container.Id.zero in
     let new_container () =
       Container.make ~id ~title ~isbn ~issn ~note:"" ~private_note:"" ~public ()
@@ -154,7 +81,7 @@ module Doi = struct
                 end;
                 Ok (Some (`Exists (List.hd cs)))
 
-  let get_person ~create_public:public db p =
+  let get_person ~create_public:public db (p : Crossref.Contributor.t) =
     let new_person () =
       Person.make ~id:Person.Id.zero ~last_name:p.family ~first_names:p.given
         ~orcid:p.orcid ~note:"" ~private_note:"" ~public ()
@@ -177,10 +104,10 @@ module Doi = struct
             end;
             Ok (`Exists (List.hd ps))
 
-  let authors_editors_of_ref ~create_public db r =
+  let authors_editors_of_ref ~create_public db (r : ref) =
     let add p acc = let* p = get_person ~create_public db p in Ok (p :: acc) in
-    let* authors = List.fold_stop_on_error add r.authors [] in
-    let* editors = List.fold_stop_on_error add r.editors [] in
+    let* authors = List.fold_stop_on_error add r.author [] in
+    let* editors = List.fold_stop_on_error add r.editor [] in
     (* Order is important, for some people *)
     Ok (List.rev authors, List.rev editors)
 end

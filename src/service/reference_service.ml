@@ -110,7 +110,7 @@ let fill_in_form env req doi =
   (* FIXME replace by let* self = Hfrag.url_of_req_referer req in *)
   let self (* XXX *) = Reference.Url.v (New_form { cancel }) in
   let* log, part =
-    Service_kit.fill_in_reference_form env db ~self ~cancel doi
+    Service_kit.fill_in_reference_form env db ~self ~cancel ~doi
   in
   Ok (Page.part_response ?log part)
 
