@@ -18,6 +18,7 @@ let v =
   |> Kurl.bind ["references"] (immutable_session Reference_service.v)
   |> Kurl.bind ["suggestions"] (immutable_session Suggestion_service.v)
   |> Kurl.bind ["years"] (immutable_session Year_service.v)
+  |> Kurl.bind ["search"] (immutable_session Search_service.v)
   |> Kurl.bind ["users"] User_service.v
 
 let url_fmt ~init =

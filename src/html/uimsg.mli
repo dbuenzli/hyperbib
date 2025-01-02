@@ -165,6 +165,7 @@ val save_container : string
 val save_person : string
 val save_reference : string
 val save_subject : string
+val search : string
 val server_error_5XX : string
 val server_error_5XX_descr : string
 val something_went_wrong_XXX : string
