@@ -57,7 +57,11 @@ let page_html g =
       El.txt ". This means that some of the data is noisy. In
           particular authors may end up being duplicated at the moment.
           Work is in progress to cleanup the data.";
-    ]]
+    ];
+    El.p [
+    let href = Kurl.Fmt.url (Page.Gen.url_fmt g) (Search.Url.v Index) in
+    Html_kit.link ~href (El.txt "Search") ]
+  ]
 
 let page g =
   let self = Kurl.V (Bibliography.Url.kind, Home) in
