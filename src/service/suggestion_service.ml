@@ -177,7 +177,7 @@ let integrate env req id =
       let g = Service_env.page_gen env in
       Ok (None, Service_kit.empty_reference_form g ~self ~cancel)
   | doi ->
-      Service_kit.fill_in_reference_form ~no_suggestion_dupe_check:true
+      Service_kit.fill_in_reference_form ~suggestion_dupe_check:false
         env db ~self ~cancel ~doi
   in
   let g = Service_env.page_gen env in

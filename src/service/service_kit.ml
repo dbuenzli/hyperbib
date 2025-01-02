@@ -14,11 +14,11 @@ let find_doi_suggestion db doi =
   let r = Suggestion.find_doi (Rel_query.Text.v doi) in
   Db.first db (Rel_query.Sql.of_bag' Suggestion.table r)
 
-let find_dupe_doi ?(no_suggestion_dupe_check = false) g ~self db doi =
+let find_dupe_doi ?(suggestion_dupe_check = true) g ~self db doi =
   let* exists = find_doi db doi |> Db.http_resp_error in
   match exists with
   | None ->
-      if no_suggestion_dupe_check then Ok None else
+      if not suggestion_dupe_check then Ok None else
       let* exists = find_doi_suggestion db doi |> Db.http_resp_error in
       begin match exists with
       | None -> Ok None
@@ -64,7 +64,7 @@ let resp_err_doi_error g ~self ~cancel = (* move to reference_html *)
   let msg = El.p ~at [El.txt Uimsg.doi_error]in
   empty_reference_form ~msg g ~self ~cancel
 
-let fill_in_reference_form ?no_suggestion_dupe_check env db ~self ~cancel ~doi =
+let fill_in_reference_form ?suggestion_dupe_check env db ~self ~cancel ~doi =
   let g = Service_env.page_gen env in
   match Doi.extract doi with
   | None -> Ok (None, resp_err_doi_no_extract g ~self ~cancel doi)
@@ -77,7 +77,7 @@ let fill_in_reference_form ?no_suggestion_dupe_check env db ~self ~cancel ~doi =
           let r =
             Import.Doi.reference_of_ref ~public:false ~container_id:None ref
           in
-          let* msg = find_dupe_doi ?no_suggestion_dupe_check g ~self db doi in
+          let* msg = find_dupe_doi ?suggestion_dupe_check g ~self db doi in
           let msg = Option.value ~default:El.void msg in
           let* container =
             Import.Doi.get_container ~create_public:false db ref
