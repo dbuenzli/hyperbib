@@ -248,7 +248,7 @@ let fill_ui g ~doi =
     Hui.group ~at ~x_align:`Center ~dir:`H [input; fill_in]
   in
   let at =
-    let url = Reference.Url.v (Fill_in_form "") in
+    let url = Reference.Url.v (Fill_in_form (`Doi "")) in
     let r = Html_kit.htmlact_request (Page.Gen.url_fmt g) url in
     let t = Htmlact.target ":up .entity" in
     [r; t; Hclass.vspace_0125]

@@ -44,7 +44,7 @@ module Static_html = struct
     let* cites = refs_render_data ~only_public cites db in
     let cited_by = match Reference.doi r with
     | None -> Bag.empty
-    | Some doi -> Reference.citing_doi (Rel_query.Text.v doi)
+    | Some doi -> Reference.citing_doi (Schema_kit.Doi_rel.v doi)
     in
     let* cited_by = refs_render_data ~only_public cited_by db in
     write_page ~dir g (Reference_html.page g r ~render_data ~cites ~cited_by)
@@ -312,7 +312,7 @@ module Bibtex = struct
       String.Map.empty
       |> add_if_non_empty "note" (Reference.note r)
       |> add_if_non_empty "author" (ref_author rs r)
-      |> add_if_some "doi" (Reference.doi r)
+      |> add_if_some "doi" (Option.map Doi.to_string (Reference.doi r))
       |> add_if_non_empty "editor" (ref_editor rs r)
       |> add_if_non_empty "keywords" (ref_keywords rs r)
       |> add_if_non_empty "number" (Reference.issue r)

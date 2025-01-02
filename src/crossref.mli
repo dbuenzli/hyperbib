@@ -32,7 +32,7 @@ end
 
 (** {{:https://github.com/Crossref/rest-api-doc/blob/master/api_format.md#reference}Reference} objects. *)
 module Reference : sig
-  type t = { doi : string option }
+  type t = { doi : Doi.t option }
   val jsont : t Jsont.t
 end
 
@@ -65,7 +65,7 @@ module Work : sig
     { author : Contributor.t list;
       abstract : string;
       container_title : string list;
-      doi : string;
+      doi : Doi.t;
       editor : Contributor.t list;
       issn : string list;
       isbn : string list;

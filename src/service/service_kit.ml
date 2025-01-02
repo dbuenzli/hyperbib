@@ -7,7 +7,7 @@ open Hyperbib_std
 open Result.Syntax
 
 let find_doi db doi =
-  let r = Reference.find_doi (Rel_query.Text.v doi) in
+  let r = Reference.find_doi (Schema_kit.Doi_rel.v doi) in
   Db.first db (Rel_query.Sql.of_bag' Reference.table r)
 
 let find_doi_suggestion db doi =
@@ -19,7 +19,10 @@ let find_dupe_doi ?(suggestion_dupe_check = true) g ~self db doi =
   match exists with
   | None ->
       if not suggestion_dupe_check then Ok None else
-      let* exists = find_doi_suggestion db doi |> Db.http_resp_error in
+      let* exists =
+        find_doi_suggestion db (Doi.to_string doi)
+        |> Db.http_resp_error
+      in
       begin match exists with
       | None -> Ok None
       | Some s ->

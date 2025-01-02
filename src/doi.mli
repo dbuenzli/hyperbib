@@ -14,7 +14,11 @@ open Hyperbib_std
 (** {1:dois DOI names} *)
 
 type t = string
-(** The type for DOI names. {b TODO} make abstract. *)
+(** Thye type for DOI names. *)
+
+val v : string -> t
+(** [v s] is [s] as a DOI. Raises [Invalid_argument] if it doesn't
+    parse as a DOI, use {!of_string} to deal with untrusted inputs. *)
 
 (** {1:scraping Scraping} *)
 
@@ -57,6 +61,9 @@ val to_string : t -> string
 
 val pp : Format.formatter -> t -> unit
 (** [pp] formats a DOI name like {!to_string} does. *)
+
+val jsont : t Jsont.t
+(** [jsont] parses JSON strings into [DOI]s. *)
 
 (** {1:presentations Presentations} *)
 

@@ -92,7 +92,7 @@ val date_key : string
 val find_date : Http.Query.t -> (Date.partial option, string) result
 
 val cite_key : string
-val find_cites : Http.Query.t -> Doi.t list
+val find_cites : Http.Query.t -> string list
 
 val person_key : Person.Role.t option -> string
 

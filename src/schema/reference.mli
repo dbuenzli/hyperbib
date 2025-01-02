@@ -470,7 +470,7 @@ module Url : sig
   | Duplicate_form of Id.t
 *)
   | Edit_form of Id.t
-  | Fill_in_form of Doi.t
+  | Fill_in_form of [`Doi of string]
   | Index
   | New_form of { cancel : Entity.Url.cancel_url }
   | Page of named_id

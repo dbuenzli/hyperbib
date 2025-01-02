@@ -46,10 +46,10 @@ val details : string
 val delete : string
 val deleted : string
 val description : string
-val document_in_bib : string -> string
-val document_suggested : string -> string
+val document_in_bib : Doi.t -> string
+val document_suggested : Doi.t -> string
 val doi : string
-val doi_not_found : string -> string
+val doi_not_found : Doi.t -> string
 val doi_error : string
 val doi_extract_error : string -> string
 val doi_unspecified : string

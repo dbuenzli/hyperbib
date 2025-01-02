@@ -19,8 +19,8 @@ module Doi = struct
   let title (r : ref) = first r.title
   let container_title (r : ref) = first r.container_title
   let cited_dois (r : ref) =
-    let doi r = Option.map String.trim (r.Crossref.Reference.doi) in
-    String.distinct @@ List.filter_map doi r.reference
+    let doi r = r.Crossref.Reference.doi in
+    List.sort_uniq Doi.compare @@ List.filter_map doi r.reference
 
   let ref_to_short_text_citation (r : ref) =
     let person (p : person) = Fmt.str "%s, %s" p.family p.given in
@@ -31,7 +31,7 @@ module Doi = struct
       (title r) (container_title r) (fst r.issued) (authors r.author)
 
   let get_ref httpr ~cache doi =
-    Result.map_error (fun e -> Fmt.str "%s: %s" doi e) @@
+    Result.map_error (fun e -> Fmt.str "%a: %s" Doi.pp doi e) @@
     Crossref.for_doi httpr ~cache doi
 
   (* Converting to hyperbib entities. A bit convoluted we need to check

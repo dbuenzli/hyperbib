@@ -11,7 +11,7 @@ open Hyperbib_std
 (** The type for suggestion ids. These are allocated by the database. *)
 module Id : Rel_kit.INTABLE_ID
 
-type doi = string
+type doi = string (* FIXME make it abstract an the field optiona. *)
 
 type t
 (** The type for suggestions. *)

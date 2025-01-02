@@ -39,7 +39,7 @@ let get_page_data db g r =
   let* cites = Reference.render_data ~only_public cites db in
   let cited_by = match Reference.doi r with
   | None -> Bag.empty
-  | Some doi -> Reference.citing_doi (Rel_query.Text.v doi)
+  | Some doi -> Reference.citing_doi (Schema_kit.Doi_rel.v doi)
   in
   let* cited_by = Reference.render_data ~only_public cited_by db in
   Ok (render_data, cites, cited_by)
@@ -96,7 +96,7 @@ let new_form app req ~cancel =
   let page = Reference_html.new_form g Reference.new' ~cancel in
   Ok (Page.response page)
 
-let fill_in_form env req doi =
+let fill_in_form env req (`Doi doi) =
   let* () = Entity_service.check_edit_authorized env in
   Service_env.with_db_transaction' `Deferred env @@ fun db ->
   let* cancel =

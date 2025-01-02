@@ -38,10 +38,10 @@ module Contributor = struct
 end
 
 module Reference = struct
-  type t = { doi : string option }
+  type t = { doi : Doi.t option }
   let jsont =
     Jsont.Object.map (fun doi -> { doi })
-    |> Jsont.Object.opt_mem "DOI" Jsont.string
+    |> Jsont.Object.opt_mem "DOI" Doi.jsont
     |> Jsont.Object.finish
 end
 
@@ -120,7 +120,7 @@ module Work = struct
     |> Jsont.Object.mem "author" Jsont.(list Contributor.jsont) ~dec_absent:[]
     |> Jsont.Object.mem "abstract" Jsont.string ~dec_absent:""
     |> Jsont.Object.mem "container-title" string_or_string_array ~dec_absent:[]
-    |> Jsont.Object.mem "DOI" Jsont.string
+    |> Jsont.Object.mem "DOI" Doi.jsont
     |> Jsont.Object.mem "editor" Jsont.(list Contributor.jsont) ~dec_absent:[]
     |> Jsont.Object.mem "ISSN" Jsont.(list string) ~dec_absent:[]
     |> Jsont.Object.mem "ISBN" Jsont.(list string) ~dec_absent:[]
@@ -149,7 +149,7 @@ let rec for_doi httpc ~cache doi =
       Jsont_bytesrw.decode_string ~locs:true ~file Work.jsont contents
   | false ->
       let* httpc = match httpc with
-      | None -> Fmt.error "No cached metadata for %s" doi
+      | None -> Fmt.error "No cached metadata for %a" Doi.pp doi
       | Some httpc -> Ok httpc
       in
       let content_type = Doi.json in
