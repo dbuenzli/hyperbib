@@ -11,18 +11,16 @@ open Hyperbib_std
 (** The type for suggestion ids. These are allocated by the database. *)
 module Id : Rel_kit.INTABLE_ID
 
-type doi = string
-
 type t
 (** The type for suggestions. *)
 
 val make :
-  id:Id.t -> timestamp:int -> doi:doi -> suggestion:string -> comment:string ->
-  email:string -> unit -> t
+  id:Id.t -> timestamp:int -> doi:Doi.t option -> suggestion:string ->
+  comment:string -> email:string -> unit -> t
 (** [make …] is a suggestion with given properties. See accessors for
     semantics. *)
 
-val row : Id.t -> int -> doi -> string -> string -> string -> t
+val row : Id.t -> int -> Doi.t option -> string -> string -> string -> t
 (** [row …] is unlabelled {!make}. *)
 
 val new' : t
@@ -34,8 +32,8 @@ val id : t -> Id.t
 val timestamp : t -> int
 (** [timestamp s] is the time when the suggestion made it to the database. *)
 
-val doi : t -> doi
-(** [doi s] is the DOI of the suggestion (empty string if none). *)
+val doi : t -> Doi.t option
+(** [doi s] is the DOI of the suggestion if any. *)
 
 val suggestion : t -> string
 (** [suggestion s] is the free form text of the suggestion. *)
@@ -50,7 +48,7 @@ val email : t -> string
 
 val id' : (t, Id.t) Rel.Col.t
 val timestamp' : (t, int) Rel.Col.t
-val doi' : (t, doi) Rel.Col.t
+val doi' : (t, Doi.t option) Rel.Col.t
 val suggestion' : (t, string) Rel.Col.t
 val comment' : (t, string) Rel.Col.t
 val email' : (t, string) Rel.Col.t
@@ -62,7 +60,7 @@ include Entity.IDENTIFIABLE_WITH_QUERIES with type t := t and module Id := Id
 val list : (t, Bag.unordered) Rel_query.Bag.t
 val list_stmt : t Rel_sql.Stmt.t
 
-val find_doi : string Rel_query.value -> (t, Bag.unordered) Bag.t
+val find_doi : Doi.t Rel_query.value -> (t, Bag.unordered) Bag.t
 
 (** {1:urls Urls} *)
 

@@ -9,7 +9,7 @@ open Hyperbib_std
 
 val find_dupe_doi :
   ?suggestion_dupe_check:bool -> Page.Gen.t -> self:Kurl.t -> Db.t ->
-  string -> (El.html option, Http.Response.t) result
+  Doi.t -> (El.html option, Http.Response.t) result
 
 val lookup_doi :
   Service_env.t -> Doi.t ->

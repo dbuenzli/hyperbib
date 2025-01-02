@@ -11,6 +11,13 @@ let pp_check ppf () = Fmt.(st [`Bg `White; `Fg `Black]) ppf " TEST "
 let pp_pass ppf () = Fmt.(st [`Bg `Green; `Fg `Black]) ppf " PASS "
 let pp_fail ppf () = Fmt.(st [`Bg `Red; `Fg `Black]) ppf " FAIL "
 
+(* DOI check.
+
+   Note the DOI check works because we use Doi.unsafe_of_string when
+   get out DOIs from the db column and Doi.to_string is the
+   identity. So we can recover unormalized dois despite them having
+   gone through Doi.t *)
+
 let check_reference_dois db ~repair =
   let reference_dois_stmt =
     let ref_dois = Row.(t2 Reference.id' Reference.doi') in
@@ -36,30 +43,32 @@ let check_reference_dois db ~repair =
   in
   let check (id, doi) n = match doi with
   | None -> n
-  | Some "" ->
-      Log.err (fun m ->
-          m "Reference %a: Invalid empty DOI, should be NULL"
-            Reference.Id.pp id);
-      (if not repair then () else
-       (Log.if_error ~use:() @@ Db.string_error @@ do_update ~id None));
-      n + 1
   | Some doi ->
-      match Doi.of_string doi with
-      | Error e ->
-          Log.err (fun m -> m "Reference %a: DOI %S: %s"
-                      Reference.Id.pp id doi e);
+      match Doi.to_string doi with
+      | "" ->
+          Log.err (fun m ->
+              m "Reference %a: Invalid empty DOI, should be NULL"
+                Reference.Id.pp id);
+          (if not repair then () else
+           (Log.if_error ~use:() @@ Db.string_error @@ do_update ~id None));
           n + 1
-      | Ok doi' ->
-          let doi' = Doi.to_string doi' in
-          if Doi.equal doi' doi then n else begin
-            Log.warn (fun m ->
-                m "Reference %a: DOI %S not normalized (%S)"
-                  Reference.Id.pp id doi doi');
-            (if not repair then () else
-             (Log.if_error ~use:() @@ Db.string_error @@
-              do_update ~id (Some doi')));
-            n + 1
-          end
+      | doi_raw ->
+          match Doi.extract doi_raw with
+          | None ->
+              Log.err (fun m -> m "Reference %a: DOI %S: cannot extract a DOI"
+                          Reference.Id.pp id doi_raw);
+              n + 1
+          | Some doi_reparsed ->
+              let doi_reparsed_raw = Doi.to_string doi_reparsed in
+              if String.equal doi_reparsed_raw doi_raw then n else begin
+              Log.warn (fun m ->
+                  m "Reference %a: DOI %S not normalized (%S)"
+                    Reference.Id.pp id doi_raw doi_reparsed_raw);
+              (if not repair then () else
+               (Log.if_error ~use:() @@ Db.string_error @@
+                do_update ~id (Some doi_reparsed)));
+              n + 1
+            end
   in
   Db.fold db reference_dois_stmt check 0 |> Db.string_error
 
@@ -91,23 +100,24 @@ let check_reference_dois db ~repair =
    let check r n =
      let reference = Reference.Cites.reference r in
      let doi = Reference.Cites.doi r in
+     let doi_raw = Doi.to_string doi in
      match
        (* It seems sometimes crossrefs gave us spaces *)
-       Doi.of_string (String.replace_all ~sub:" " ~by:"" doi)
+       Doi.extract (String.replace_all ~sub:" " ~by:"" doi_raw)
      with
-     | Error e ->
-         Log.err (fun m -> m "Cites reference %a: DOI %S: %s"
-                     Reference.Id.pp reference doi e);
+     | None ->
+         Log.err (fun m -> m "Cites reference %a: DOI %S: cannot extract a DOI"
+                     Reference.Id.pp reference doi_raw);
          n + 1
-     | Ok doi' ->
-         let doi' = Doi.to_string doi' in
-         if Doi.equal doi' doi then n else begin
+     | Some doi_reparsed ->
+         let doi_reparsed_raw = Doi.to_string doi_reparsed in
+         if String.equal doi_reparsed_raw doi_raw then n else begin
            Log.warn begin fun m ->
              m "Cites reference %a: DOI %S not normalized (%S)"
-               Reference.Id.pp reference doi doi'
+               Reference.Id.pp reference doi_raw doi_reparsed_raw
            end;
            (if not repair then () else
-            let newr = Reference.Cites.make ~reference ~doi:doi' in
+            let newr = Reference.Cites.make ~reference ~doi:doi_reparsed in
             Log.if_error ~use:() @@ Db.string_error @@ do_update r newr);
            n + 1
          end

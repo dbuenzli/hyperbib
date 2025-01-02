@@ -46,16 +46,18 @@ let details = "Details"
 let delete = "Delete"
 let deleted = "Deleted"
 let description = "Description"
-let document_in_bib s =
-  Fmt.str "Warning, the document identified by DOI ‘%s’ is already part of the
-    bibliography" s
+let document_in_bib doi =
+  Fmt.str "Warning, the document identified by DOI ‘%a’ is already part of the
+    bibliography" Doi.pp doi
 
-let document_suggested s =
-  Fmt.str "Warning, the document identified by DOI ‘%s’ is already suggested" s
+let document_suggested doi =
+  Fmt.str "Warning, the document identified by DOI ‘%a’ is already suggested"
+    Doi.pp doi
 
 let doi = "DOI"
-let doi_not_found s =
-  Fmt.str "Sorry, the document identified by DOI ‘%s’ cannot be found." s
+let doi_not_found doi =
+  Fmt.str "Sorry, the document identified by DOI ‘%a’ cannot be found."
+    Doi.pp doi
 
 let doi_extract_error s =
   Fmt.str "Sorry, could not extract a DOI from ‘%s’." s

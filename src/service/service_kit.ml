@@ -7,11 +7,11 @@ open Hyperbib_std
 open Result.Syntax
 
 let find_doi db doi =
-  let r = Reference.find_doi (Rel_query.Text.v doi) in
+  let r = Reference.find_doi (Schema_kit.Doi_rel.v doi) in
   Db.first db (Rel_query.Sql.of_bag' Reference.table r)
 
 let find_doi_suggestion db doi =
-  let r = Suggestion.find_doi (Rel_query.Text.v doi) in
+  let r = Suggestion.find_doi (Schema_kit.Doi_rel.v doi) in
   Db.first db (Rel_query.Sql.of_bag' Suggestion.table r)
 
 let find_dupe_doi ?(suggestion_dupe_check = true) g ~self db doi =

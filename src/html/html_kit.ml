@@ -103,7 +103,8 @@ let link ?(at = []) ~href:h content = El.a ~at:(At.href h :: at) [content]
 let doi_link ?(at = []) doi text = match doi with
 | None -> El.void
 | Some doi ->
-    let at = At.(href (Doi.as_url doi) :: v "data-doi" doi :: at) in
+    let doi_url = Doi.as_url doi in
+    let at = At.(href doi_url :: v "data-doi" (Doi.to_string doi) :: at) in
     El.a ~at [text]
 
 let mailto_link ?(at = []) ?(body = "") ?(subject = "") ~email text =

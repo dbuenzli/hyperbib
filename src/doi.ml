@@ -126,6 +126,14 @@ let of_string s = match find ~already_delimited:true s with
 | None -> Error (Fmt.str "%S: No DOI found" s)
 | Some d -> Ok d
 
+let v s = of_string s |> Result.get_ok'
+
+let jsont =
+  let kind = "DOI" in
+  let dec = Jsont.Base.dec_result of_string in
+  let enc = to_string in
+  Jsont.Base.string (Jsont.Base.map ~kind ~dec ~enc ())
+
 (* Resolving *)
 
 let response_success request response = match Http.Response.status response with

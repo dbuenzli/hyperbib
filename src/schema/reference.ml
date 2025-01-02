@@ -111,9 +111,9 @@ module Reference = struct
 
   let date_year' = Col.make "date_year" Type.(option int) date_year
   let date_md' =
-    Col.make "date_md" Type.(option Schema_kit.date_md_partial_type) date_md
+    Col.make "date_md" Type.(option Schema_kit.Date_md_partial_rel.t) date_md
 
-  let doi' = Col.make "doi" Type.(option text) doi
+  let doi' = Col.make "doi" Type.(option Schema_kit.Doi_rel.t) doi
   let isbn' = Col.make "isbn" Type.text isbn
   let issue' = Col.make "issue" Type.text issue
   let note' = Col.make "note" Type.text note
@@ -400,7 +400,7 @@ module Cites = struct
   let doi c = c.doi
 
   let reference' = Col.make "reference" Id.type' reference
-  let doi' = Col.make "doi" Type.text doi
+  let doi' = Col.make "doi" Schema_kit.Doi_rel.t doi
   let table =
     let primary_key = Table.Primary_key.make [Def reference'; Def doi'] in
     let foreign_keys =
@@ -413,6 +413,7 @@ module Cites = struct
     Row.(unit row * reference' * doi')
 
   open Rel_query.Syntax
+  open Schema_kit
 
   let create c = Rel_sql.insert_into Db.dialect table c
   let of_ref_ids rids =
@@ -427,7 +428,7 @@ module Cites = struct
     let is_rid = Id.(rid = rel #. reference') in
     let is_internal_doi =
       Option.is_some (ref #. reference_doi') &&
-      Text.(rel #. doi' = Option.get (ref #. reference_doi'))
+      Doi_rel.(rel #. doi' = Option.get (ref #. reference_doi'))
     in
     let pair x y = Bag.inj (fun x y -> x, y) $ x $ y in (* FIXME rel *)
     let rel' = pair (rel #. reference') (ref #. id') in
@@ -630,9 +631,11 @@ let replace_container_stmt ~this ~by =
   let by = Col.Value (container', (Some by)) in
   Rel_sql.update Db.dialect table ~set:[by] ~where:[this]
 
+open Schema_kit
+
 let ids_citing_doi doi =
   let* c = Bag.table Cites.table in
-  Bag.where Text.(c #. Cites.doi' = doi) (Bag.yield (c #. Cites.reference'))
+  Bag.where Doi_rel.(c #. Cites.doi' = doi) (Bag.yield (c #. Cites.reference'))
 
 let citing_doi doi =
   let* citing = ids_citing_doi doi in
@@ -646,13 +649,15 @@ let dois_cited rid =
 let find_dois dois =
   let* doi = dois in
   let* r = Bag.table table in
-  let eq_doi = Option.(equal (r #.doi') (some Type.text doi) ~eq:Text.equal) in
+  let eq_doi =
+    Option.(equal (r #.doi') (some Doi_rel.t doi) ~eq:Doi_rel.equal)
+  in
   Bag.where eq_doi (Bag.yield r)
 
 let find_doi doi =
   let* r = Bag.table table in
   let eq_doi =
-    Option.(equal (r #. doi') (some Type.text doi) ~eq:Text.equal)
+    Option.(equal (r #. doi') (some Doi_rel.t doi) ~eq:Doi_rel.equal)
   in
   Bag.where eq_doi (Bag.yield r)
 
@@ -767,7 +772,7 @@ module Url = struct
   | Duplicate_form of Id.t
 *)
   | Edit_form of Id.t
-  | Fill_in_form of Doi.t
+  | Fill_in_form of [`Doi of string ]
   | Index
   | New_form of { cancel : Entity.Url.cancel_url }
   | Page of named_id
@@ -795,7 +800,7 @@ module Url = struct
   | ["part"; "fill-in-form"] ->
       let* `GET = Kurl.allow Http.Method.[get] u in
       let* doi = get_doi u in
-      Kurl.ok (Fill_in_form doi)
+      Kurl.ok (Fill_in_form (`Doi doi))
   | ["part"; "view-fields"; id] ->
       let* `GET, id = Entity.Url.get_id (module Id) u id in
       Kurl.ok (View_fields id)
@@ -869,7 +874,7 @@ module Url = struct
       Kurl.bare `GET ["part"; "edit-form"; Id.to_string id]
   | Index ->
       Kurl.bare `GET [""] ~ext:html
-  | Fill_in_form d ->
+  | Fill_in_form (`Doi d) ->
       (* XXX something feels wrong with Kurl here separate
          URL req / resp types ? *)
       let query = match d with

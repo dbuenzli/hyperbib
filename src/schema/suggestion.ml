@@ -8,11 +8,10 @@ open Rel
 
 module Suggestion = struct
   module Id = Rel_kit.Id.MakeInt ()
-  type doi = string
   type t =
     { id : Id.t;
       timestamp : int;
-      doi : doi;
+      doi : Doi.t option;
       suggestion : string;
       comment : string;
       email : string }
@@ -24,7 +23,7 @@ module Suggestion = struct
     { id; timestamp; doi; suggestion; comment; email }
 
   let new' =
-    { id = Id.zero; timestamp = 0; doi = ""; suggestion = "";  comment = "";
+    { id = Id.zero; timestamp = 0; doi = None; suggestion = "";  comment = "";
       email = ""; }
 
   let id s = s.id
@@ -38,7 +37,7 @@ module Suggestion = struct
 
   let id' = Col.make "id" Id.type' id
   let timestamp' = Col.make "timestamp" Type.int timestamp
-  let doi' = Col.make "doi" Type.text doi
+  let doi' = Col.make "doi" Type.(option Schema_kit.Doi_rel.t) doi
   let suggestion' = Col.make "suggestion" Type.text suggestion
   let comment' = Col.make "comment" Type.text comment
   let email' = Col.make "email" Type.text email
@@ -62,7 +61,9 @@ let list_stmt = Rel_query.Sql.(func @@ ret (Table.row table) list)
 
 let find_doi doi =
   let* r = Bag.table table in
-  let is_doi = Text.(not (doi = empty) && doi = r #. doi') in
+  let is_doi = Option.(equal (some Schema_kit.Doi_rel.t doi) (r #. doi')
+                         ~eq:Schema_kit.Doi_rel.equal)
+  in
   Bag.where is_doi (Bag.yield r)
 
 module Url = struct

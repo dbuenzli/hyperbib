@@ -15,6 +15,7 @@ val confirm_delete :
   Page.Gen.t -> Suggestion.t -> El.html
 
 val suggest_form :
+  ?invalid_user_doi:string ->
   ?force_rescue:bool -> ?msg:El.html -> Page.Gen.t -> Suggestion.t -> El.html
 
 val created : Page.Gen.t -> Suggestion.t -> Page.t

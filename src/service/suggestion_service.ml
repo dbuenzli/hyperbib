@@ -38,27 +38,45 @@ let suggestion_notification env id =
   in
   Email.send ~sender ~recipient ~subject ~body
 
-let lookup_doi db env req s =
+let fill_in_with_doi g db env req s =
   let* self = Html_kit.url_of_req_referer req in
-  match Doi.extract (Suggestion.doi s) with
+  match Suggestion.doi s with
   | None ->
-      let msg = err_doi_extract_error_msg (Suggestion.doi s) in
-      let e = "Could not extract DOI" in
-      Ok (Suggestion.doi s, Suggestion.suggestion s, Some msg, Some e)
+      let msg = err_doi_unspecified_msg in
+      let html = Suggestion_html.suggest_form ~force_rescue:true ~msg g s in
+      let log = "Missing DOI" in
+      Error (Page.part_response ~log html)
   | Some doi ->
       let* doi, ref = Service_kit.lookup_doi env doi in
       let g = Service_env.page_gen env in
       match ref with
-      | Error e ->
+      | Error log ->
           let msg = err_doi_error_msg in
-          Ok (doi, Suggestion.suggestion s, Some msg, Some e)
+          let html = Suggestion_html.suggest_form ~force_rescue:true ~msg g s in
+          Error (Page.part_response ~log html)
       | Ok None ->
-          Ok (doi, Suggestion.suggestion s,
-              Some (err_doi_not_found_msg doi), None)
+          let msg = err_doi_not_found_msg doi in
+          let log = "DOI not found" in
+          let html = Suggestion_html.suggest_form ~force_rescue:true ~msg g s in
+          Error (Page.part_response ~log html)
       | Ok (Some ref) ->
           let suggestion = Import.Doi.ref_to_short_text_citation ref in
           let* msg = Service_kit.find_dupe_doi g ~self db doi in
-          Ok (doi, suggestion, msg, None)
+          let s =
+            let id = Suggestion.Id.zero in
+            let timestamp = Suggestion.timestamp s in
+            let doi = Suggestion.doi s and comment = Suggestion.comment s in
+            let email = Suggestion.email s in
+            Suggestion.make ~id ~timestamp ~doi ~suggestion ~comment ~email ()
+          in
+          match msg with
+          | None -> Ok s
+          | Some msg ->
+              let log = "DOI dupe" in
+              let html =
+                Suggestion_html.suggest_form ~force_rescue:true ~msg g s
+              in
+              Error (Page.part_response ~log html)
 
 let honeypot_error fill =
   let log = Fmt.str "Bot honeypot triggered with fill: %s" fill in
@@ -68,30 +86,23 @@ let honeypot_error fill =
   in
   Error (Page.part_response ~log ~status:Http.Status.forbidden_403 html)
 
-let validate_suggestion db env req s =
+let validate_suggestion g db env req s =
   let g = Service_env.page_gen env in
-  if String.trim (Suggestion.suggestion s) <> "" then Ok (Ok s) else
-  if String.trim (Suggestion.doi s) = "" then
+  if String.trim (Suggestion.suggestion s) <> "" then Ok s else
+  if Option.is_none (Suggestion.doi s) then
     let msg = Suggestion_html.need_a_doi_or_suggestion in
-    Ok (Error (Suggestion_html.suggest_form ~msg g s))
+    let log = "No suggestion and no DOI" in
+    let html = Suggestion_html.suggest_form ~msg g s in
+    Error (Page.part_response ~log html)
   else
-  let* doi, suggestion, msg, explain = lookup_doi db env req s in
-  let s =
-    let comment = Suggestion.comment s and email = Suggestion.email s in
-    let id = Suggestion.Id.zero in
-    Suggestion.make ~id ~timestamp:0 ~doi ~suggestion ~comment ~email ()
-  in
-  match msg with
-  | None -> Ok (Ok s)
-  | Some msg ->
-      Ok (Error (Suggestion_html.suggest_form ~force_rescue:true ~msg g s))
+  (* No suggestion but we have a DOI, fill in Suggestion.suggestion *)
+  fill_in_with_doi g db env req s
 
-let suggestion_of_req req =
+let suggestion_of_req g req =
   let* q = Http.Request.to_query req in
   let honey = Hquery.key Suggestion_html.bot_honeypot_field Hquery.string in
   let* fill = Hquery.get honey q in
   if fill <> "" then honeypot_error fill else
-  let* doi = Hquery.get_col Suggestion.doi' q in
   let* suggestion = Hquery.get_col Suggestion.suggestion' q in
   let* comment = Hquery.get_col Suggestion.comment' q in
   let* email =
@@ -102,6 +113,25 @@ let suggestion_of_req req =
     Ptime.to_span (Ptime_clock.now ())
   in
   let id = Suggestion.Id.zero in
+  let* doi =
+    (* XXX support for coded columns and user validation *)
+    let* doi =
+      let doi = Hquery.key (Rel.Col.name Suggestion.doi') Hquery.string in
+      Hquery.get doi q
+    in
+    if String.trim doi = "" then Ok None else match Doi.extract doi with
+    | Some _ as doi -> Ok doi
+    | None ->
+        let msg = err_doi_extract_error_msg doi in
+        let log = "Could not extract DOI" in
+        let html =
+          Suggestion_html.suggest_form
+            ~invalid_user_doi:doi ~force_rescue:true ~msg g @@
+          Suggestion.make ~id ~timestamp ~doi:None ~suggestion ~comment ~email
+            ()
+        in
+        Error (Page.part_response ~log html)
+  in
   Ok (Suggestion.make ~id ~timestamp ~doi ~suggestion ~comment ~email ())
 
 (* Responses *)
@@ -116,21 +146,18 @@ let confirm_delete env id =
 
 let create env req =
   Service_env.with_db_transaction' `Immediate env @@ fun db ->
-  let* s = suggestion_of_req req in
-  let* v = validate_suggestion db env req s in
-  match v with
-  | Error html -> Ok (Page.part_response html)
-  | Ok s ->
-      let* id =
-        Db.insert' (module Suggestion.Id) db
-          (Suggestion.create ~ignore_id:true s)
-      in
-      let uf = Service_env.url_fmt env in
-      let iid = Suggestion.Id.to_int id in
-      let () = suggestion_notification env iid |> Log.if_error ~use:() in
-      let redirect = Suggestion.Url.v (Page {id; created = true}) in
-      let headers = Html_kit.htmlact_redirect uf redirect in
-      Ok (Http.Response.empty ~headers Http.Status.ok_200)
+  let g = Service_env.page_gen env in
+  let* s = suggestion_of_req g req in
+  let* s = validate_suggestion g db env req s in
+  let* id =
+    Db.insert' (module Suggestion.Id) db (Suggestion.create ~ignore_id:true s)
+  in
+  let uf = Service_env.url_fmt env in
+  let iid = Suggestion.Id.to_int id in
+  let () = suggestion_notification env iid |> Log.if_error ~use:() in
+  let redirect = Suggestion.Url.v (Page {id; created = true}) in
+  let headers = Html_kit.htmlact_redirect uf redirect in
+  Ok (Http.Response.empty ~headers Http.Status.ok_200)
 
 let delete env id =
   let* () = Entity_service.check_edit_authorized env in
@@ -143,20 +170,10 @@ let delete env id =
 let fill_in env req =
   Service_env.with_db_transaction' `Deferred env @@ fun db ->
   let g = Service_env.page_gen env in
-  let* s = suggestion_of_req req in
-  let doi = Suggestion.doi s in
-  let* doi, suggestion, msg, log =
-    if doi = ""
-    then Ok (doi, Suggestion.suggestion s, Some err_doi_unspecified_msg, None)
-    else lookup_doi db env req s
-  in
-  let s =
-    let comment = Suggestion.comment s and email = Suggestion.email s in
-    let id = Suggestion.Id.zero in
-    Suggestion.make ~id ~timestamp:0 ~doi ~suggestion ~comment ~email ()
-  in
-  let html = Suggestion_html.suggest_form ~force_rescue:true ?msg g s in
-  Ok (Page.part_response ?log html)
+  let* s = suggestion_of_req g req in
+  let* s = fill_in_with_doi g db env req s in
+  let html = Suggestion_html.suggest_form ~force_rescue:true g s in
+  Ok (Page.part_response html)
 
 let view_fields env req id =
   Service_env.with_db_transaction' `Deferred env @@ fun db ->
@@ -173,12 +190,12 @@ let integrate env req id =
   let suggs = Suggestion.Url.v Index in
   let cancel = Some (Kurl.Fmt.url (Service_env.url_fmt env) suggs) in
   let* explain, form = match Suggestion.doi s with
-  | "" ->
+  | None ->
       let g = Service_env.page_gen env in
       Ok (None, Service_kit.empty_reference_form g ~self ~cancel)
-  | doi ->
+  | Some doi ->
       Service_kit.fill_in_reference_form ~suggestion_dupe_check:false
-        env db ~self ~cancel ~doi
+        env db ~self ~cancel ~doi:(Doi.to_string doi)
   in
   let g = Service_env.page_gen env in
   let page = Suggestion_html.integrate g s ~form in

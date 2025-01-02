@@ -39,7 +39,7 @@ let get_page_data db g r =
   let* cites = Reference.render_data ~only_public cites db in
   let cited_by = match Reference.doi r with
   | None -> Bag.empty
-  | Some doi -> Reference.citing_doi (Rel_query.Text.v doi)
+  | Some doi -> Reference.citing_doi (Schema_kit.Doi_rel.v doi)
   in
   let* cited_by = Reference.render_data ~only_public cited_by db in
   Ok (render_data, cites, cited_by)
@@ -96,7 +96,7 @@ let new_form app req ~cancel =
   let page = Reference_html.new_form g Reference.new' ~cancel in
   Ok (Page.response page)
 
-let fill_in_form env req doi =
+let fill_in_form env req (`Doi doi) =
   let* () = Entity_service.check_edit_authorized env in
   Service_env.with_db_transaction' `Deferred env @@ fun db ->
   let* cancel =
@@ -183,12 +183,8 @@ let authors_editors_maybe_create db q =
   let* eids, _ = ids created [] editors in
   Ok (aids, eids)
 
-let create app req = (* create and update are very similar factor out a bit. *)
-  let* () = Entity_service.check_edit_authorized app in
-  let entity_page_url id = Reference.Url.v (Page (None, id)) in
-  Service_env.with_db_transaction' `Immediate app @@ fun db ->
-  let* q = Http.Request.to_query req in
-  let ignore = [Col.Def Reference.id'] in
+let reference_cols_of_query q =
+  let ignore = [Col.Def Reference.id'; Col.Def Reference.doi'] in
   let* vs = Hquery.careless_find_table_cols ~ignore Reference.table q in
   let vs = match Hquery.find_date q with
   | Error _ (* FIXME form validation *) -> vs
@@ -196,6 +192,19 @@ let create app req = (* create and update are very similar factor out a bit. *)
       let y, md = Reference.col_values_for_date d in
       y :: md :: vs
   in
+  match Http.Query.find_first "doi" q with
+  | None -> Ok vs
+  | Some doi ->
+      (* FIXME form validation, for now we simply erase the field
+         if it doesn't validate. *)
+      Ok (Rel.Col.Value (Reference.doi', Doi.extract doi) :: vs)
+
+let create app req = (* create and update are very similar factor out a bit. *)
+  let* () = Entity_service.check_edit_authorized app in
+  let entity_page_url id = Reference.Url.v (Page (None, id)) in
+  Service_env.with_db_transaction' `Immediate app @@ fun db ->
+  let* q = Http.Request.to_query req in
+  let* vs = reference_cols_of_query q in
   let vs =
     (* These things are not set in the ui but we have an integrity constraint *)
     Col.Value (Reference.abstract', "") :: vs
@@ -205,7 +214,7 @@ let create app req = (* create and update are very similar factor out a bit. *)
     Hquery.find_ids (module Subject.Id) ~uniquify:true key q
   in
   let* aids, eids = authors_editors_maybe_create db q in
-  let cites = Hquery.find_cites q in
+  let cites = List.filter_map Doi.extract (Hquery.find_cites q) in
   let* vs = maybe_create_container db vs q in
   let created = Col.Value (Reference.created_ptime_s', Unix.gettimeofday ()) in
   let vs = created :: vs in
@@ -231,15 +240,7 @@ let update env req id =
   let* () = Entity_service.check_edit_authorized env in
   Service_env.with_db_transaction' `Immediate env @@ fun db ->
   let* q = Http.Request.to_query req in
-  let ignore = [Col.Def Reference.id'] in
-  let* vs = Hquery.careless_find_table_cols ~ignore Reference.table q in
-  let vs = match Hquery.find_date q with
-  | Error _ (* FIXME form validation, which we also need to poperly type
-               dois. *) -> vs
-  | Ok d ->
-      let y, md = Reference.col_values_for_date d in
-      y :: md :: vs
-  in
+  let* vs = reference_cols_of_query q in
   let uniquify = true in
   let* sids =
     let key = Reference.Subject.(Hquery.key_for_rel table subject') in
@@ -289,8 +290,8 @@ let doc env request (_, ref_id) docid =
     let* ref = get_reference db ref_id in
     let doi = Reference.doi ref in
     match doi with
-    | None | Some "" -> Ok "doc"
-    | Some doi -> Ok doi
+    | None -> Ok "doc"
+    | Some doi -> Ok (Doi.to_string doi)
   in
   let media_type = Reference.Doc.media_type doc in
   let ext = Media_type.to_file_ext media_type in

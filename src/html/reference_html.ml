@@ -74,7 +74,12 @@ let edit_title r =
 
 let edit_doi r =
   let label = El.txt Uimsg.doi and col = Reference.doi' in
-  Hui.field_string_option ~autogrow:true ~min_size:8 ~label ~col r
+  (* TODO Hui support for coded columns *)
+  let name = Rel.Col.name col in
+  let v = match Rel.Col.proj col r with
+  | None -> "" | Some doi -> Doi.to_string doi
+  in
+  Hui.field_string' ~label ~autogrow:true ~min_size:8 ~name v
 
 let edit_isbn r =
   let label = El.txt Uimsg.isbn and col = Reference.isbn' in
@@ -189,7 +194,10 @@ let edit_buttons uf ~submit r =
   Hui.group ~align:`Justify ~dir:`H [cancel; submit]
 
 let edit_cites cites = (* Hidden for now *)
-  let cite doi = El.input ~at:At.[hidden; name Hquery.cite_key; value doi] () in
+  let cite doi =
+    let doi = Doi.to_string doi in
+    El.input ~at:At.[hidden; name Hquery.cite_key; value doi] ()
+  in
   El.splice (List.map cite cites)
 
 let edit_reference
@@ -248,7 +256,7 @@ let fill_ui g ~doi =
     Hui.group ~at ~x_align:`Center ~dir:`H [input; fill_in]
   in
   let at =
-    let url = Reference.Url.v (Fill_in_form "") in
+    let url = Reference.Url.v (Fill_in_form (`Doi "")) in
     let r = Html_kit.htmlact_request (Page.Gen.url_fmt g) url in
     let t = Htmlact.target ":up .entity" in
     [r; t; Hclass.vspace_0125]
@@ -423,8 +431,9 @@ let view_reference_docs r g ~self = function
     let reference_doc b =
       let name = match String.trim (Reference.Doc.name b) with
       | "" ->
+          (* FIXME use Export.ref_to_cite_key *)
           Option.value ~default:"doc" @@
-          Reference.doi r (* FIXME use Export.ref_to_cite_key *)
+          Option.map Doi.to_string (Reference.doi r)
       | slug -> slug
       in
       Html_kit.link_reference_doc r ~name ~self uf b

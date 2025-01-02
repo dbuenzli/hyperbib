@@ -13,9 +13,6 @@ open Rel
 
 (** {1:gen Generic} *)
 
-(* FIXME not convient for form building. Should we separate kind from
-   key name ? *)
-
 type 'a kind
 val kind : string -> (string -> 'a option) -> 'a kind
 val bool : bool kind
@@ -92,7 +89,7 @@ val date_key : string
 val find_date : Http.Query.t -> (Date.partial option, string) result
 
 val cite_key : string
-val find_cites : Http.Query.t -> Doi.t list
+val find_cites : Http.Query.t -> string list
 
 val person_key : Person.Role.t option -> string
 

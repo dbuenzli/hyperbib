@@ -51,9 +51,9 @@ let add_reference_doc
   | Collides ->
       Log.err begin
         fun m ->
-          m "@[<v>Reference %a: DOI:%s Origin:%s :@,\
+          m "@[<v>Reference %a: DOI:%a Origin:%s :@,\
              Collision on %a. Please report a bug to the software developers."
-            Reference.Id.pp reference doi origin
+            Reference.Id.pp reference Doi.pp doi origin
             Blobstore.Key.pp key
       end
   | Exists | Created ->
