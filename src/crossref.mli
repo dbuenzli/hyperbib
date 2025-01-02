@@ -36,6 +36,28 @@ module Reference : sig
   val jsont : t Jsont.t
 end
 
+(** {{:https://github.com/Crossref/rest-api-doc/blob/master/api_format.md#license}License} objects. *)
+module License : sig
+  type t = {
+    content_version : string;
+    start : partial_date;
+    url : string; }
+
+  val jsont : t Jsont.t
+end
+
+(** {{:https://github.com/Crossref/rest-api-doc/blob/master/api_format.md#resource-link}Ressource link} objects. *)
+module Ressource_link : sig
+  type t =
+    { intended_application : string;
+      content_version : string;
+      url : string;
+      content_type : string option; }
+
+  val jsont : t Jsont.t
+end
+
+
 (** {{:https://github.com/Crossref/rest-api-doc/blob/master/api_format.md#work}
     Work} objects. *)
 module Work : sig
@@ -49,6 +71,8 @@ module Work : sig
       isbn : string list;
       issue : string option;
       issued : partial_date;
+      license : License.t list;
+      link : Ressource_link.t list;
       page : string option;
       publisher : string;
       reference : Reference.t list;

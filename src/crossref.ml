@@ -45,6 +45,42 @@ module Reference = struct
     |> Jsont.Object.finish
 end
 
+module License = struct
+  type t =
+    { content_version : string;
+      start : partial_date;
+      url : string; }
+
+  let make content_version start url =
+    { content_version; start; url }
+
+  let jsont =
+    Jsont.Object.map make
+    |> Jsont.Object.mem "content-version" Jsont.string
+    |> Jsont.Object.mem "start" partial_date_jsont
+    |> Jsont.Object.mem "URL" Jsont.string
+    |> Jsont.Object.finish
+end
+
+module Ressource_link = struct
+  type t =
+    { intended_application : string;
+      content_version : string;
+      url : string;
+      content_type : string option; }
+
+  let make intended_application content_version url content_type =
+    { intended_application; content_version; url; content_type}
+
+  let jsont =
+    Jsont.Object.map make
+    |> Jsont.Object.mem "intended-application" Jsont.string
+    |> Jsont.Object.mem "content-version" Jsont.string
+    |> Jsont.Object.mem "URL" Jsont.string
+    |> Jsont.Object.opt_mem "content-type" Jsont.string
+    |> Jsont.Object.finish
+end
+
 module Work = struct
   type t =
     { author : Contributor.t list;
@@ -56,6 +92,8 @@ module Work = struct
       isbn : string list;
       issue : string option;
       issued : partial_date;
+      license : License.t list;
+      link : Ressource_link.t list;
       page : string option;
       publisher : string;
       reference : Reference.t list;
@@ -65,11 +103,11 @@ module Work = struct
       volume : string option; }
 
   let make
-      author abstract container_title doi editor issn isbn issue issued page
-      publisher reference subject title type' volume
+      author abstract container_title doi editor issn isbn issue issued
+      license link page publisher reference subject title type' volume
     =
-    { author; abstract; container_title; doi; editor; issn; isbn;
-      issue; issued; page; publisher; reference; subject; title; type';
+    { author; abstract; container_title; doi; editor; issn; isbn; issue;
+      issued; license; link; page; publisher; reference; subject; title; type';
       volume; }
 
   let string_or_string_array = (* It seems we also get them as simple strings *)
@@ -88,6 +126,8 @@ module Work = struct
     |> Jsont.Object.mem "ISBN" Jsont.(list string) ~dec_absent:[]
     |> Jsont.Object.opt_mem "issue" Jsont.string
     |> Jsont.Object.mem "issued" partial_date_jsont
+    |> Jsont.Object.mem "license" Jsont.(list License.jsont) ~dec_absent:[]
+    |> Jsont.Object.mem "link" Jsont.(list Ressource_link.jsont) ~dec_absent:[]
     |> Jsont.Object.opt_mem "page" Jsont.string
     |> Jsont.Object.mem "publisher" Jsont.string
     |> Jsont.Object.mem "reference" Jsont.(list Reference.jsont) ~dec_absent:[]

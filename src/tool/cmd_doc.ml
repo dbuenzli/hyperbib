@@ -7,6 +7,8 @@ open Hyperbib_std
 open Result.Syntax
 open Rel
 
+(* FIXME we should also look into CrossRef.Ressource_link *)
+
 let find_document httpc ~url_only ~doi_resolvers ~media_type ~doi =
   let rec loop = function
   | [] -> Fmt.error "DOI %a: No document found" (Fmt.code' Doi.pp) doi
