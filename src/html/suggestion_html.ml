@@ -9,11 +9,21 @@ let page_404 g ~self =
   let consult = Suggestion.Url.v Index in
   Page.for_404 g ~kind:Uimsg.suggestion ~self ~consult
 
-let doi_input g s =
+let doi_input g ?invalid_user_doi s =
   let label = El.txt (String.concat " " Uimsg.[doi; optional]) in
-  let col = Suggestion.doi' in
   let label = El.span ~at:[Hui.Class.label] [label] in
-  let input = Hui.input_string ~autogrow:true ~min_size:25 ~col s in
+  let col = Suggestion.doi' in
+  let input =
+    (* TODO Hui support for coded columns and restoring invalid inputs *)
+    let name = Rel.Col.name col in
+    let v = match invalid_user_doi with
+    | Some doi -> doi
+    | None ->
+        match Rel.Col.proj col s with
+        | None -> "" | Some doi -> Doi.to_string doi
+    in
+    Hui.input_string' ~autogrow:true ~min_size:25 ~name v
+  in
   let fill_in =
     let r =
       Html_kit.htmlact_request (Page.Gen.url_fmt g) (Suggestion.Url.v Fill_in)
@@ -83,8 +93,8 @@ let need_a_doi_or_suggestion =
   El.p ~at:[Hclass.message; Hclass.error]
     [El.txt Uimsg.need_a_doi_or_suggestion]
 
-let suggest_form ?force_rescue ?(msg = El.void) g s =
-  let doi = doi_input g s in
+let suggest_form ?invalid_user_doi ?force_rescue ?(msg = El.void) g s =
+  let doi = doi_input ?invalid_user_doi g s in
   let suggestion = input_suggestion s in
   let comment = input_comment s in
   let email = input_email s in
@@ -95,19 +105,22 @@ let suggest_form ?force_rescue ?(msg = El.void) g s =
 
 let pending_anchor = "pending"
 
-let doi s =
-  let txt = El.txt ("doi:" ^ Suggestion.doi s) in
-  let d = Html_kit.doi_link (Some (Suggestion.doi s)) txt in
-  if El.is_void d then d else El.small [El.sp ; d]
+let doi s = match Suggestion.doi s with
+| None -> El.void
+| Some d as doi ->
+    (* Why does doi_link take an option ? try to remove that. *)
+    Html_kit.doi_link doi (El.txt (" doi:" ^ Doi.to_string d))
+
 
 let created g s =
+  (* FIXME move the messages to Uimsg *)
   let self = Suggestion.Url.v (Page {id = Suggestion.id s; created = true}) in
   let title = Uimsg.suggestion in
   let uf = Page.Gen.url_fmt g in
   let h1 = El.h1 [ El.txt "Suggestion submitted"] in
   let doi = doi s in
   let thanks = El.p [El.txt "Thank you!"] in
-  let theref = El.p [El.txt "The reference"; doi; El.txt ":" ] in
+  let theref = El.p [El.txt "The reference "; doi; El.txt ":" ] in
   let sugg =
     El.p ~at:[Hclass.message; Hclass.info] [El.txt (Suggestion.suggestion s)]
   in

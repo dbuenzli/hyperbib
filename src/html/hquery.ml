@@ -59,8 +59,6 @@ let get_all k q =
   if not (Http.Query.mem k.name q) then no_key_400 ~kind:k.kind.kind k.name else
   find_all k q
 
-
-
 let uniquify_ids (type id) (module Id : Rel_kit.ID with type t = id) l =
   let rec loop seen acc = function
   | [] -> List.rev acc
@@ -69,7 +67,6 @@ let uniquify_ids (type id) (module Id : Rel_kit.ID with type t = id) l =
       loop (Id.Set.add i seen) (i :: acc) is
   in
   loop Id.Set.empty [] l
-
 
 let find_ids
     (type id) (module Id : Rel_kit.ID with type t = id) ~uniquify key q
