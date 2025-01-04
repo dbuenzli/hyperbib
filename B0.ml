@@ -185,19 +185,42 @@ let deploy_cmd name =
 
 let deploy_test =
   B0_unit.of_action "deploy-test" ~doc:"Build and deploy on test server" @@
-  fun _ env ~args -> Os.Cmd.run (exec_remote (deploy_cmd "hyperbib-next"))
+  fun _ _ ~args -> Os.Cmd.run (exec_remote (deploy_cmd "hyperbib-next"))
 
 let deploy_live =
   B0_unit.of_action "deploy-live" ~doc:"Build and deploy on the live server" @@
-  fun _ env ~args -> Os.Cmd.run (exec_remote (deploy_cmd "hyperbib"))
+  fun _ _ ~args -> Os.Cmd.run (exec_remote (deploy_cmd "hyperbib"))
 
 let test_logs =
   B0_unit.of_action "test-logs" ~doc:"Test server logs" @@
-  fun _ env ~args -> Os.Cmd.run (exec_remote (logs_cmd "hyperbib-next"))
+  fun _ _ ~args -> Os.Cmd.run (exec_remote (logs_cmd "hyperbib-next"))
 
 let live_logs =
   B0_unit.of_action "live-logs" ~doc:"Live server logs" @@
-  fun _ env ~args -> Os.Cmd.run (exec_remote (logs_cmd "hyperbib"))
+  fun _ _ ~args -> Os.Cmd.run (exec_remote (logs_cmd "hyperbib"))
+
+let schema =
+  B0_unit.of_action "schema" ~doc:"Show schema" ~units:[hyperbib] @@
+  fun env _ ~args:_ ->
+  let open Result.Syntax in
+  (* b0 FIXME: we should readd pipes to Os.Cmd… *)
+  let* hyperbib = B0_env.unit_exe_file_cmd env hyperbib in
+  let* dot = B0_env.get_cmd env (Cmd.tool "dot") in
+  let* show_url = B0_env.get_cmd env (Cmd.tool "show-url") in
+  let* graph =
+    let cwd =  B0_env.in_scope_dir env ~/"app" in
+    Os.Cmd.run_out ~cwd ~trim:false
+      Cmd.(hyperbib % "db" % "schema" % "-fdot" % "app")
+  in
+  let stdin = Os.Cmd.in_string graph in
+  let* svg = Os.Cmd.run_out ~stdin ~trim:false Cmd.(dot % "-Tsvg") in
+  let stdin = Os.Cmd.in_string svg in
+  Os.Cmd.run ~stdin Cmd.(show_url % "-t" % "schema.svg")
+
+
+
+
+
 
 (* Packs *)
 

@@ -83,7 +83,13 @@ The SQL database definition can be output via
 b0 -- hyperbib db schema app
 ```
 
-To visualize the schema diagram use 
+To visualize the schema diagram use:
+
+```
+b0 -- schema 
+```
+
+Which is a shortcut for:
 ```
 b0 -- hyperbib db schema -f dot app | dot -Tsvg | show-url -t s.svg
 ```
