@@ -163,6 +163,7 @@ let test ?doc ?run:(r = true) ?(requires = []) ?(srcs = []) src =
   B0_ocaml.exe name ~srcs ~requires ~meta ?doc
 
 let test_blobstore = test ~/"test/test_blobstore.ml"
+let test_orcid = test ~/"test/test_orcid.ml"
 
 (* Actions *)
 
