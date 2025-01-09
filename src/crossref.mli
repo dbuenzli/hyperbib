@@ -24,7 +24,7 @@ module Contributor : sig
   type t =
     { family : string;
       given : string;
-      orcid : string }
+      orcid : Orcid.t option }
 
   val jsont : t Jsont.t
   val equal : t -> t -> bool

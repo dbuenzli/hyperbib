@@ -29,3 +29,16 @@ module Doi_rel : sig
     Doi.t Rel_query.value ->
     Doi.t Rel_query.value -> bool Rel_query.value
 end
+
+module Orcid_rel : sig
+  val t : Orcid.t Rel.Type.t
+  val v : Orcid.t -> Orcid.t Rel_query.value
+
+  val equal :
+    Orcid.t Rel_query.value ->
+    Orcid.t Rel_query.value -> bool Rel_query.value
+
+  val ( = ) :
+    Orcid.t Rel_query.value ->
+    Orcid.t Rel_query.value -> bool Rel_query.value
+end

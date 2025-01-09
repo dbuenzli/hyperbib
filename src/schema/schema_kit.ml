@@ -18,11 +18,22 @@ module Date_md_partial_rel = struct
   let ( = ) = equal
 end
 
-
 module Doi_rel = struct
   let t =
     let enc = Doi.to_string and dec = Doi.unsafe_of_string and pp = Doi.pp in
     Type.coded @@ Type.Coded.make ~name:"doi" Type.text ~enc ~dec ~pp
+
+  let v = Rel_query.Coded.v t
+  let equal = Rel_query.Coded.equal t
+  let ( = ) = equal
+end
+
+
+module Orcid_rel = struct
+  let t =
+    let enc = Orcid.to_string and dec = Orcid.unsafe_of_string in
+    let pp = Orcid.pp in
+    Type.coded @@ Type.Coded.make ~name:"ORCID" Type.text ~enc ~dec ~pp
 
   let v = Rel_query.Coded.v t
   let equal = Rel_query.Coded.equal t

@@ -23,17 +23,35 @@ module Contributor = struct
   type t =
     { family : string;
       given : string;
-      orcid : string; }
+      orcid : Orcid.t option; }
+
+  let orcid_jsont =
+    let kind = "ORCID" in
+    let dec meta = function
+    | "" -> None
+    | orcid ->
+        match Orcid.of_string orcid with
+        | Error e -> Jsont.Error.msg meta e
+        | Ok v -> Some v
+    in
+    let enc = function
+    | None -> "" | Some orcid -> Orcid.to_string orcid
+    in
+    Jsont.Base.string (Jsont.Base.map ~kind ~dec ~enc ())
 
   let equal c0 c1 =
-    (String.equal c0.orcid c1.orcid) ||
+    let orcid_equal = match c0.orcid, c1.orcid with
+    | Some o0, Some o1 when Orcid.equal o0 o1 -> true
+    | _ -> false
+    in
+    orcid_equal ||
     (String.equal c0.family c1.family && String.equal c0.given c1.given)
 
   let jsont =
     Jsont.Object.map (fun family given orcid -> { family; given; orcid })
     |> Jsont.Object.mem "family" Jsont.string
     |> Jsont.Object.mem "given" Jsont.string ~dec_absent:""
-    |> Jsont.Object.mem "ORCID" Jsont.string ~dec_absent:""
+    |> Jsont.Object.mem "ORCID" orcid_jsont ~dec_absent:None
     |> Jsont.Object.finish
 end
 

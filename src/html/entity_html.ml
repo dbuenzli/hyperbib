@@ -188,7 +188,9 @@ let person_input_create uf ~for_list ~input_name ~role p =
       i (Hquery.person_key role) "x";
       i first (Person.first_names p);
       i last (Person.last_name p);
-      i orcid (Person.orcid p) ]
+      i orcid (match Person.orcid p with
+        | None -> ""
+        | Some orcid -> Orcid.to_string orcid); ]
   in
   let entity =
     let create = Hclass.creatable in

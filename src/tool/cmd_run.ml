@@ -144,15 +144,19 @@ let check_dois ~repair conf =
   else Ok Cli_kit.Exit.some_error
 
 let test () conf =
-  let open Typegist in
   Log.if_error ~use:Cli_kit.Exit.some_error @@
-  let users_file = Cli_kit.Conf.users_file conf in
-  let* users = User.load users_file in
-  let json =
-    Jsont_bytesrw.encode_string ~format:Jsont.Indent User.s_jsont users
+  Result.join @@ Cli_kit.with_db conf @@ fun db ->
+  let open Rel_query.Syntax in
+  Db.string_error @@
+  let match' =
+    Db.show_sql @@
+    Person.match_stmt ~last:"Coulter" ~first:"Liese"
+      ~orcid:None
   in
-  Log.stdout (fun m -> m "%a" User.s_pp users);
-  Log.stdout (fun m -> m "%s" (json |> Result.get_ok));
+  let open Result.Syntax in
+  let* persons = Db.list db match' in
+  let pp_person = Row.value_pp (Table.row Person.table) in
+  Log.stdout (fun m -> m "Persons: @[<v>%a@]" (Fmt.list pp_person) persons);
   Ok Cli_kit.Exit.ok
 
 (* Command line interface *)

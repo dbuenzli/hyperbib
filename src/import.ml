@@ -93,7 +93,9 @@ module Doi = struct
     | [] -> Ok (`To_create (new_person ()))
     | _ ->
         (* Try to disambiguate by orcid (even if empty) *)
-        let has_orcid p' = Person.orcid p' = p.orcid in
+        let has_orcid p' =
+          Option.equal Orcid.equal (Person.orcid p') p.orcid
+        in
         match List.filter has_orcid ps with
         | [] -> assert false
         | [p] -> Ok (`Exists p)

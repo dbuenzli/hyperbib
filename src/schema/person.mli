@@ -36,11 +36,12 @@ type t
 
 val make :
   id:Id.t -> last_name:string -> first_names:string ->
-  orcid:string -> note:string -> private_note:string ->
+  orcid:Orcid.t option -> note:string -> private_note:string ->
   public:bool -> unit -> t
 (** [make …] is a person with given attributes, see accessors for semantics. *)
 
-val row : Id.t -> string -> string -> string -> string -> string -> bool -> t
+val row :
+  Id.t -> string -> string -> Orcid.t option -> string -> string -> bool -> t
 (** [row] is {!make} unlabelled. *)
 
 val new' : t
@@ -55,8 +56,8 @@ val last_name : t -> string
 val first_names : t -> string
 (** [first_names p] are the comma separated first names of [p]. *)
 
-val orcid : t -> string
-(** [orcid p] is the orcid of [p]. *)
+val orcid : t -> Orcid.t option
+(** [orcid p] is the orcid of [p] (if any) *)
 
 val note : t -> string
 (** [note p] is the public note of [p]. *)
@@ -109,7 +110,7 @@ val last_name' : (t, string) Col.t
 val first_names' : (t, string) Col.t
 (** [first_names'] is the column for {!first_names}. *)
 
-val orcid' : (t, string) Col.t
+val orcid' : (t, Orcid.t option) Col.t
 (** [orcid'] is the column for {!orcid}. *)
 
 val note' : (t, string) Col.t
@@ -137,11 +138,11 @@ val select_stmt : string -> t Rel_sql.Stmt.t
 
 val match' :
   last:string Rel_query.value -> first:string Rel_query.value ->
-  orcid:string Rel_query.value ->
+  orcid:Orcid.t option Rel_query.value ->
   (t, Bag.unordered) Rel_query.Bag.t
 
 val match_stmt :
-  last:string -> first:string -> orcid:string -> t Rel_sql.Stmt.t
+  last:string -> first:string -> orcid:Orcid.t option -> t Rel_sql.Stmt.t
 
 val id_map :
   Db.t -> 'a Rel_sql.Stmt.t -> ('a -> Id.t) -> ('a Id.Map.t, Db.error) result

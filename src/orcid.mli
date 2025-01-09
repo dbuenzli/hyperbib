@@ -11,7 +11,7 @@
 
 (** {1:orcids ORCIDs} *)
 
-type t = string
+type t
 (** The type for ORCIDs. *)
 
 val v : string -> t

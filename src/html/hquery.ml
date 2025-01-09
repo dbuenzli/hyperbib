@@ -175,7 +175,12 @@ let add_col_value (type c) ~col:(col : ('a, c) Rel.Col.t) q acc =
       | Option Text ->
           let v = if v = "" (* XXX allow to trim *) then None else Some v in
           Ok (Rel.Col.Value (col, v) :: acc)
-      | Option _ as t -> unhandled key t
+      | Option _ as t ->
+          (* FIXME something is off for coded columns we should
+             distinguish a dec from the db, assumed to be trusted,
+             and a dec for untrusted inputs. Also we'd like to be
+             able to handle validation. *)
+          unhandled key t
       | Blob as t -> unhandled key t
       | t -> unhandled key t
 
@@ -263,7 +268,13 @@ let find_create_person ~public ~role q =
   let ( let* ) = Option.bind in
   let* first_names = Http.Query.find_first first q in
   let* last_name = Http.Query.find_first last q in
-  let* orcid = Http.Query.find_first orcid q in
+  let orcid = match Http.Query.find_first orcid q with
+  | None | Some "" -> None
+  | Some orcid ->
+      match Orcid.of_string orcid with
+      | Error e (* FIXME validation *) -> None
+      | Ok v -> Some v
+  in
   Option.some @@
   Person.make ~id:Person.Id.zero
     ~last_name ~first_names ~orcid ~note:"" ~private_note:"" ~public ()
@@ -284,7 +295,10 @@ let find_create_persons ~public role q =
   let firsts = Http.Query.find_all first q in
   let lasts = Http.Query.find_all last q in
   let orcids = Http.Query.find_all orcid q in
-  loop [] firsts lasts orcids
+  let parse = function
+  | "" -> None | orcid -> Result.to_option (Orcid.of_string orcid)
+  in
+  loop [] firsts lasts (List.map parse orcids)
 
 let find_contributor_kind ~public role q =
   let id_key = person_key (Some role) in

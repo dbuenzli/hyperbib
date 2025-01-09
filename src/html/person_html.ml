@@ -21,8 +21,9 @@ let entity_cancel_button uf p =
   Html_kit.htmlact_cancel_button uf cancel
 
 let orcid_html p = match Person.orcid p with
-| "" -> El.void
-| href ->
+| None -> El.void
+| Some orcid ->
+    let href = Orcid.as_https_url orcid in
     let viz = if Person.public p then At.void else Hclass.private' in
     let cl = Hui.Class.for_col Person.orcid' in
     Html_kit.link ~at:[Hclass.value; cl; viz] ~href (El.txt Uimsg.orcid)
@@ -90,8 +91,13 @@ let edit_names p =
   El.splice [fst; El.sp; lst ]
 
 let edit_orcid p =
-  let label = El.txt Uimsg.orcid in
-  Hui.field_string ~autogrow:true ~min_size:20 ~label ~col:Person.orcid' p
+  let label = El.txt Uimsg.orcid and col = Person.orcid' in
+  (* TODO Hui support for coded columns *)
+  let name = Rel.Col.name col in
+  let v = match Rel.Col.proj col p with
+  | None -> "" | Some orcid -> Orcid.to_string orcid
+  in
+  Hui.field_string' ~label ~autogrow:true ~min_size:20 ~name v
 
 let edit_note = Entity_html.edit_note (module Person)
 let edit_private_note = Entity_html.edit_private_note (module Person)

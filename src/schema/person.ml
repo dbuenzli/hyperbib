@@ -26,7 +26,7 @@ module Person = struct
     { id : Id.t;
       last_name : string;
       first_names : string;
-      orcid : string;
+      orcid : Orcid.t option;
       note : string;
       private_note : string;
       public : bool; }
@@ -38,7 +38,7 @@ module Person = struct
     { id; last_name; first_names; orcid; note; private_note; public }
 
   let new' =
-    { id = Id.zero; last_name = Uimsg.unnamed; first_names = ""; orcid = "";
+    { id = Id.zero; last_name = Uimsg.unnamed; first_names = ""; orcid = None;
       note = ""; private_note = ""; public = false }
 
   let id p = p.id
@@ -57,9 +57,12 @@ module Person = struct
     { p with last_name; public }
 
   let created_equal p0 p1 =
-    (p0.orcid <> "" && p0.orcid = p1.orcid) ||
-    (p0.last_name = p1.last_name &&
-     p0.first_names = p1.first_names)
+    let orcid_equal = match p1.orcid, p1.orcid with
+    | Some id1, Some id2 when Orcid.equal id1 id2 -> true
+    | _ -> false
+    in
+    (orcid_equal ||
+    (p0.last_name = p1.last_name && p0.first_names = p1.first_names))
 
   (* Predicates and comparisons *)
 
@@ -95,7 +98,7 @@ module Person = struct
   let id' = Col.make "id" Id.type' id
   let last_name' = Col.make "last_name" Type.text last_name
   let first_names' = Col.make "first_names" Type.text first_names
-  let orcid' = Col.make "orcid" Type.text orcid
+  let orcid' = Col.make "orcid" Type.(option Schema_kit.Orcid_rel.t) orcid
   let note' = Col.make "note" Type.text note
   let private_note' = Col.make "private_note" Type.text private_note
   let public' = Col.make "public" Type.bool public
@@ -115,10 +118,11 @@ module Label = Label.For_entity (Person)
 include Entity.Publicable_queries (Person)
 
 open Rel_query.Syntax
+open Schema_kit
 
 let select sel =
   (* TODO the structure of this query is wrong. select should
-     have to args. *)
+     have two args. *)
   let* p = Bag.table table in
   let sel_by_id = Text.(Id.to_text (p #. id') = sel) in
   let sel_by_last = Text.like (p #. last_name') Text.(sel ^ v "%") in
@@ -130,15 +134,21 @@ let select_stmt =
 
 let match' ~last ~first ~orcid =
   let* p = Bag.table table in
-  let match_orcid = Text.(not (orcid = empty) && orcid = p #. orcid') in
+  let match_orcid =
+    Option.is_some orcid &&
+    Option.equal ~eq:Orcid_rel.equal orcid (p #. orcid')
+  in
   let match_lf = Text.(like (p #. last_name') last) &&
                  Text.(like (p #. first_names') first)
   in
   Bag.where (match_orcid || match_lf) (Bag.yield p)
 
 let match_stmt =
-  Rel_query.Sql.(func @@ text @-> text @-> text @-> ret (Table.row table)
-                           (fun last first orcid -> match' ~last ~first ~orcid))
+  (* FIXME Rel the reverse of args is annoying here. *)
+  let match' orcid first last = match' ~last ~first ~orcid in
+  Rel_query.Sql.func @@
+  Rel_query.Sql.(text @-> text @-> option Orcid_rel.t @->
+                 ret (Table.row table) match')
 
 let match_stmt ~last ~first ~orcid = match_stmt last first orcid
 
@@ -177,6 +187,12 @@ module Url = struct
           match Http.Query.find_first orcid q with
           | None -> Http.Response.bad_request_400 ~reason:"No person found" ()
           | Some orcid ->
+              let orcid =
+                if orcid = "" then None else
+                (* XXX form validation *)
+                match Orcid.of_string orcid with
+                | Ok v -> Some v | Error _ -> None
+              in
               Ok (Person.make ~id:Id.zero ~last_name:l ~first_names:f ~orcid
                     ~note:"" ~private_note:"" ~public:true ())
 
@@ -184,7 +200,8 @@ module Url = struct
     init
     |> Http.Query.def last (Person.last_name p)
     |> Http.Query.def first (Person.first_names p)
-    |> Http.Query.def orcid (Person.orcid p)
+    |> Http.Query.def orcid
+      (match Person.orcid p with None -> "" | Some o -> Orcid.to_string o)
 
   type named_id = string option * Id.t
   type t =

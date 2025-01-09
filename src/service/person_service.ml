@@ -47,6 +47,23 @@ let view_fields_resp app db req id =
   let* self = Html_kit.url_of_req_referer req in
   Ok (Page.part_response (Person_html.view_fields g p ~self))
 
+
+let person_columns_of_query req =
+  let add_orcid_of_query q vs = (* FIXME codec columns and validation *)
+    match Http.Query.find_first (Col.name Person.orcid') q with
+    | None -> Ok vs
+    | Some orcid ->
+        (* FIXME form validation, for now we simply erase the field
+           if it doesn't validate. *)
+        let orcid = Result.to_option (Orcid.of_string orcid) in
+        Ok (Rel.Col.Value (Person.orcid', orcid) :: vs)
+  in
+  let* q = Http.Request.to_query req in
+  let ignore = Col.[Def Person.id'; Def Person.orcid'] in
+  let* vs = Hquery.careless_find_table_cols ~ignore Person.table q in
+  let* vs = add_orcid_of_query q vs in
+  Ok vs
+
 (* Responses *)
 
 let confirm_delete env id =
@@ -58,9 +75,20 @@ let confirm_delete env id =
   let confirm = Person_html.confirm_delete g p ~ref_count in
   Ok (Page.part_response confirm)
 
-let create =
+let create env req =
   let entity_page_url id = Person.Url.v (Page (None, id)) in
-  Entity_service.create (module Person.Id) (module Person) ~entity_page_url
+  (* This used to be the following but we due to lack
+     of coded column suupport for ORCID we cant use that anymore.
+  Entity_service.create (module Person.Id) (module Person) ~entity_page_url *)
+  let* () = Entity_service.check_edit_authorized env in
+  Service_env.with_db_transaction' `Immediate env @@ fun db ->
+  let* vs = person_columns_of_query req in
+  let* id =
+    Db.insert' (module Person.Id) db (Person.create_cols ~ignore_id:true vs)
+  in
+  let uf = Service_env.url_fmt env in
+  let headers = Html_kit.htmlact_redirect uf (entity_page_url id) in
+  Ok (Http.Response.empty ~headers Http.Status.ok_200)
 
 let delete =
   Entity_service.delete (module Person) ~deleted_html:Person_html.deleted
@@ -68,9 +96,7 @@ let delete =
 let duplicate env req src =
   let* () = Entity_service.check_edit_authorized env in
   Service_env.with_db_transaction' `Immediate env @@ fun db ->
-  let* q = Http.Request.to_query req in
-  let ignore = Col.[Def Person.id'] in
-  let* vs = Hquery.careless_find_table_cols ~ignore Person.table q in
+  let* vs = person_columns_of_query req in
   let* dst =
     Db.insert' (module Person.Id) db (Person.create_cols ~ignore_id:true vs)
   in
@@ -116,13 +142,13 @@ let creatable_person_of_sel sel =
   match String.cut_left ~sep:"," sel with
   | None ->
       Option.some @@
-      Person.make ~id:Person.Id.zero ~last_name:sel ~first_names:"" ~orcid:""
+      Person.make ~id:Person.Id.zero ~last_name:sel ~first_names:"" ~orcid:None
         ~note:"" ~private_note:"" ~public:true ()
   | Some (last_name, first_names) ->
       let last_name = String.trim last_name in
       let first_names = String.trim first_names in
       Option.some @@
-      Person.make ~id:Person.Id.zero ~last_name ~first_names ~orcid:""
+      Person.make ~id:Person.Id.zero ~last_name ~first_names ~orcid:None
         ~note:"" ~private_note:"" ~public:true ()
 
 let input env ~for_list ~input_name ~role id =
@@ -225,7 +251,9 @@ let replace env req this =
       let* () = Db.exec' db copy in
       let* () = Db.exec' db (Person.delete this) in
       let uf = Service_env.url_fmt env in
-      let headers = Html_kit.htmlact_redirect uf (Person.Url.v (Page (None, by))) in
+      let headers =
+        Html_kit.htmlact_redirect uf (Person.Url.v (Page (None, by)))
+      in
       Ok (Http.Response.empty ~headers Http.Status.ok_200)
 
 let replace_form env req this =
@@ -235,9 +263,7 @@ let replace_form env req this =
 let update env req id =
   let* () = Entity_service.check_edit_authorized env in
   Service_env.with_db_transaction' `Immediate env @@ fun db ->
-  let* q = Http.Request.to_query req in
-  let ignore = [Col.Def Person.id'] in
-  let* vs = Hquery.careless_find_table_cols ~ignore Person.table q in
+  let* vs = person_columns_of_query req in
   let* () = Db.exec' db (Person.update id vs) in
   let* p = get_person db id in
   let g = Service_env.page_gen env in
