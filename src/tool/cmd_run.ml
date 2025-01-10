@@ -143,6 +143,80 @@ let check_dois ~repair conf =
   then Ok Cli_kit.Exit.ok
   else Ok Cli_kit.Exit.some_error
 
+(* Check ORCIDs
+
+   Note the ORCID check works because we use Orcid.unsafe_of_string when
+   get out ORCIDs from the db column and Orcid.to_string is the
+   identity. So we can recover un-normalized dois despite them having
+   gone through Orcid.t *)
+
+let check_person_orcids db ~repair =
+  let person_orcid_stmt =
+    let p_orcid = Row.t2 Person.id' Person.orcid' in
+    let person_orcids =
+      let open Rel_query.Syntax in
+      let* r = Bag.table Person.table in
+      let id = r #. Person.id' in
+      let doi = r #. Person.orcid' in
+      Bag.yield (Bag.row (fun id doi -> id, doi) $ id $ doi)
+    in
+    Rel_query.Sql.of_bag p_orcid person_orcids
+  in
+  let do_update ~id orcid =
+    let update_person_orcid ~id orcid =
+      let set = Col.[Value (Person.orcid', orcid)] in
+      let where = Col.[Value (Person.id', id)] in
+      Rel_sql.update Db.dialect Person.table ~set ~where
+    in
+    let* () = Db.exec db (update_person_orcid ~id orcid) in
+    Ok (Log.stdout (fun m -> m "Person %a: repaired" Person.Id.pp id))
+  in
+  let check (id, orcid) n = match orcid with
+  | None -> n
+  | Some orcid ->
+      match Orcid.to_string orcid with
+      | "" ->
+          Log.err (fun m ->
+              m "Person %a: Invalid empty ORCID, should be NULL"
+                Person.Id.pp id);
+          (if not repair then () else
+           (Log.if_error ~use:() @@ Db.string_error @@ do_update ~id None));
+          n + 1
+      | orcid_raw ->
+          match Orcid.of_string orcid_raw with
+          | Error e ->
+              Log.err (fun m ->
+                  m "Person %a: ORCID %S: %s" Person.Id.pp id orcid_raw e);
+              n + 1
+          | Ok orcid_reparsed ->
+              let orcid_reparsed_raw = Orcid.to_string orcid_reparsed in
+              if String.equal orcid_reparsed_raw orcid_raw then n else begin
+                Log.warn (fun m ->
+                    m "Person %a: DOI %S not normalized (%S)"
+                      Person.Id.pp id orcid_raw orcid_reparsed_raw);
+                (if not repair then () else
+                 (Log.if_error ~use:() @@ Db.string_error @@
+                  do_update ~id (Some orcid_reparsed)));
+                n + 1
+              end
+  in
+  Db.fold db person_orcid_stmt check 0 |> Db.string_error
+
+let check_orcids ~repair conf =
+  let log_result ~repair n =
+    if repair then () else
+    Log.stdout (fun m -> m "%a@." (if n > 0 then pp_fail else pp_pass) ())
+  in
+  Log.if_error ~use:Cli_kit.Exit.some_error @@
+  Cli_kit.with_db_transaction conf `Deferred @@ fun db ->
+  Log.stdout (fun m -> m "%a ORCIDs in the %a table"
+              pp_check () Fmt.code (Table.name Person.table));
+  let* n = check_person_orcids db ~repair in
+  log_result ~repair n;
+  if n = 0
+  then Ok Cli_kit.Exit.ok
+  else Ok Cli_kit.Exit.some_error
+
 let test () conf =
   Log.if_error ~use:Cli_kit.Exit.some_error @@
   Result.join @@ Cli_kit.with_db conf @@ fun db ->
@@ -170,10 +244,21 @@ let check_dois_cmd =
     [ `S Manpage.s_description;
       `P "The $(iname) command is used for checking DOIs in the database."; ]
   in
-  Cli_kit.cmd_with_conf "doi-check" ~doc ~man @@
+  Cli_kit.cmd_with_conf "check-dois" ~doc ~man @@
   let doc = "Repair warnings and errors that can be." in
   let+ repair = Arg.(value & flag & info ["repair"] ~doc) in
   check_dois ~repair
+
+let check_orcids_cmd =
+  let doc = "Check DOIs" in
+  let man =
+    [ `S Manpage.s_description;
+      `P "The $(iname) command is used for checking ORCIDs in the database."; ]
+  in
+  Cli_kit.cmd_with_conf "check-orcids" ~doc ~man @@
+  let doc = "Repair warnings and errors that can be." in
+  let+ repair = Arg.(value & flag & info ["repair"] ~doc) in
+  check_orcids ~repair
 
 let test_cmd =
   let doc = "Test" in
@@ -188,4 +273,4 @@ let test_cmd =
 let cmd =
   let doc = "Run maintenance tasks" in
   Cli_kit.cmd_group "run" ~doc @@
-  [test_cmd; check_dois_cmd]
+  [test_cmd; check_dois_cmd; check_orcids_cmd]
