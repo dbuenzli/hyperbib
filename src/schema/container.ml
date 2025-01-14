@@ -88,7 +88,7 @@ let match' ~title ~isbn ~issn =
 
 let match_stmt =
   Rel_query.Sql.(func @@ text @-> text @-> text @-> ret (Table.row table)
-                           (fun title isbn issn -> match' ~title ~isbn ~issn))
+                           (fun issn isbn title -> match' ~title ~isbn ~issn))
 
 let match_stmt ~title ~isbn ~issn = match_stmt title isbn issn
 
