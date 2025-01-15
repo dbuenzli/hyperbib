@@ -175,7 +175,7 @@ let edit_submit uf ~submit r =
   | `New _ -> Reference.Url.v Create, Uimsg.create_reference
   | `Edit -> Reference.Url.v (Update (Reference.id r)), Uimsg.save_reference
   in
-  let r = Html_kit.htmlact_request uf url and e = Htmlact.effect `Element in
+  let r = Html_kit.htmlact_request uf url and e = Htmlact.effect' `Element in
   let q = Htmlact.query "form:up" in
   let rescue = Htmlact.query_rescue (`Bool true) in
   let t = Htmlact.target ":up :up :up :up" in

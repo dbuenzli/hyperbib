@@ -32,18 +32,18 @@ let htmlact_button
   =
   let r = htmlact_request uf url in
   let t = At.if_some (Option.map Htmlact.target target) in
-  let e = Htmlact.effect `Element in
+  let e = Htmlact.effect' `Element in
   let q = match query with None -> At.void | Some q -> Htmlact.query q in
   Hui.button ~at:(r :: t :: e :: q :: at) ?x_align ?align ?dir ?tip label
 
 let htmlact_delete ?(at = []) ?x_align ?align ?dir ?tip uf url ~target label =
   let r = htmlact_request uf url in
-  let t = Htmlact.target target and e = Htmlact.effect `Element in
+  let t = Htmlact.target target and e = Htmlact.effect' `Element in
   Hui.delete ~at:(r :: t :: e :: at) ?x_align ?align ?dir ?tip label
 
 let htmlact_cancel ?(at = []) ?x_align ?align ?dir ?tip uf url ~target label =
   let r = htmlact_request uf url in
-  let t = Htmlact.target target and e = Htmlact.effect `Element in
+  let t = Htmlact.target target and e = Htmlact.effect' `Element in
   Hui.cancel ~at:(r :: t :: e :: at) ?x_align ?align ?dir ?tip label
 
 let htmlact_edit_button ?(target = target_entity) uf url =

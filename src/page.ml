@@ -120,7 +120,7 @@ let user_view g uf ~self view =
         let req =
           Html_kit.htmlact_request uf (User.Url.v (View {private' = false}))
         in
-        [req; Htmlact.effect `None]
+        [req; Htmlact.effect' `None]
     in
     Hui.button ~at ~tip:Uimsg.public_tip (El.txt Uimsg.public)
   in
@@ -131,7 +131,7 @@ let user_view g uf ~self view =
         let req =
           Html_kit.htmlact_request uf (User.Url.v (View {private' = true}))
         in
-        [req; Htmlact.effect `None]
+        [req; Htmlact.effect' `None]
     in
     Hui.button ~at ~tip:Uimsg.private_tip (El.txt Uimsg.private')
   in

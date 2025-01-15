@@ -90,7 +90,7 @@ let finder_result
   in
   let r = Html_kit.htmlact_request uf (action e) in
   let t = Htmlact.target ":up :up :up" in
-  let e = Htmlact.effect `Element in
+  let e = Htmlact.effect' `Element in
   let tab_index = At.tabindex (-1) in
   let title = At.v "title" tip in
   let role = At.v "role" "option" in
@@ -110,7 +110,7 @@ let entity_input_finder ?min_size ?(at = []) uf ~kind req ~value =
   let r = Html_kit.htmlact_request uf req in
   let t = Htmlact.target (":up :up ol") in
   let e = Htmlact.event ~debounce_ms:250 "input" in
-  let eff = Htmlact.effect `Element in
+  let eff = Htmlact.effect' `Element in
   let pl = kind ^ "\u{207A}" in
   let min_size = String.length pl (* - 1 *) in
   let pl = At.placeholder pl in
@@ -125,7 +125,7 @@ let entity_remove_button ~req ~tip =
   | Some (method', url) ->
       let r = Htmlact.request ~method' url in
       let t = Htmlact.target ":up :up" in
-      let e = Htmlact.effect `Element in
+      let e = Htmlact.effect' `Element in
       [r; t; e]
   in
   let at = Hui.Class.button :: Hclass.remove :: Hclass.entity :: at in
@@ -349,7 +349,7 @@ let container_input_finder uf ~input_name =
     let r = Html_kit.htmlact_request uf req in
     let t = Htmlact.target (":up :up ol") in
     let e = Htmlact.event ~debounce_ms:250 "input" in
-    let eff = Htmlact.effect `Element in
+    let eff = Htmlact.effect' `Element in
     let pl = Uimsg.container ^ "\u{207A}" in
     let pl = At.placeholder pl in
     let type' = At.type' "search" in

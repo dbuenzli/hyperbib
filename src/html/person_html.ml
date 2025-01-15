@@ -109,7 +109,7 @@ let edit_submit uf ~submit p =
   | `Edit -> Person.Url.v (Update (Person.id p)), Uimsg.save_person
   | `Duplicate -> Person.Url.v (Duplicate (Person.id p)), Uimsg.create_duplicate
   in
-  let r = Html_kit.htmlact_request uf url and e = Htmlact.effect `Element in
+  let r = Html_kit.htmlact_request uf url and e = Htmlact.effect' `Element in
   let q = Htmlact.query "form:up" and rescue = Htmlact.query_rescue (`Bool true) in
   let t = Htmlact.target ":up :up :up" in
   let at = At.[t; r; e; q; rescue; Hui.Class.submit] in
@@ -189,7 +189,7 @@ let replace_form g p ~ref_count =
   in
   let at =
     let r = Html_kit.htmlact_request uf (Person.Url.v (Replace (Person.id p))) in
-    let e = Htmlact.effect `Element in
+    let e = Htmlact.effect' `Element in
     At.[Hclass.entity; Hclass.editing; r; e]
   in
   let h1 = h1_person uf ~self ~orcid:true p in

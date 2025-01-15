@@ -74,7 +74,7 @@ let buttons ?(force_rescue = false) g =
     let label = Uimsg.submit_suggestion in
     let r = Html_kit.htmlact_request uf (Suggestion.Url.v Create) in
     let t = Htmlact.target "form:up" in
-    let e = Htmlact.effect `Element in
+    let e = Htmlact.effect' `Element in
     let q = Htmlact.query "form:up" in
     let rescue =
       Htmlact.query_rescue (if force_rescue then `Force else `Bool true)

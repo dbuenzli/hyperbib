@@ -90,7 +90,7 @@ let edit_submit uf ~submit s =
   | `Duplicate ->
       Subject.Url.v (Duplicate (Subject.id s)), Uimsg.create_duplicate
   in
-  let r = Html_kit.htmlact_request uf url and e = Htmlact.effect `Element in
+  let r = Html_kit.htmlact_request uf url and e = Htmlact.effect' `Element in
   let q = Htmlact.query "form:up" in
   let rescue = Htmlact.query_rescue (`Bool true) in
   let t = Htmlact.target ":up :up" in
@@ -169,7 +169,7 @@ let replace_form g s ~ref_count =
   in
   let at =
     let r = Html_kit.htmlact_request uf (Subject.Url.v (Replace (Subject.id s))) in
-    let e = Htmlact.effect `Element in
+    let e = Htmlact.effect' `Element in
     At.[Hclass.entity; Hclass.editing; r; e]
   in
   let replace = El.div ~at:[Hclass.replace] [input_subject] in
