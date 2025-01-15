@@ -70,16 +70,9 @@ val error : At.t
 val info : At.t
 val good : At.t
 
-(** {1:util Utility} *)
+(** {1:util Utility}
 
-val hspace_0 : At.t
-val hspace_0_125 : At.t
-val hspace_0_25 : At.t
-val hspace_0_5 : At.t
-val hspace : At.t
-val hspace_2 : At.t
-val hspace_4 : At.t
-val hspace_8 : At.t
+    {b FIXME.} Eventually get rid of this in favour of negsp. *)
 
 val vspace_000 : At.t
 val vspace_0125 : At.t
@@ -102,16 +95,6 @@ module Font : sig
   val large : At.t
   val x_large : At.t
   val xx_large : At.t
-
-  val w100 : At.t
-  val w200 : At.t
-  val w300 : At.t
-  val w400 : At.t
-  val w500 : At.t
-  val w600 : At.t
-  val w700 : At.t
-  val w800 : At.t
-  val w900 : At.t
 
   val w_light : At.t
   val w_normal : At.t

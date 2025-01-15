@@ -75,15 +75,6 @@ let good = c "good"
 
 (* Utility *)
 
-let hspace_0  = c "hspace-0"
-let hspace_0_125  = c "hspace-0-125"
-let hspace_0_25  = c "hspace-0-25"
-let hspace_0_5  = c "hspace-0-5"
-let hspace  = c "hspace"
-let hspace_2  = c "hspace-2"
-let hspace_4  = c "hspace-4"
-let hspace_8  = c "hspace-8"
-
 let vspace_000  = c "vspace_000"
 let vspace_0125 = c "vspace_0125"
 let vspace_025  = c "vspace_025"
@@ -106,19 +97,9 @@ module Font = struct
   let x_large = c "font_x_large"
   let xx_large = c "font_xx_large"
 
-  let w100 = c "font_w100"
-  let w200 = c "font_w200"
-  let w300 = c "font_w300"
-  let w400 = c "font_w400"
-  let w500 = c "font_w500"
-  let w600 = c "font_w600"
-  let w700 = c "font_w700"
-  let w800 = c "font_w800"
-  let w900 = c "font_w900"
-
-  let w_light = w300
-  let w_normal = w400
-  let w_bold = w700
+  let w_light = c "font_wlight"
+  let w_normal = c "font_wnormal"
+  let w_bold = c "font_wbold"
 end
 
 module Margin = struct

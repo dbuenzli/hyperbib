@@ -300,15 +300,6 @@ footer { font-size: var(--size-font-tiny); color: var(--color-fg-light); }
   --measure_200: calc(2.00 * var(--measure_100));
 }
 
-.hspace-0 > * + * { margin-left: 0rem }
-.hspace-0-125 > * + * { margin-left: calc(0.125 * var(--size-line));}
-.hspace-0-25 > * + * { margin-left: calc(0.25 * var(--size-line));}
-.hspace-0-5 > * + * { margin-left: calc(0.5 * var(--size-line));}
-.hspace > * + * { margin-left: var(--size-line) }
-.hspace-2 > * + * { margin-left: calc(2 * var(--size-line));}
-.hspace-4 > * + * { margin-left: calc(4 * var(--size-line)); }
-.hspace-8 > * + * { margin-left: calc(8 * var(--size-line)); }
-
 .vspace_000 > * + * { margin-top: 0 }
 .vspace_0125 > * + * { margin-top: calc(0.125 * var(--size-line));}
 .vspace_025 > * + * { margin-top: var(--unit_025) }
@@ -354,15 +345,9 @@ footer { font-size: var(--size-font-tiny); color: var(--color-fg-light); }
 .font_xx_large { font-size: var(--size-font-huge);
                   line-height: 1 }
 
-.font_w100 { font-weight: 100 }
-.font_w200 { font-weight: 200 }
-.font_w300 { font-weight: 300 }
-.font_w400 { font-weight: 400 }
-.font_w500 { font-weight: 500 }
-.font_w600 { font-weight: 600 }
-.font_w700 { font-weight: 700 }
-.font_w800 { font-weight: 800 }
-.font_w900 { font-weight: 900 }
+.font_wlight { font-weight: 300 }
+.font_wnormal { font-weight: 400 }
+.font_wbold { font-weight: 700 }
 
 
 /* Generic UI layout */
