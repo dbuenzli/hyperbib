@@ -22,21 +22,19 @@ let search_bar g query =
     let label = [Icon.magnifying_glass; El.span [El.txt Uimsg.search]] in
     Hui.button ~type':"submit" ~x_align:`Center ~dir:`H ~tip (El.splice label)
   in
-  let input =
-    let at = [Hclass.Gap.v_050] in
-    Hui.group ~at ~x_align:`Center ~dir:`H [input; search]
-  in
   let at =
     let url = Search.Url.v (Results None) in
     let r = Html_kit.htmlact_request (Page.Gen.url_fmt g) url in
     let t = Htmlact.target ":up .search-results" in
-    [Hclass.search; r; t; Hclass.vspace_0125]
+    let layout = Negsp.Layout.sidebar ~gap:(`Sp `XXS) `End () in
+    (Hclass.search :: r :: t :: layout)
   in
-  El.splice [El.form ~at [input]; El.hr ()]
+  El.splice [El.form ~at [input; search]; El.hr ()]
 
 let index_html ?(results = search_results El.void) g ~self query =
   let h1 = El.h1 [El.txt Uimsg.search] in
-  El.section [h1; search_bar g query; results]
+  let at = Negsp.Text.flow () in
+  El.section ~at [h1; search_bar g query; results]
 
 let index ?(results = search_results El.void) g query =
   let self = Search.Url.v (Index query) in

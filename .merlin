@@ -1,4 +1,4 @@
-PKG cmdliner b0 b0.kit bytesrw bytesrw.xxhash bytesrw.unix ptime ptime.clock.os brr note note.brr htmlit webs webs.kit webs.unix webs.cli htmlact htmlact.page rel rel.sqlite3 rel.pool rel.kit rel.cli jsont.bytesrw typegist
+PKG cmdliner b0 b0.kit bytesrw bytesrw.xxhash bytesrw.unix ptime ptime.clock.os brr note note.brr htmlit webs webs.kit webs.unix webs.cli htmlact htmlact.page rel rel.sqlite3 rel.pool rel.kit rel.cli jsont.bytesrw typegist negsp.htmlit
 S src/**
 S test/**
 B _b0/b/**

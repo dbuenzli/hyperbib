@@ -1,5 +1,6 @@
 @charset "UTF-8";
 @import url("fonts/fonts.css");
+@import url("negsp.css");
 
 /* Copyright (c) 2019 University of Bern. All rights reserved.
    SPDX-License-Identifier: ISC */
@@ -175,7 +176,12 @@ body { width: 100vw; height: 100vh; margin: 0; }
 
 /* Basic markup */
 
-* + * { margin-top: var(--size-half-line); }
+/* Try to eventually get rid of that we should replace
+   this by negsp .text_flow */
+
+.ui * + * { margin-top: var(--size-half-line); }
+.entity * + * { margin-top: var(--size-half-line); }
+section > * + * { margin-top: var(--size-half-line); }
 
 h1, h2, h3
 { font-family: var(--font-headings), sans-serif; }
@@ -634,7 +640,6 @@ footer { font-size: var(--size-font-tiny); color: var(--color-fg-light); }
 .login > .field > * { display: block }
 .login > .field > .label { font-weight: 700; font-size:var(--font-size); }
 .login > .field > input,
-.search > * > input
 { font-size:var(--font-size); width: 100%; padding:0.5ex; }
 
 .item-count
@@ -645,6 +650,7 @@ h1 .item-count { font-size: var(--size-font) }
 h2 .item-count { font-size: var(--size-font-tiny) }
 
 .ref-list { list-style-type: none; }
+.ref-list * + * { margin-top: var(--size-half-line); }
 .ref-item { margin-left: 0 }
 .ref-item * + * { margin-top: 0 }
 .ref-item p { margin-top: 0 }
@@ -737,6 +743,7 @@ a.year:hover, a.ref-cite:hover, a.subject:hover
 
 .index ol { list-style-type: none; margin-left: 0; }
 .index li { margin: 0; }
+.index > * + * { margin-top: var(--size-half-line); }
 .index
 { margin-top: var(--size-half-line);
   padding-bottom: var(--size-half-line);

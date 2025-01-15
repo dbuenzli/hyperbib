@@ -1,0 +1,212 @@
+@charset "UTF-8";
+/*---------------------------------------------------------------------------
+   Copyright (c) 2022 The negsp programmers. All rights reserved.
+   SPDX-License-Identifier: ISC
+  ---------------------------------------------------------------------------*/
+
+/* Output by `negsp css`,  note most of these should not clash with
+   hyperbib: we use _ instead of -. All the element specific
+   stuff has been removed and we adjusted to use Lato. */
+
+:root
+{ -webkit-text-size-adjust: none;
+  font-synthesis: none;
+
+  --font_headings: "Lato";
+  --font_body: "Lato";
+/*  --font_body_features: "ss01"; */
+  --font_mono: "DejaVu-SansMono";
+  --font_mono_ratio: 0.85; /* mono size / font body size */
+
+  --font_xxs: calc(var(--t-3) * 1rem);
+  --font_xs: calc(var(--t-2) * 1rem);
+  --font_s: calc(var(--t-1) * 1rem);
+  --font_m: 1rem;
+  --font_l: calc(var(--t1) * 1rem);
+  --font_xl: calc(var(--t2) * 1rem);
+  --font_xxl: calc(var(--t3) * 1rem);
+
+  --font_numeric_default: normal;
+/*  --font_numeric_tabular: slashed-zero tabular-nums; */ }
+
+/* Measure and leading setup */
+
+:root
+{ font-size: 100%;
+
+  --leading_ratio_m: 1.5; /* leading / font size */
+  --leading_m: calc(var(--leading_ratio_m) * 1rem);
+
+  --leading_ratio_xs: calc(0.7 * var(--leading_ratio_m));
+  --leading_ratio_s: calc(0.8 * var(--leading_ratio_m));
+  --leading_ratio_l: calc(1.2 * var(--leading_ratio_m));
+  --leading_ratio_xl: calc(1.5 * var(--leading_ratio_m));
+
+  --measure_m: 100ch; /* Adjusted to hyperbib.css */
+  --measure_xs: calc(0.25 * var(--measure_m));
+  --measure_s: calc(0.5 * var(--measure_m));
+  --measure_l: calc(1.5 * var(--measure_m));
+  --measure_xl: calc(2.0 * var(--measure_m)); }
+
+body { line-height: var(--leading_ratio_m); }
+
+/* Unclear whether out layouts need this */
+* { max-inline-size: none }
+
+
+/* Type and space scale */
+
+:root
+{
+  --t-3: 0.485;
+  --t-2: 0.618;
+  --t-1: 0.786;
+  --t0: 1;
+  --t1: 1.616;
+  --t2: 3.232;
+  --t3: 4.848;
+
+  --sp_xxs: calc(0.485 * var(--leading_m));
+  --sp_xs: calc(0.618 * var(--leading_m));
+  --sp_s: calc(0.786 * var(--leading_m));
+  --sp_m: var(--leading_m);
+  --sp_l: calc(1.616 * var(--leading_m));
+  --sp_xl: calc(3.232 * var(--leading_m));
+  --sp_xxl: calc(4.848 * var(--leading_m));
+  --sp_xxxl: calc(6.853 * var(--leading_m));
+  --sp_xxxxl: calc(11.089 * var(--leading_m)); }
+
+/* FIXME review this, tracking vs font-stretch. */
+
+.font_stretch_xxs { letter-spacing: -0.1rem } /* { font-stretch: 50% } */
+.font_stretch_xs { letter-spacing: -0.05rem } /* { font-stretch: 75% } */
+.font_stretch_s { letter-spacing: -0.01rem } /* { font-stretch: 87.5% } */
+.font_stretch_m { letter-spacing: normal; } /* { font-stretch: 100%; } */
+.font_stretch_l { letter-spacing: 0.01rem; } /* { font-stretch: 112.5% } */
+.font_stretch_xl { letter-spacing: 0.05rem; } /* { font-stretch: 125% } */
+.font_stretch_xxl { letter-spacing: 0.1rem; } /* { font-stretch: 150% } */
+
+/* Text */
+
+.text_flow > * + * { margin-block-start: var(--sp_s); }
+.text_flow > * + h2 { margin-block-start: var(--sp_l); }
+
+/* Block layouts */
+
+.stack
+{ --stack_gap: var(--sp_m);
+  display: flex; flex-direction: column; justify-content: flex-start;
+  gap: var(--stack_gap); }
+
+.box
+{ --box_pad: var(--sp_m); --box_border: 0;
+  padding: var(--box_pad); border: var(--box_border) solid; }
+
+.center /* on the inline axis */
+{ --center_max_size: var(--measure_m); --center_pad: 0; --center_align: normal;
+  display: flex; flex-direction: column; align-items: var(--center_align);
+  box-sizing: content-box;
+  max-inline-size: var(--center_max_size);
+  padding-inline-start: var(--center_pad);
+  padding-inline-end: var(--center_pad);
+  margin-inline: auto; }
+
+.cluster
+{ --cluster_justify: flex-start; --cluster_align: center;
+  --cluster_gap: var(--sp_m);
+  display: flex; flex-wrap: wrap;
+  align-items: var(--cluster_align); justify-content: var(--cluster_justify);
+  gap: var(--cluster_gap); }
+
+
+.sidebar
+{ --sidebar_gap: var(--sp_m); --sidebar_bar_size: auto;
+  --sidebar_min_content: 50%;
+  display: flex; flex-wrap: wrap;
+  gap: var(--sidebar_gap); }
+
+.sidebar.start > :first-child, .sidebar.end > :last-child
+{ flex-basis: var(--sidebar_bar_size); flex-grow: 1; }
+
+.sidebar.start > :last-child, .sidebar.end > :first-child
+{ flex-basis: 0; flex-grow: 999;
+  min-inline-size: var(--sidebar_min_content); }
+
+
+.switcher
+{ --switcher_gap: var(--sp_m); --switcher_at_size: var(--measure_m);
+  display: flex; flex-wrap: wrap; gap: var(--switcher_gap); }
+
+.switcher > *
+{ flex-grow: 1; flex-basis: calc((var(--switcher_at_size) - 100%) * 999) }
+
+.switcher > :nth-last-child(n + 5),
+.switcher > :nth-last-child(n + 5) ~ * { flex-basis: 100% }
+
+
+.cover > .central { margin-block: auto; }
+.cover
+{ --cover_gap: var(--sp_m); --cover_min_size: 100vh;
+  display: flex; flex-direction: column; gap: var(--cover_gap);
+  min-block-size: var(--cover_min_size); }
+
+
+.grid
+{ --grid_gap: var(--sp_m); --grid_min: var(--measure_xs);
+  display: grid;
+  grid-gap: var(--grid_gap);
+  grid-template-columns:
+    repeat(auto-fit, minmax(min(var(--grid_min), 100%), 1fr)); }
+
+
+.frame
+{ --frame_ratio_num: 16; --frame_ratio_den: 9;
+  display: flex; justify-content: center; align-items: center;
+  aspect-ratio:  var(--frame_ratio_num) / var(--frame_ratio_den);
+  overflow: hidden; }
+
+.frame > img, .frame > video
+{ inline-size: 100%; block-size: 100%; object-fit: cover }
+
+
+.reel
+{ --reel_item_size: auto;
+  --reel_gap: var(--sp_m);
+  --reel_scrollbar_size: var(--sp_xxs);
+  --reel_scrollbar_visible: auto; /* use scroll to make it always visible */
+  --reel_track_color: #fff;
+  --reel_thumb_color: #000;
+  display: flex;
+  overflow-x: var(--reel_scrollbar_visible); overflow-y: hidden;
+  scrollbar-color: var(--reel_thumb_color) var(--reel_track_color);
+  gap: var(--reel_gap); }
+
+.reel::-webkit-scrollbar-thumb { background-color: var(--reel_thumb_color); }
+.reel::-webkit-scrollbar
+{ block-size: var(--reel_scrollbar_size); border-top: 1px solid; }
+
+.reel > * { flex: 0 0 var(--reel_item_size); }
+.reel > img { block-size: 100%; flex-basis: auto; width: auto; }
+
+.imposter
+{ --imposter_position: absolute;
+  --imposter_pad: var(--sp_m);
+  position: var(--imposter_position);
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.imposter.contained {
+  overflow: auto;
+  max-inline-size: calc(100% - (var(--imposter_pad) * 2));
+  max-block-size: calc(100% - (var(--imposter_pad) * 2));
+}
+
+/* Icons */
+
+/* FIXME checkout with hyperbib.
+.icon { width: 0.75em; width: 1cap; height: 0.75em; height: 1cap}
+*/
+.with_icon { --icon_gap: 0.25em; display: inline-flex; align-items: baseline; }
+.with_icon .icon { margin-inline-end: var(--icon_gap) }

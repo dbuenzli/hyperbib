@@ -13,6 +13,7 @@ let htmlact = B0_ocaml.libname "htmlact"
 let htmlact_page = B0_ocaml.libname "htmlact.page"
 let htmlit = B0_ocaml.libname "htmlit"
 let jsont_bytesrw = B0_ocaml.libname "jsont.bytesrw"
+let negsp = B0_ocaml.libname "negsp.htmlit"
 let note = B0_ocaml.libname "note"
 let note_brr = B0_ocaml.libname "note.brr"
 let ptime_clock = B0_ocaml.libname "ptime.clock"
@@ -113,7 +114,7 @@ let hyperbib_base_requires =
   [ unix; threads; cmdliner; bytesrw; bytesrw_xxhash; bytesrw_unix;
     ptime_clock; b0_std; jsont_bytesrw; htmlit; htmlact;
     rel; rel_cli; rel_sqlite3; rel_pool; typegist;
-    webs; webs_kit; webs_unix; webs_cli; ]
+    webs; webs_kit; webs_unix; webs_cli; negsp ]
 
 let hyperbib_requires =
   hyperbib_base :: hyperbib_base_requires (* remove once we have -H support *)
