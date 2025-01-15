@@ -3,12 +3,18 @@
    SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
-(** Search. *)
-
 open Hyperbib_std
 
+(** Search. *)
+
+type raw_query = string
+
 module Url : sig
-  type t = Index
+  val query_key : string
+  type t =
+  | Index of raw_query option
+  | Results of raw_query option
+
   val kind : t Kurl.kind
   val v : t -> Kurl.t
 end

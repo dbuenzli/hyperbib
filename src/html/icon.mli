@@ -16,6 +16,7 @@ val database : El.html
 val duplicate : El.html
 val eye : El.html
 val eye_off : El.html
+val magnifying_glass : El.html
 val minus_circle : El.html
 val pencil : El.html
 val pencil_alt : El.html

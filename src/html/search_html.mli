@@ -7,4 +7,5 @@
 
 open Hyperbib_std
 
-val index : Page.Gen.t -> unit -> Page.t
+val index :
+  ?results:El.html -> Page.Gen.t -> Search.raw_query option -> Page.t

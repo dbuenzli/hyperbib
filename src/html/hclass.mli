@@ -46,6 +46,8 @@ val reference_ids : At.t
 val ref : At.t
 val ref_item : At.t
 val ref_list : At.t
+val search : At.t
+val search_results : At.t
 val testing : At.t
 val toc : At.t
 val secondary : At.t
@@ -59,7 +61,6 @@ val year : At.t
 (** {1:animate Animate} *)
 
 val fade : At.t
-
 
 (** {1:msg Messages} *)
 

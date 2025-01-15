@@ -648,7 +648,8 @@ footer { font-size: var(--size-font-tiny); color: var(--color-fg-light); }
 .login > * { display: block }
 .login > .field > * { display: block }
 .login > .field > .label { font-weight: 700; font-size:var(--font-size); }
-.login > .field > input
+.login > .field > input,
+.search > * > input
 { font-size:var(--font-size); width: 100%; padding:0.5ex; }
 
 .item-count

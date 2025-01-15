@@ -59,7 +59,7 @@ let page_html g =
           Work is in progress to cleanup the data.";
     ];
     El.p [
-    let href = Kurl.Fmt.url (Page.Gen.url_fmt g) (Search.Url.v Index) in
+    let href = Kurl.Fmt.url (Page.Gen.url_fmt g) (Search.Url.v (Index None)) in
     Html_kit.link ~href (El.txt "Search") ]
   ]
 
