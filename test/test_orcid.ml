@@ -5,7 +5,7 @@
 
 open B0_testing
 
-let test_of_string () =
+let test_of_string =
   Test.test "Orcid.of_string" @@ fun () ->
   let test ?__POS__ = Test.result ?__POS__ ~ok:(module Orcid) in
   let ok ?__POS__ id n = test (Orcid.of_string id) (Ok (Orcid.v n)) ?__POS__ in
@@ -21,9 +21,5 @@ let test_of_string () =
     "ORCID checksum error, expected: 'X' found: 'A'" ~__POS__;
   ()
 
-let main () =
-  Test.main @@ fun () ->
-  test_of_string ();
-  ()
-
+let main () = Test.main @@ fun () -> Test.autorun ()
 let () = if !Sys.interactive then () else exit (main ())

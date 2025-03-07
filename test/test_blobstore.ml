@@ -18,7 +18,7 @@ let data1_key = k "9a4dea864648af82823c8c03e6dd2202.xxh3-128"
 
 let no_key = k "aabbcc864648af82823c8c03e6dd2202.xxh3-128"
 
-let test () =
+let test_mechanics =
   Test.test "store mechanics" @@ fun () ->
   Result.get_ok @@ Result.join @@
   (* Make a store in a temporary directory. *)
@@ -71,9 +71,5 @@ let test () =
   let* () = Blobstore.fold add store () in
   Ok ()
 
-let main () =
-  Test.main @@ fun () ->
-  test ();
-  ()
-
+let main () = Test.main @@ fun () -> Test.autorun ()
 let () = if !Sys.interactive then () else exit (main ())
