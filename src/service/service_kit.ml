@@ -28,13 +28,13 @@ let find_dupe_doi ?(suggestion_dupe_check = true) g ~self db doi =
   | Some r -> Ok (Some (Doi_html.warn_doi_exists g ~self doi r))
 
 let lookup_doi env doi =
-  let doi_cache = Cli_kit.Conf.doi_cache_dir (Service_env.conf env) in
+  let doi_cache = Hyperbib_conf.doi_cache_dir (Service_env.conf env) in
   let* httpc =
     Result.map_error
       (* Bof *)
       (fun e -> Result.get_error (Http.Response.server_error_500 ~log:e ())) @@
     Result.map Option.some
-      (Cli_kit.Conf.http_client (Service_env.conf env))
+      (Hyperbib_conf.http_client (Service_env.conf env))
   in
   Ok (doi, Import.Doi.get_ref httpc ~cache:doi_cache doi)
 

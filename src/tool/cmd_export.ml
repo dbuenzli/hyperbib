@@ -9,8 +9,8 @@ open Result.Syntax
 (* BibTeX export *)
 
 let bibtex ~outf conf =
-  Log.if_error ~use:Cli_kit.Exit.some_error @@
-  Cli_kit.with_db_transaction conf `Deferred @@ fun db ->
+  Log.if_error ~use:Hyperbib_cli.Exit.some_error @@
+  Hyperbib_conf.with_db_transaction conf `Deferred @@ fun db ->
   let* b = Bibliography.get () in
   let now = Ptime_clock.now () in
   let only_public = Rel_query.Bool.true' in
@@ -18,7 +18,7 @@ let bibtex ~outf conf =
   let* refs = Reference.render_data ~only_public refs db |> Db.string_error in
   let* bib = Export.bibtex_of_refs ~now b refs in
   let* () = Os.File.write ~force:true ~make_path:false outf bib in
-  Ok Cli_kit.Exit.ok
+  Ok Hyperbib_cli.Exit.ok
 
 (* HTML export *)
 
@@ -33,12 +33,12 @@ let page_gen ~file_browsable bibliography =
   Page.Gen.v ~now bibliography uf ~auth_ui ~user_view ~private_data ~testing
 
 let html ~dest ~file_browsable conf =
-  Log.if_error ~use:Cli_kit.Exit.some_error @@
-  Cli_kit.with_db_transaction conf `Deferred @@ fun db ->
+  Log.if_error ~use:Hyperbib_cli.Exit.some_error @@
+  Hyperbib_conf.with_db_transaction conf `Deferred @@ fun db ->
   let* b = Bibliography.get () in
   let page_gen = page_gen ~file_browsable b in
   let* () = Export.static_html ~inside_dir:dest conf db page_gen in
-  Ok Cli_kit.Exit.ok
+  Ok Hyperbib_cli.Exit.ok
 
 (* Command line interface *)
 
@@ -52,11 +52,11 @@ let bibtex =
     `P "The $(iname) command exports the public bibliography as a \
         BibTeX file." ]
   in
-  Cli_kit.cmd_with_conf "bibtex" ~doc ~man @@
+  Hyperbib_cli.cmd_with_conf "bibtex" ~doc ~man @@
   let+ outf =
     let doc = "Write BibTeX file to $(docv). Use $(b,-) for $(stdout)." in
     let docv = "FILE" in
-    Arg.(value & opt Cli_kit.fpath Fpath.dash & info ["o"] ~doc ~docv)
+    Arg.(value & opt Hyperbib_cli.fpath Fpath.dash & info ["o"] ~doc ~docv)
   in
   bibtex ~outf
 
@@ -72,10 +72,10 @@ let html =
         external links to it (you will have to configure your webserver \
         to append $(b,.html) to requests)." ]
   in
-  Cli_kit.cmd_with_conf "html" ~doc ~man @@
+  Hyperbib_cli.cmd_with_conf "html" ~doc ~man @@
   let+ dest =
     let doc = "Output directory." and docv = "HTML_DIR" in
-    Arg.(required & pos 1 (some Cli_kit.fpath) None & info [] ~doc ~docv)
+    Arg.(required & pos 1 (some Hyperbib_cli.fpath) None & info [] ~doc ~docv)
   and+ file_browsable =
     let doc = "Ensure the HTML can be browsed via the $(b,file://) protocol." in
     Arg.(value & flag & info ["file-browsable"] ~doc)
@@ -88,4 +88,4 @@ let cmd =
     `S Manpage.s_description;
     `P "The $(iname) command exports data in the database."  ]
   in
-  Cli_kit.cmd_group "export" ~doc ~man [bibtex; html]
+  Hyperbib_cli.cmd_group "export" ~doc ~man [bibtex; html]

@@ -75,10 +75,10 @@ let add_reference_doc
       Ok ()
 
 let fill ~doi_resolvers ~media_type ~url_only ~public conf =
-  Log.if_error ~use:Cli_kit.Exit.some_error @@
-  let* httpc = Cli_kit.Conf.http_client conf in
-  let* blobstore = Cli_kit.Conf.blobstore conf in
-  Result.join @@ Cli_kit.with_db conf @@ fun db ->
+  Log.if_error ~use:Hyperbib_cli.Exit.some_error @@
+  let* httpc = Hyperbib_conf.http_client conf in
+  let* blobstore = Hyperbib_conf.blobstore conf in
+  Result.join @@ Hyperbib_conf.with_db conf @@ fun db ->
   let lookup (rid, doi) () = match doi with
   | None -> Log.stdout (fun m -> m "Reference %a: no DOI." Reference.Id.pp rid);
   | Some doi ->
@@ -104,11 +104,11 @@ let fill ~doi_resolvers ~media_type ~url_only ~public conf =
       |> Db.string_error
     with Failure e -> Error e
   in
-  Ok Cli_kit.Exit.ok
+  Ok Hyperbib_cli.Exit.ok
 
 let fetch ~doi_resolvers ~media_type ~doi ~url_only ~outf conf =
-  Log.if_error ~use:Cli_kit.Exit.some_error @@
-  let* httpc = Cli_kit.Conf.http_client conf in
+  Log.if_error ~use:Hyperbib_cli.Exit.some_error @@
+  let* httpc = Hyperbib_conf.http_client conf in
   (* XXX we should extract and use a resolver from doi if there is one *)
   let* doi = Doi.of_string doi in
   let* resolver, url, doc =
@@ -121,7 +121,7 @@ let fetch ~doi_resolvers ~media_type ~doi ~url_only ~outf conf =
     Log.info (fun m -> m "Wrote file %a" (Fmt.code' Fpath.pp) outf);
     Ok ()
   in
-  Ok Cli_kit.Exit.ok
+  Ok Hyperbib_cli.Exit.ok
 
 (* Command line interface *)
 
@@ -157,7 +157,7 @@ let fill_cmd =
       `P "The $(iname) tries to fill-in the document store for those \
           references that do not have an associated document"; ]
   in
-  Cli_kit.cmd_with_conf "fill" ~doc ~man @@
+  Hyperbib_cli.cmd_with_conf "fill" ~doc ~man @@
   let+ doi_resolvers and+ media_type and+ url_only
   and+ public =
     let doc = "Publication status of added documents" and docv = "BOOL" in
@@ -178,7 +178,7 @@ let fetch_cmd =
           this may result in a 403 forbidden error. Sometimes trying \
           to use the resolver with a browser and trying again works."];
   in
-  Cli_kit.cmd_with_conf "fetch" ~doc ~man @@
+  Hyperbib_cli.cmd_with_conf "fetch" ~doc ~man @@
   let+ doi_resolvers and+ media_type and+ url_only
   and+ doi =
     let doc =
@@ -189,11 +189,11 @@ let fetch_cmd =
   and+ outf =
     let doc = "Write document to $(docv). Use $(b,-) for standard output" in
     let docv = "FILE" in
-    Arg.(value & opt Cli_kit.fpath Fpath.dash & info ["o"] ~doc ~docv)
+    Arg.(value & opt Hyperbib_cli.fpath Fpath.dash & info ["o"] ~doc ~docv)
   in
   fetch ~doi_resolvers ~media_type ~doi ~url_only ~outf
 
 let cmd =
   let doc = "Operations on reference documents" in
-  Cli_kit.cmd_group "doc" ~doc @@
+  Hyperbib_cli.cmd_group "doc" ~doc @@
   [fetch_cmd; fill_cmd]

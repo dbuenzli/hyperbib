@@ -279,7 +279,7 @@ let doc env request (_, ref_id) docid =
   if not see_private_data && is_private (* 404 to avoid probing *)
   then Http.Response.not_found_404 ~log:"Not authorized" () else
   let file =
-    let* blobstore = Cli_kit.Conf.blobstore (Service_env.conf env) in
+    let* blobstore = Hyperbib_conf.blobstore (Service_env.conf env) in
     let* id = Blobstore.Key.of_text (Reference.Doc.blob_key doc) in
     Blobstore.find id blobstore
   in

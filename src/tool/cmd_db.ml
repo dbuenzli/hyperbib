@@ -20,14 +20,14 @@ let make_backup db_file db =
 (* Backup *)
 
 let backup conf file =
-  Log.if_error ~use:Cli_kit.Exit.some_error @@
-  let db_file = Cli_kit.Conf.db_file conf in
+  Log.if_error ~use:Hyperbib_cli.Exit.some_error @@
+  let db_file = Hyperbib_conf.db_file conf in
   let file = match file with
   | None -> Db.stamped_backup_file db_file | Some file -> file
   in
   Result.join @@ Db.string_error @@ Db.with_open db_file @@ fun db ->
   let* () = log_making_backup file; Db.backup file db in
-  Ok Cli_kit.Exit.ok
+  Ok Hyperbib_cli.Exit.ok
 
 (* Changes *)
 
@@ -45,8 +45,8 @@ let do_changes (col_renames, table_renames) db =
   List.iter_stop_on_error (Db.exec db) stmts |> Db.string_error
 
 let changes conf (col_renames, table_renames as r) format exec no_backup =
-  Log.if_error ~use:Cli_kit.Exit.some_error @@
-  let db_file = Cli_kit.Conf.db_file conf in
+  Log.if_error ~use:Hyperbib_cli.Exit.some_error @@
+  let db_file = Hyperbib_conf.db_file conf in
   Result.join @@ Db.string_error @@ Db.with_open db_file @@ fun db ->
   let* (live, issues) = Db.schema db |> Db.string_error in
   List.iter (fun i -> Log.warn (fun m -> m "%s" i)) issues;
@@ -70,13 +70,13 @@ let changes conf (col_renames, table_renames as r) format exec no_backup =
           let pp_changes = Fmt.list Rel.Schema.pp_change in
           Log.stdout (fun m -> m "@[<v>%a@]" pp_changes cs); Ok ()
   in
-  Ok Cli_kit.Exit.ok
+  Ok Hyperbib_cli.Exit.ok
 
 let restore ~backup ~last conf =
-  Log.if_error ~use:Cli_kit.Exit.some_error @@
-  let db_file = Cli_kit.Conf.db_file conf in
+  Log.if_error ~use:Hyperbib_cli.Exit.some_error @@
+  let db_file = Hyperbib_conf.db_file conf in
   let* backup = match backup with
-  | None when last -> Ok (Cli_kit.Conf.db_backup_file conf)
+  | None when last -> Ok (Hyperbib_conf.db_backup_file conf)
   | Some backup -> Ok backup
   | None ->
       Fmt.error
@@ -87,20 +87,20 @@ let restore ~backup ~last conf =
   Result.join @@ Db.with_open' db_file @@ fun dst ->
   let () = log_restore_backup backup db_file in
   let* () = Db.restore ~backup dst in
-  Ok Cli_kit.Exit.ok
+  Ok Hyperbib_cli.Exit.ok
 
 (* Reset *)
 
 let reset conf no_backup (* populate *) =
-  Log.if_error ~use:Cli_kit.Exit.some_error @@ Result.join @@
-  let db_file = Cli_kit.Conf.db_file conf in
+  Log.if_error ~use:Hyperbib_cli.Exit.some_error @@ Result.join @@
+  let db_file = Hyperbib_conf.db_file conf in
   let* exists = Os.File.exists db_file in
   Db.string_error @@ Db.with_open db_file @@ fun db ->
   let* () = if no_backup || not exists then Ok () else make_backup db_file db in
   let* () = Db.clear db |> Db.string_error in
   let* () = Db.ensure_schema Schema.v db in
 (*  let* () = if populate then do_populate db else Ok () in *)
-  Ok Cli_kit.Exit.ok
+  Ok Hyperbib_cli.Exit.ok
 
 (* Schema *)
 
@@ -114,24 +114,24 @@ let output_schema ~format s = match format with
     Log.stdout (fun m -> m "@[%a@]" (Rel.Schema.pp_ocaml kind) s)
 
 let schema conf which format =
-  Log.if_error ~use:Cli_kit.Exit.some_error @@
+  Log.if_error ~use:Hyperbib_cli.Exit.some_error @@
   let* () = match which with
   | `App -> output_schema ~format Schema.v; Ok ()
   | `Live ->
       Db.string_error @@ Result.join @@
-      Db.with_open (Cli_kit.Conf.db_file conf) @@ fun db ->
+      Db.with_open (Hyperbib_conf.db_file conf) @@ fun db ->
       let* live, issues = Db.schema db in
       output_schema ~format live;
       List.iter (fun i -> Log.warn (fun m -> m "%a" Fmt.lines i)) issues;
       Ok ()
   in
-  Ok Cli_kit.Exit.ok
+  Ok Hyperbib_cli.Exit.ok
 
 (* SQL prompt *)
 
 let sql conf args =
-  Log.if_error ~use:Cli_kit.Exit.some_error @@
-  let db_file = Cli_kit.Conf.db_file conf in
+  Log.if_error ~use:Hyperbib_cli.Exit.some_error @@
+  let db_file = Hyperbib_conf.db_file conf in
   let args = match List.rev args with
   | [] -> Cmd.path db_file
   | a :: _ when String.length a > 1 && a.[0] = '-' (* is an option *) ->
@@ -146,7 +146,7 @@ let sql conf args =
 open Cmdliner
 open Cmdliner.Term.Syntax
 
-let exits = Cli_kit.Exit.Info.base_cmd
+let exits = Hyperbib_cli.Exit.Info.base_cmd
 
 let backup_cmd =
   let doc = "Make a backup of the database" in
@@ -158,10 +158,10 @@ let backup_cmd =
     let doc = "The backup file. If unspecified a new timestamped file is \
                written in data directory of the application directory."
     in
-    Arg.(value & pos 0 (some Cli_kit.fpath) None & info [] ~doc ~docv:"FILE")
+    Arg.(value & pos 0 (some Hyperbib_cli.fpath) None & info [] ~doc ~docv:"FILE")
   in
   Cmd.v (Cmd.info "backup" ~doc ~man) @@
-  Term.(const backup $ Cli_kit.conf $ dst)
+  Term.(const backup $ Hyperbib_cli.conf $ dst)
 
 let changes_cmd =
   let doc = "Compare live database and application schema" in
@@ -195,7 +195,7 @@ let changes_cmd =
     Arg.(value & flag & info ["no-backup"] ~doc)
   in
   Cmd.v (Cmd.info "changes" ~doc ~man) @@
-  Term.(const changes $ Cli_kit.conf $ Rel_cli.renames () $ format $
+  Term.(const changes $ Hyperbib_cli.conf $ Rel_cli.renames () $ format $
         exec $ no_backup)
 
 let restore_cmd =
@@ -204,11 +204,11 @@ let restore_cmd =
     `S Manpage.s_description;
     `P "$(iname) restores a backup of the database."; ]
   in
-  Cli_kit.cmd_with_conf "restore" ~doc ~man @@
+  Hyperbib_cli.cmd_with_conf "restore" ~doc ~man @@
   let+ backup =
     let doc = "$(docv) is the backup file to restore." in
     let docv = "BACKUP.sqlite3" in
-    Arg.(value & pos 0 (some Cli_kit.fpath) None & info [] ~doc ~docv)
+    Arg.(value & pos 0 (some Hyperbib_cli.fpath) None & info [] ~doc ~docv)
   and+ last =
     let doc = "Use the last automated backup." in
     Arg.(value & flag & info ["l"; "last"] ~doc)
@@ -232,7 +232,7 @@ let reset_cmd =
     Arg.(value & flag & info ["p"; "populate"] ~doc)
   in *)
   Cmd.v (Cmd.info "reset" ~doc ~exits ~man) @@
-  Term.(const reset $ Cli_kit.conf $ no_backup (* $ populate *))
+  Term.(const reset $ Hyperbib_cli.conf $ no_backup (* $ populate *))
 
 let schema_cmd =
   let doc = "Output the app or live database schema" in
@@ -251,7 +251,7 @@ let schema_cmd =
     Arg.(required & pos 0 (Arg.enum e) None & info [] ~doc ~docv)
   in
   Cmd.v (Cmd.info "schema" ~doc ~exits ~man) @@
-  Term.(const schema $ Cli_kit.conf $ which $
+  Term.(const schema $ Hyperbib_cli.conf $ which $
         Rel_cli.schema_format ~default:`Sqlite3 ())
 
 let sql_cmd =
@@ -268,7 +268,7 @@ let sql_cmd =
     Arg.(value & pos_all string [] & info [] ~doc ~docv)
   in
   Cmd.v (Cmd.info "sql" ~doc ~exits ~man)
-    Term.(const sql $ Cli_kit.conf $ args)
+    Term.(const sql $ Hyperbib_cli.conf $ args)
 
 let cmd =
   let doc = "Manage the application database" in

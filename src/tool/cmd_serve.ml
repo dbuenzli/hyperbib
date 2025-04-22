@@ -7,7 +7,7 @@ open Hyperbib_std
 open Result.Syntax
 
 let log_startup c env =
-  let app_dir = Cli_kit.Conf.app_dir (Service_env.conf env) in
+  let app_dir = Hyperbib_conf.app_dir (Service_env.conf env) in
   let l = Webs_http11_gateway.listener c in
   let service_path = Webs_http11_gateway.service_path c in
   Log.stdout (fun m ->
@@ -44,7 +44,7 @@ let setup_env ~conf ~db_pool ~editable ~service_path ~testing  =
   Ok (Service_env.v ~conf ~caps ~db_pool ~editable ~page_gen ())
 
 let setup_service ~conf ~service_path ~secure_cookie ~env =
-  let pk_file = Cli_kit.Conf.authentication_private_key conf in
+  let pk_file = Hyperbib_conf.authentication_private_key conf in
   let* private_key = Service.setup_private_key ~file:pk_file in
   let tree = Service_tree.v and fallback = Static_file_service.v in
   Ok (Service.v ~service_path ~private_key ~secure_cookie tree ~fallback env)
@@ -53,7 +53,7 @@ let start_backup_thread ~conf ~db_pool ~backup_every_s =
   match backup_every_s with
   | None -> ()
   | Some every_s ->
-      let backup = Cli_kit.Conf.db_backup_file conf in
+      let backup = Hyperbib_conf.db_backup_file conf in
       (* FIXME would be nice to stop that in finish *)
       ignore (Db.backup_thread db_pool ~every_s backup)
 
@@ -65,12 +65,12 @@ let serve
     listener service_path max_connections backup_every_s editable
     insecure_cookie testing conf
   =
-  Log.if_error ~use:Cli_kit.Exit.some_error @@
+  Log.if_error ~use:Hyperbib_cli.Exit.some_error @@
   let service_path = Option.value ~default:[""] service_path in
   let secure_cookie = not insecure_cookie in
   let read_only = editable = `No in
   let pool_size = max_connections + 1 (* backup thread *) in
-  let db_file = Cli_kit.Conf.db_file conf in
+  let db_file = Hyperbib_conf.db_file conf in
   let* () = if not read_only then Db.ensure_db_path db_file else Ok () in
   let db_pool = Db.pool ~read_only db_file ~size:pool_size in
   let* () = setup_db ~read_only ~db_pool in
@@ -85,7 +85,7 @@ let serve
   let* () = Webs_http11_gateway.serve c service in
   let* () = finish ~db_pool in
   log_shutdown ();
-  Ok Cli_kit.Exit.ok
+  Ok Hyperbib_cli.Exit.ok
 
 (* Command line interface *)
 
@@ -148,7 +148,7 @@ let cmd =
     `S Manpage.s_description;
     `P "The $(iname) command serves the web application."; ]
   in
-  Cli_kit.cmd_with_conf "serve" ~doc ~man @@
+  Hyperbib_cli.cmd_with_conf "serve" ~doc ~man @@
   Term.(const serve $ Webs_cli.listener () $
         Webs_cli.service_path () $ Webs_cli.max_connections () $
         backup_every_s $ editable $ insecure_cookie $ testing)

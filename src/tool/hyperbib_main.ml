@@ -12,7 +12,7 @@ let cmds =
 
 let hyperbib =
   let doc = "Annotates bibliographies" in
-  let exits = Cli_kit.Exit.Info.base_cmd in
+  let exits = Hyperbib_cli.Exit.Info.base_cmd in
   let default = Term.(ret (const (`Help (`Auto, None)))) in
   let info = Cmd.info "hyperbib" ~version:Stamp.version ~doc ~exits in
   Cmd.group info ~default cmds

@@ -129,8 +129,8 @@ let check_dois ~repair conf =
     if repair then () else
     Log.stdout (fun m -> m "%a@." (if n > 0 then pp_fail else pp_pass) ())
   in
-  Log.if_error ~use:Cli_kit.Exit.some_error @@
-  Cli_kit.with_db_transaction conf `Deferred @@ fun db ->
+  Log.if_error ~use:Hyperbib_cli.Exit.some_error @@
+  Hyperbib_conf.with_db_transaction conf `Deferred @@ fun db ->
   Log.stdout (fun m -> m "%a DOIs in the %a table"
               pp_check () Fmt.code (Table.name Reference.Cites.table));
   let* n0 = check_cites_doi db ~repair in
@@ -140,8 +140,8 @@ let check_dois ~repair conf =
   let* n1 = check_reference_dois db ~repair in
   log_result ~repair n1;
   if n0 + n1 = 0
-  then Ok Cli_kit.Exit.ok
-  else Ok Cli_kit.Exit.some_error
+  then Ok Hyperbib_cli.Exit.ok
+  else Ok Hyperbib_cli.Exit.some_error
 
 (* Check ORCIDs
 
@@ -207,19 +207,19 @@ let check_orcids ~repair conf =
     if repair then () else
     Log.stdout (fun m -> m "%a@." (if n > 0 then pp_fail else pp_pass) ())
   in
-  Log.if_error ~use:Cli_kit.Exit.some_error @@
-  Cli_kit.with_db_transaction conf `Deferred @@ fun db ->
+  Log.if_error ~use:Hyperbib_cli.Exit.some_error @@
+  Hyperbib_conf.with_db_transaction conf `Deferred @@ fun db ->
   Log.stdout (fun m -> m "%a ORCIDs in the %a table"
               pp_check () Fmt.code (Table.name Person.table));
   let* n = check_person_orcids db ~repair in
   log_result ~repair n;
   if n = 0
-  then Ok Cli_kit.Exit.ok
-  else Ok Cli_kit.Exit.some_error
+  then Ok Hyperbib_cli.Exit.ok
+  else Ok Hyperbib_cli.Exit.some_error
 
 let test () conf =
-  Log.if_error ~use:Cli_kit.Exit.some_error @@
-  Result.join @@ Cli_kit.with_db conf @@ fun db ->
+  Log.if_error ~use:Hyperbib_cli.Exit.some_error @@
+  Result.join @@ Hyperbib_conf.with_db conf @@ fun db ->
   let open Rel_query.Syntax in
   Db.string_error @@
   let match' =
@@ -231,7 +231,7 @@ let test () conf =
   let* persons = Db.list db match' in
   let pp_person = Row.value_pp (Table.row Person.table) in
   Log.stdout (fun m -> m "Persons: @[<v>%a@]" (Fmt.list pp_person) persons);
-  Ok Cli_kit.Exit.ok
+  Ok Hyperbib_cli.Exit.ok
 
 (* Command line interface *)
 
@@ -244,7 +244,7 @@ let check_dois_cmd =
     [ `S Manpage.s_description;
       `P "The $(iname) command is used for checking DOIs in the database."; ]
   in
-  Cli_kit.cmd_with_conf "check-dois" ~doc ~man @@
+  Hyperbib_cli.cmd_with_conf "check-dois" ~doc ~man @@
   let doc = "Repair warnings and errors that can be." in
   let+ repair = Arg.(value & flag & info ["repair"] ~doc) in
   check_dois ~repair
@@ -255,7 +255,7 @@ let check_orcids_cmd =
     [ `S Manpage.s_description;
       `P "The $(iname) command is used for checking ORCIDs in the database."; ]
   in
-  Cli_kit.cmd_with_conf "check-orcids" ~doc ~man @@
+  Hyperbib_cli.cmd_with_conf "check-orcids" ~doc ~man @@
   let doc = "Repair warnings and errors that can be." in
   let+ repair = Arg.(value & flag & info ["repair"] ~doc) in
   check_orcids ~repair
@@ -266,11 +266,11 @@ let test_cmd =
     [ `S Manpage.s_description;
       `P "The $(iname) is used for testing purposes."; ]
   in
-  Cli_kit.cmd_with_conf "test" ~doc ~man @@
+  Hyperbib_cli.cmd_with_conf "test" ~doc ~man @@
   let+ () = Term.const () in
   test ()
 
 let cmd =
   let doc = "Run maintenance tasks" in
-  Cli_kit.cmd_group "run" ~doc @@
+  Hyperbib_cli.cmd_group "run" ~doc @@
   [test_cmd; check_dois_cmd; check_orcids_cmd]

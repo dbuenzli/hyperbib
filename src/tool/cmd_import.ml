@@ -7,7 +7,7 @@ open Hyperbib_std
 open Result.Syntax
 
 let doi ~reset ~dois ~files ~dry_run conf =
-  Log.if_error ~use:Cli_kit.Exit.some_error @@
+  Log.if_error ~use:Hyperbib_cli.Exit.some_error @@
   let files = match dois, files with [], [] -> [Fpath.dash] | _ -> files in
   let dois_of_file file acc =
     Log.info (fun m -> m "Extracting DOIs from %a" Fpath.pp file);
@@ -22,7 +22,7 @@ let doi ~reset ~dois ~files ~dry_run conf =
       let dois = Doi.Set.to_list dois in
       let dois = List.map Doi.to_string dois in
       Log.stdout (fun m -> m "@[<v>%a@]" (Fmt.iter List.iter Fmt.string) dois);
-      Ok Cli_kit.Exit.ok
+      Ok Hyperbib_cli.Exit.ok
   | false ->
       failwith "TODO"
   (*
@@ -38,7 +38,7 @@ let doi ~reset ~dois ~files ~dry_run conf =
       let* () = Db.clear db |> Db.string_error in
       let* () = Db.ensure_schema Schema.v db in
       let* () = Import.legacy db conf |> Db.string_error |> Result.join in
-      Ok Cli_kit.Exit.ok *)
+      Ok Hyperbib_cli.Exit.ok *)
 
 (* Command line interface *)
 
@@ -70,7 +70,7 @@ let doi_cmd =
     `P "Note that it won't work well if your text format needs to \
         escape the DOIs, e.g. on BibTeX files." ]
   in
-  Cli_kit.cmd_with_conf "doi" ~doc ~man @@
+  Hyperbib_cli.cmd_with_conf "doi" ~doc ~man @@
   let+ reset and+ dry_run
   and+ dois =
     let doc = "Import reference $(docv). Repeatable." in
@@ -91,5 +91,5 @@ let cmd =
     `S Manpage.s_description;
     `P "The $(iname) command imports data in the database."  ]
   in
-  Cli_kit.cmd_group "import" ~doc ~man @@
+  Hyperbib_cli.cmd_group "import" ~doc ~man @@
   [doi_cmd]
