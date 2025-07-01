@@ -100,10 +100,10 @@ let write_static_file_stamp b =
       B0_zero.Reviver.hash_file r f |> B0_memo.fail_if_error m
     in
     let stamps =
-      List.map (fun f -> Hash.to_binary_string (stamp_file f)) files
+      List.map (fun f -> B0_hash.to_binary_string (stamp_file f)) files
     in
     let stamp = B0_zero.Reviver.hash_string r (String.concat "" stamps) in
-    Ok (Fmt.str "let static_files = %S\nlet version = %S" (Hash.to_hex stamp)
+    Ok (Fmt.str "let static_files = %S\nlet version = %S" (B0_hash.to_hex stamp)
           version)
   end;
   let mli = B0_build.in_scope_dir b stamp_mli_src in
@@ -160,7 +160,7 @@ let test ?doc ?run:(r = true) ?(requires = []) ?(srcs = []) src =
   let srcs = (`File src) :: srcs in
   let requires = hyperbib_base :: requires in
   let meta = B0_meta.(empty |> tag test |> ~~ run r) in
-  let name = Fpath.basename ~strip_ext:true src in
+  let name = Fpath.basename ~strip_exts:true src in
   B0_ocaml.exe name ~srcs ~requires ~meta ?doc
 
 let test_blobstore = test ~/"test/test_blobstore.ml"
