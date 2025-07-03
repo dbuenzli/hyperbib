@@ -5,20 +5,21 @@
 
 (** Hyperbib standard needs. *)
 
-(** {1:std Standard libray needs}
+(** {1:std Standard libray needs} *)
 
-    For now we sometimes piggy back B0_std but we should not. *)
+module Fmt = More.Fmt
+module Fpath = More.Fpath
+module Log = More.Log
+module Cmd = More.Cmd
+module Os = More.Os
 
-module Char = B0_std.Char
-module String = B0_std.String
+(** {1:extended_stdlib Extended [Stdlib] modules} *)
+
+module Char = More.Char
+module String = More.String
 module Bytes = Bytesrw.Bytes
-module Result = B0_std.Result
-module Fmt = B0_std.Fmt
-module List = B0_std.List
-module Fpath = B0_std.Fpath
-module Log = B0_std.Log
-module Cmd = B0_std.Cmd
-module Os = B0_std.Os
+module List = More.List
+module Result = More.Result
 
 (** {1:lib Library shortcuts} *)
 

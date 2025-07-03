@@ -55,8 +55,7 @@ let bibtex =
   Hyperbib_cli.cmd_with_conf "bibtex" ~doc ~man @@
   let+ outf =
     let doc = "Write BibTeX file to $(docv). Use $(b,-) for $(stdout)." in
-    let docv = "FILE" in
-    Arg.(value & opt Hyperbib_cli.fpath Fpath.dash & info ["o"] ~doc ~docv)
+    Arg.(value & opt More_cli.filepath Fpath.dash & info ["o"] ~doc)
   in
   bibtex ~outf
 
@@ -75,7 +74,7 @@ let html =
   Hyperbib_cli.cmd_with_conf "html" ~doc ~man @@
   let+ dest =
     let doc = "Output directory." and docv = "HTML_DIR" in
-    Arg.(required & pos 1 (some Hyperbib_cli.fpath) None & info [] ~doc ~docv)
+    Arg.(required & pos 1 (some More_cli.dirpath) None & info [] ~doc ~docv)
   and+ file_browsable =
     let doc = "Ensure the HTML can be browsed via the $(b,file://) protocol." in
     Arg.(value & flag & info ["file-browsable"] ~doc)

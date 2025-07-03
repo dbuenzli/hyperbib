@@ -3,16 +3,17 @@
    SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
-module Char = B0_std.Char
-module String = B0_std.String
+module Fmt = More.Fmt
+module Fpath = More.Fpath
+module Log = More.Log
+module Cmd = More.Cmd
+module Os = More.Os
+
+module Char = More.Char
+module String = More.String
 module Bytes = Bytesrw.Bytes
-module Result = B0_std.Result
-module Fmt = B0_std.Fmt
-module Log = B0_std.Log
-module List = B0_std.List
-module Fpath = B0_std.Fpath
-module Cmd = B0_std.Cmd
-module Os = B0_std.Os
+module List = More.List
+module Result = More.Result
 
 module Bag = Rel_query.Bag
 

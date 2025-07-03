@@ -11,16 +11,9 @@ type t
 (** The type for configurations. *)
 
 val make :
-  log_level:Log.level -> fmt_styler:Fmt.styler -> app_dir:Fpath.t ->
-  http_client:(Http_client.t, string) result -> unit -> t
+  app_dir:Fpath.t -> http_client:(Http_client.t, string) result -> unit -> t
 (** [make] is a configuration with given atributes. See the acessors
-      for semantics. *)
-
-val log_level : t -> Log.level
-(** [log_level c] is the desired log level in [c] *)
-
-val fmt_styler : t -> Fmt.styler
-(** [fmt_styler c] is the formatter styler. *)
+    for semantics. *)
 
 val app_dir : t -> Fpath.t
 (** [app_dir c] is the absolute path to the application directory. *)
@@ -61,9 +54,7 @@ val http_client : t -> (Http_client.t, string) result
 (** [http_client c] is the HTTP client to use in the app. *)
 
 
-val with_cli : log_level:Log.level option ->
-  fmt_styler:Fmt.styler option option ->
-  app_dir:Hyperbib_std.Fpath.t option -> (t, string) result
+val with_cli : app_dir:Hyperbib_std.Fpath.t option -> (t, string) result
 
 val with_db : t -> (Db.t -> 'a) -> ('a, string) result
 

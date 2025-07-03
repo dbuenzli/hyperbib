@@ -158,7 +158,7 @@ let backup_cmd =
     let doc = "The backup file. If unspecified a new timestamped file is \
                written in data directory of the application directory."
     in
-    Arg.(value & pos 0 (some Hyperbib_cli.fpath) None & info [] ~doc ~docv:"FILE")
+    Arg.(value & pos 0 (some More_cli.filepath) None & info [] ~doc)
   in
   Cmd.v (Cmd.info "backup" ~doc ~man) @@
   Term.(const backup $ Hyperbib_cli.conf $ dst)
@@ -208,7 +208,7 @@ let restore_cmd =
   let+ backup =
     let doc = "$(docv) is the backup file to restore." in
     let docv = "BACKUP.sqlite3" in
-    Arg.(value & pos 0 (some Hyperbib_cli.fpath) None & info [] ~doc ~docv)
+    Arg.(value & pos 0 (some More_cli.filepath) None & info [] ~doc ~docv)
   and+ last =
     let doc = "Use the last automated backup." in
     Arg.(value & flag & info ["l"; "last"] ~doc)

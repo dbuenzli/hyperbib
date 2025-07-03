@@ -22,31 +22,25 @@ end
 open Cmdliner
 open Cmdliner.Term.Syntax
 
-let fpath = Arg.conv' ~docv:"PATH" Fpath.(of_string, pp)
 let common_man = []
 let docs = Manpage.s_common_options
 
 let conf =
   Term.term_result' @@
-  let+ log_level =
-    let env = Cmd.Env.info "HYPERBIB_VERBOSITY" in
-    B0_std_cli.log_level ~docs ~env ()
-  and+ fmt_styler =
-    let env = Cmd.Env.info "HYPERBIB_COLOR" in
-    B0_std_cli.color ~docs ~env ()
+  let+ () = More_cli.set_log_level ()
   and+ app_dir =
-    let doc = "Application directory." and docv = "APP_DIR" in
+    let doc = "Application directory." in
     let absent = "current working directory" in
     let env = Cmd.Env.info "HYPERBIB_APP_DIR" in
-    Arg.(value & opt (some ~none:"." fpath) None &
-         info ["a"; "app-dir"] ~doc ~docs ~docv ~env ~absent)
+    Arg.(value & opt (some ~none:"." More_cli.dirpath) None &
+         info ["a"; "app-dir"] ~doc ~docs ~env ~absent)
   in
-  Hyperbib_conf.with_cli ~log_level ~fmt_styler ~app_dir
+  Hyperbib_conf.with_cli ~app_dir
 
 let cmd ?doc ?(man = []) ?(exits = []) name term =
   let man = [`Blocks man; `Blocks common_man] in
   let exits = List.append exits Exit.Info.base_cmd in
-  Cmd.v (Cmd.info name ~exits ?doc ~man) term
+  Cmd.make (Cmd.info name ~exits ?doc ~man) term
 
 let cmd_with_conf ?doc ?man ?exits name term =
   cmd ?doc ?man ?exits name Term.(term $ conf)

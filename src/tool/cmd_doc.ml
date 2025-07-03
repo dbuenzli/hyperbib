@@ -188,8 +188,7 @@ let fetch_cmd =
     Arg.(required & pos 0 (some string) None & info [] ~doc ~docv:"ID")
   and+ outf =
     let doc = "Write document to $(docv). Use $(b,-) for standard output" in
-    let docv = "FILE" in
-    Arg.(value & opt Hyperbib_cli.fpath Fpath.dash & info ["o"] ~doc ~docv)
+    Arg.(value & opt More_cli.filepath Fpath.dash & info ["o"] ~doc)
   in
   fetch ~doi_resolvers ~media_type ~doi ~url_only ~outf
 

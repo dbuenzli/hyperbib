@@ -28,16 +28,13 @@ end
 
 open Cmdliner
 
-val fpath : Fpath.t Arg.conv
-(** [fpath] is a filepath converter. *)
-
 (** {1:conf Cli configuration} *)
 
 val conf : Hyperbib_conf.t Term.t
 (** [conf] is a cmdliner term for configuration.
 
-      Term evaluation sets up logging level and color output by side
-      effect and looksup the HTTP client. *)
+    Term evaluation sets up logging level and by side effect
+    and looks up the HTTP client. *)
 
 val cmd_with_conf :
   ?doc:string -> ?man:Manpage.block list -> ?exits:Cmd.Exit.info list ->

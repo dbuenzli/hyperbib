@@ -19,7 +19,7 @@ let is_quote c = Char.equal c '\"' || Char.equal c '\''
 let doi_stop_char c = Char.Ascii.is_white c || Char.Ascii.is_control c
 
 let simple_delimitation s ~suffix_start:start =
-  match String.find_index ~start doi_stop_char s with
+  match String.find_first_index ~start doi_stop_char s with
   | None -> String.length s - 1
   | Some stop_char -> stop_char - 1
 
@@ -60,12 +60,12 @@ let rec find ?(already_delimited = false) ?start s =
   let sub = "10." (* Note ISO 26324:2022 allows more directory indicator,
                      but could not find a registry, not sure if that exists. *)
   in
-  match String.find_sub ?start ~sub s with
+  match String.find_first ?start ~sub s with
   | None -> None
   | Some first ->
       let start = first + String.length sub in
       let prefix_char c = Char.equal '.' c || Char.Ascii.is_digit c in
-      match String.find_index ~start (Fun.negate prefix_char) s with
+      match String.find_first_index ~start (Fun.negate prefix_char) s with
       | None -> find ~start s
       | Some should_slash ->
           if s.[should_slash] <> '/' then find ~start s  else

@@ -9,7 +9,7 @@
     and [@comment] are not supported. For values we assume UTF-8 without
     escape sequences. Nested braces are handled though. *)
 
-open B0_std
+open More
 
 val escape : string -> string
 (** [escape s] escapes [s] for BibT{_E}X. *)

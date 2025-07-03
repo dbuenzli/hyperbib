@@ -139,7 +139,7 @@ let index env =
 let creatable_person_of_sel sel =
   let sel = String.trim sel in
   if sel = "" then None else
-  match String.cut ~sep:"," sel with
+  match String.split_first ~sep:"," sel with
   | None ->
       Option.some @@
       Person.make ~id:Person.Id.zero ~last_name:sel ~first_names:"" ~orcid:None

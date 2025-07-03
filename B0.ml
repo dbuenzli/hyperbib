@@ -16,6 +16,8 @@ let jsont_bytesrw = B0_ocaml.libname "jsont.bytesrw"
 let negsp = B0_ocaml.libname "negsp.htmlit"
 let note = B0_ocaml.libname "note"
 let note_brr = B0_ocaml.libname "note.brr"
+let more = B0_ocaml.libname "more"
+let more_cli = B0_ocaml.libname "more.cli"
 let ptime_clock = B0_ocaml.libname "ptime.clock"
 let rel = B0_ocaml.libname "rel"
 let rel_cli = B0_ocaml.libname "rel.cli"
@@ -112,7 +114,8 @@ let write_static_file_stamp b =
 
 let hyperbib_base_requires =
   [ unix; threads; cmdliner; bytesrw; bytesrw_xxhash; bytesrw_unix;
-    ptime_clock; b0_std; jsont_bytesrw; htmlit; htmlact;
+    ptime_clock; more; more_cli; b0_std (* We still need this for B0_text *) ;
+    jsont_bytesrw; htmlit; htmlact;
     rel; rel_cli; rel_sqlite3; rel_pool; typegist;
     webs; webs_kit; webs_unix; webs_cli; negsp ]
 

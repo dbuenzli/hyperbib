@@ -23,6 +23,7 @@ depends: [
   "bytesrw"
   "ptime" {>= "1.2.0"}
   "webs"
+  "more"
   "htmlit"
   "htmlact"
   "conf-sqlite2"
@@ -41,4 +42,5 @@ pin-depends: [
   ["htmlact.dev" "git+https://erratique.ch/repos/htmlact.git#master"]
   ["rel.dev" "git+https://erratique.ch/repos/rel.git#master"]
   ["webs.dev" "git+https://erratique.ch/repos/webs.git#master"]
+  ["more.dev" "git+https://erratique.ch/repos/more.git#master"]
 ]

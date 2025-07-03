@@ -21,18 +21,14 @@ let setup_http_client () =
   c
 
 type t =
-  { log_level : Log.level;
-    fmt_styler : Fmt.styler;
-    http_client : (Http_client.t, string) result;
+  { http_client : (Http_client.t, string) result;
     app_dir : Fpath.t; }
 
-let make ~log_level ~fmt_styler ~app_dir ~http_client () =
-  { log_level; fmt_styler; app_dir; http_client }
+let make ~app_dir ~http_client () =
+  { app_dir; http_client }
 
 let blobstore_path = Fpath.v "data/blobs"
 let db_path = Fpath.v "data/bib.sqlite3"
-let log_level c = c.log_level
-let fmt_styler c = c.fmt_styler
 let http_client c = c.http_client
 let app_dir c = c.app_dir
 let users_file c = Fpath.(c.app_dir / "users.json")
@@ -56,15 +52,12 @@ let find_app_dir = function
        as@ an application directory.@]"
       Fmt.(st [`Fg `Yellow]) "Hint" Fmt.code "-a" Fmt.code "-a ."
 
-let with_cli ~log_level ~fmt_styler ~app_dir =
+let with_cli ~app_dir =
   (* I hate these three lines can't we do something better ? *)
-  let log_level = B0_std_cli.get_log_level log_level in
-  let fmt_styler = B0_std_cli.get_styler fmt_styler in
-  B0_std_cli.setup fmt_styler log_level ~log_spawns:Log.Debug;
   let http_client = setup_http_client () in
   let* app_dir = find_app_dir app_dir in
   let* app_dir = Os.Path.realpath app_dir in
-  Ok (make ~log_level ~fmt_styler ~app_dir ~http_client ())
+  Ok (make ~app_dir ~http_client ())
 
 let with_db conf f =
   let db_file = db_file conf in
