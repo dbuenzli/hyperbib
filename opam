@@ -10,7 +10,7 @@ See a few [screenshots](#screenshots).
 Hyperbib is distributed under the ISC license."""
 maintainer: "Daniel Bünzli <daniel.buenzl i@erratique.ch>"
 authors: "The hyperbib programmers"
-license: ["ISC" "OFL-1.1" "MIT"]
+license: ["ISC" "OFL-1.1" "LicenseRef-DejaVu-fonts" "MIT"]
 tags: ["app" "bibliography" "org:erratique"]
 homepage: "https://erratique.ch/software/hyperbib"
 doc: "https://erratique.ch/software/hyperbib/doc"
@@ -41,6 +41,7 @@ pin-depends: [
   ["jsont.dev" "git+https://erratique.ch/repos/jsont.git#master"]
   ["htmlact.dev" "git+https://erratique.ch/repos/htmlact.git#master"]
   ["rel.dev" "git+https://erratique.ch/repos/rel.git#master"]
+  ["typegist.dev" "git+https://erratique.ch/repos/typegist.git#master"]
   ["webs.dev" "git+https://erratique.ch/repos/webs.git#master"]
-  ["more.dev" "git+https://erratique.ch/repos/more.git#master"]
 ]
+x-maintenance-intent: ["(latest)"]

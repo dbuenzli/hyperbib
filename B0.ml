@@ -222,11 +222,6 @@ let schema =
   let stdin = Os.Cmd.in_string svg in
   Os.Cmd.run ~stdin Cmd.(show_url % "-t" % "schema.svg")
 
-
-
-
-
-
 (* Packs *)
 
 let all = B0_pack.make "all" ~locked:true @@ B0_unit.list ()
@@ -238,7 +233,7 @@ let default =
     |> ~~ B0_meta.maintainers ["Daniel Bünzli <daniel.buenzl i@erratique.ch>"]
     |> ~~ B0_meta.homepage "https://erratique.ch/software/hyperbib"
     |> ~~ B0_meta.online_doc "https://erratique.ch/software/hyperbib/doc"
-    |> ~~ B0_meta.licenses ["ISC"; "OFL-1.1"; "MIT"]
+    |> ~~ B0_meta.licenses ["ISC"; "OFL-1.1"; "LicenseRef-DejaVu-fonts"; "MIT"]
     |> ~~ B0_meta.repo "git+https://erratique.ch/repos/hyperbib.git"
     |> ~~ B0_meta.issues "https://github.com/dbuenzli/hyperbib/issues"
     |> ~~ B0_meta.description_tags ["app"; "bibliography"; "org:erratique"]
@@ -250,6 +245,7 @@ let default =
         "bytesrw", {||};
         "ptime", {|>= "1.2.0"|};
         "webs", {||};
+        "more", {||};
         "htmlit", {||};
         "htmlact", {||};
         "conf-sqlite2", {||};
