@@ -27,7 +27,8 @@ let docs = Manpage.s_common_options
 
 let conf =
   Term.term_result' @@
-  let+ () = More_cli.set_log_level ()
+  let+ () = More_cli.set_no_color ()
+  and+ () = More_cli.set_log_level ()
   and+ app_dir =
     let doc = "Application directory." in
     let absent = "current working directory" in
