@@ -242,7 +242,7 @@ let check_dois_cmd =
   let doc = "Check DOIs" in
   let man =
     [ `S Manpage.s_description;
-      `P "The $(iname) command is used for checking DOIs in the database."; ]
+      `P "The $(cmd) command is used for checking DOIs in the database."; ]
   in
   Hyperbib_cli.cmd_with_conf "check-dois" ~doc ~man @@
   let doc = "Repair warnings and errors that can be." in
@@ -253,7 +253,7 @@ let check_orcids_cmd =
   let doc = "Check DOIs" in
   let man =
     [ `S Manpage.s_description;
-      `P "The $(iname) command is used for checking ORCIDs in the database."; ]
+      `P "The $(cmd) command is used for checking ORCIDs in the database."; ]
   in
   Hyperbib_cli.cmd_with_conf "check-orcids" ~doc ~man @@
   let doc = "Repair warnings and errors that can be." in
@@ -264,7 +264,7 @@ let test_cmd =
   let doc = "Test" in
   let man =
     [ `S Manpage.s_description;
-      `P "The $(iname) is used for testing purposes."; ]
+      `P "The $(cmd) is used for testing purposes."; ]
   in
   Hyperbib_cli.cmd_with_conf "test" ~doc ~man @@
   let+ () = Term.const () in

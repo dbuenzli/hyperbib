@@ -146,7 +146,7 @@ let cmd =
   let doc = "Serve the web application over HTTP/1.1" in
   let man = [
     `S Manpage.s_description;
-    `P "The $(iname) command serves the web application."; ]
+    `P "The $(cmd) command serves the web application."; ]
   in
   Hyperbib_cli.cmd_with_conf "serve" ~doc ~man @@
   Term.(const serve $ Webs_cli.listener () $

@@ -49,7 +49,7 @@ let bibtex =
   let doc = "BibTeX export" in
   let man = [
     `S Manpage.s_description;
-    `P "The $(iname) command exports the public bibliography as a \
+    `P "The $(cmd) command exports the public bibliography as a \
         BibTeX file." ]
   in
   Hyperbib_cli.cmd_with_conf "bibtex" ~doc ~man @@
@@ -63,7 +63,7 @@ let html =
   let doc = "Static HTML export" in
   let man = [
     `S Manpage.s_description;
-    `P "The $(iname) command extracts the public bibliography as a set of \
+    `P "The $(cmd) command extracts the public bibliography as a set of \
         static HTML files.";
     `P "Use option $(b,--file-browsable) if you want the extract to be \
         browsable via the $(b,file://) protocol. Do not use this option if you \
@@ -85,6 +85,6 @@ let cmd =
   let doc = "Export data from the database" in
   let man = [
     `S Manpage.s_description;
-    `P "The $(iname) command exports data in the database."  ]
+    `P "The $(cmd) command exports data in the database."  ]
   in
   Hyperbib_cli.cmd_group "export" ~doc ~man [bibtex; html]

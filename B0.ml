@@ -142,15 +142,20 @@ let hyperbib_base_lib =
   let requires = hyperbib_base_requires in
   let exports = hyperbib_base_requires in
   let wrap proc b = write_static_file_stamp b; proc b in
-  B0_ocaml.lib hyperbib_base ~doc ~srcs ~requires ~exports ~wrap
+  let meta =
+    B0_meta.empty
+    (* We don't need bytecode for now, note this should not
+       be done if we install. In the future we should rather configure
+       these things at the build profile level. *)
+    |> ~~ B0_ocaml.Code.restrict B0_ocaml.Code.unique_favour_native
+  in
+  B0_ocaml.lib hyperbib_base ~meta ~doc ~srcs ~requires ~exports ~wrap
 
 let hyperbib =
   let doc = "hyperbib tool" in
   let srcs = [ `Dir ~/"src/tool" ] in
   let meta =
     B0_meta.empty
-    (* TODO b0: supported_code doesn't work. *)
-    |> ~~ B0_ocaml.Code.needs `Native
     |> ~~ B0_unit.Action.cwd (`In (`Scope_dir, ~/"app"))
   in
   let wrap proc b = B0_build.require_unit b hyperbib_js; proc b in

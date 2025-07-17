@@ -59,14 +59,14 @@ let doi_cmd =
   let doc = "Import bibliographic references by DOI." in
   let man = [
     `S Manpage.s_description;
-    `P "The $(iname) command imports data in the database by DOI. \
+    `P "The $(cmd) command imports data in the database by DOI. \
         DOIs can be specified explicitely with $(b,-d) option or \
         be extracted from text files. For example:";
-    `Pre "$(iname) $(b,--dry-run -d https://doi.org/10.2307/1968337)"; `Noblank;
-    `Pre "$(iname) $(b,--dry-run -d doi:10.2307/1968337)"; `Noblank;
-    `Pre "$(iname) $(b,--dry-run -d 10.2307/1968337)"; `Noblank;
-    `Pre "$(iname) $(b,--dry-run README.md dois.csv)"; `Noblank;
-    `Pre "$(b,pdftotext paper.pdf -) | $(iname) $(b,--dry-run)"; `Noblank;
+    `Pre "$(cmd) $(b,--dry-run -d https://doi.org/10.2307/1968337)"; `Noblank;
+    `Pre "$(cmd) $(b,--dry-run -d doi:10.2307/1968337)"; `Noblank;
+    `Pre "$(cmd) $(b,--dry-run -d 10.2307/1968337)"; `Noblank;
+    `Pre "$(cmd) $(b,--dry-run README.md dois.csv)"; `Noblank;
+    `Pre "$(b,pdftotext paper.pdf -) | $(cmd) $(b,--dry-run)"; `Noblank;
     `P "Note that it won't work well if your text format needs to \
         escape the DOIs, e.g. on BibTeX files." ]
   in
@@ -89,7 +89,7 @@ let cmd =
   let doc = "Bulk import data in the database" in
   let man = [
     `S Manpage.s_description;
-    `P "The $(iname) command imports data in the database."  ]
+    `P "The $(cmd) command imports data in the database."  ]
   in
   Hyperbib_cli.cmd_group "import" ~doc ~man @@
   [doi_cmd]

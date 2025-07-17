@@ -154,7 +154,7 @@ let fill_cmd =
   let doc = "fill" in
   let man =
     [ `S Manpage.s_description;
-      `P "The $(iname) tries to fill-in the document store for those \
+      `P "The $(cmd) tries to fill-in the document store for those \
           references that do not have an associated document"; ]
   in
   Hyperbib_cli.cmd_with_conf "fill" ~doc ~man @@
@@ -171,9 +171,9 @@ let fetch_cmd =
   let doc = "fetch documents" in
   let man =
     [ `S Manpage.s_description;
-      `P "The $(iname) tries to fetch a document corresponding to a \
+      `P "The $(cmd) tries to fetch a document corresponding to a \
           standard identifier and writes it on $(b,stdout).";
-      `Pre "$(iname) $(b,-o postulates.pdf 10.2307/1968337)";
+      `Pre "$(cmd) $(b,-o postulates.pdf 10.2307/1968337)";
       `P "Note various websites have DOS protections in which case \
           this may result in a 403 forbidden error. Sometimes trying \
           to use the resolver with a browser and trying again works."];
