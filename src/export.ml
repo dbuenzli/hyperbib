@@ -143,7 +143,9 @@ module Static_html = struct
 
   let write_static_files ~dir conf =
     let src = Hyperbib_conf.static_dir conf in
-    Bazaar.cp_dir_content ~recurse:true ~of_dir:src ~inside_dir:dir ()
+    let dotfiles = true and follow_symlinks = true and recurse = true in
+    Bazaar.cp_dir_content
+      ~dotfiles ~follow_symlinks ~recurse ~of_dir:src ~inside_dir:dir ()
 
   let write_data ~dir data_conf db g =
     let* () = write_references ~dir db g in

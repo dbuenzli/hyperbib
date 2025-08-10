@@ -59,7 +59,7 @@ let stamped_backup_file file =
       (t.tm_year + 1900) (t.tm_mon + 1) t.tm_mday t.tm_hour t.tm_min t.tm_sec
   in
   let p, ext = Fpath.cut_ext ~multi:true file in
-  Fpath.add_ext (stamp ^ ext) p
+  Fpath.append_ext p (stamp ^ ext)
 
 let vaccum_into file db =
   let err e = Fmt.str "Vacuum into %a: %s" Fpath.pp_unquoted file e in

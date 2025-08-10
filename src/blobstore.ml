@@ -80,4 +80,5 @@ let with_blob key store f =
 
 let fold f store acc =
   let g st fname p acc = f (key_of_filename fname) p acc in
-  Os.Dir.fold_files ~recurse:false g store.dir acc
+  let dotfiles = false and follow_symlinks = false and recurse = false in
+  Os.Dir.fold_files ~dotfiles ~follow_symlinks ~recurse g store.dir acc

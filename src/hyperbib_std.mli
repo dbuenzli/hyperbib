@@ -42,10 +42,10 @@ module Bag = Rel_query.Bag
 module Bazaar : sig
 
   val cp_dir_content :
-    ?dotfiles:bool -> ?follow_symlinks:bool -> recurse:bool ->
+    dotfiles:bool -> follow_symlinks:bool -> recurse:bool ->
     of_dir:Fpath.t -> inside_dir:Fpath.t -> unit -> (unit, string) result
   (** FIXME it these kinds of things should likely be added to
-      B0_std *)
+      B0_std FIXME don't we have that now ? *)
 
   (** {1:rel [rel] stuff} *)
 

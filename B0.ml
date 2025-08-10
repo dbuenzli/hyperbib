@@ -168,7 +168,7 @@ let test ?doc ?run:(r = true) ?(requires = []) ?(srcs = []) src =
   let srcs = (`File src) :: srcs in
   let requires = hyperbib_base :: requires in
   let meta = B0_meta.(empty |> tag test |> ~~ run r) in
-  let name = Fpath.basename ~strip_exts:true src in
+  let name = Fpath.basename ~drop_exts:true src in
   B0_ocaml.exe name ~srcs ~requires ~meta ?doc
 
 let test_blobstore = test ~/"test/test_blobstore.ml"
@@ -225,7 +225,7 @@ let schema =
   let stdin = Os.Cmd.in_string graph in
   let* svg = Os.Cmd.run_out ~stdin ~trim:false Cmd.(dot % "-Tsvg") in
   let stdin = Os.Cmd.in_string svg in
-  Os.Cmd.run ~stdin Cmd.(show_url % "-t" % "schema.svg")
+  Os.Cmd.run ~stdin Cmd.(show_url % "-f" % "schema.svg")
 
 (* Packs *)
 
