@@ -36,9 +36,10 @@ type t =
   { type' : string;
     cite_key : string;
     fields : string String.Map.t;
-    loc : Tloc.t; }
+    loc : Textloc.t; }
 
-let v ~type' ~cite_key ~fields () = { type'; cite_key; fields; loc = Tloc.nil }
+let v ~type' ~cite_key ~fields () =
+  { type'; cite_key; fields; loc = Textloc.none }
 
 let type' e = e.type'
 let cite_key e = e.cite_key
@@ -75,135 +76,140 @@ let annote e = String.Map.find_opt "annote" e.fields
 
 (* Codec *)
 
+exception Error of Textloc.t * string
+
+let err loc msg = raise_notrace (Error (loc, msg))
+let err_span d ~start fmt =
+  Format.kasprintf (err (Textdec.textloc_span d ~start)) fmt
+
+let err_here d fmt = Format.kasprintf (err (Textdec.textloc d)) fmt
+
 type error_kind = string
-type error = error_kind * B0_text.Tloc.t
+type error = error_kind * Textloc.t
 
 let pp_error ppf (err, l) =
   Fmt.pf ppf "@[<v>%a:@,%a: %s@]"
-    Tloc.pp l (Fmt.st [`Fg `Red]) "Error" err
+    Textloc.pp l (Fmt.st [`Fg `Red]) "Error" err
 
-let curr_char d = (* TODO better escaping (this is for error reports) *)
-  Tdec.tok_reset d; Tdec.tok_accept_uchar d; Tdec.tok_pop d
+let err_illegal_uchar d u =
+  err_here d "illegal character: %a" Textdec.pp_decode u
 
-let err_illegal_uchar d = Tdec.err_here d "illegal character: %s" (curr_char d)
-let err_illegal_byte d b = Tdec.err_here d "illegal character U+%04X" b
-let err_expected d exp = Tdec.err_here d "expected %s" exp
-let err_eoi msg d ~sbyte ~sline =
-  Tdec.err_to_here d ~sbyte ~sline "end of input: %s" msg
+let err_illegal_byte d b = err_here d "illegal character U+%04X" b
+let err_expected d exp = err_here d "expected %s" exp
+let err_eoi msg d ~start = err_span d ~start "end of input: %s" msg
 
 let err_eoi_entry = err_eoi "unclosed BibTeX entry"
 let err_eoi_field = err_eoi "unfinished BibTeX entry field"
 let err_eoi_value = err_eoi "unfinished BibTeX field value"
-let err_brace d ~sbyte ~sline =
-  Tdec.err_to_here d ~sbyte ~sline "incorrect brace {} nesting"
+let err_brace d ~start = err_span d ~start "incorrect brace {} nesting"
 
-let dec_byte d = match Tdec.byte d with
-| c when 0x00 <= c && c <= 0x08 || 0x0E <= c && c <= 0x1F || c = 0x7F ->
-    err_illegal_byte d c
-| c -> c
-[@@ ocaml.inline]
+let nextc d =
+  Textdec.next d;
+  if Textdec.is_error d then err_here d "UTF-8 decoding error"
 
-let rec skip_white d = match dec_byte d with
-| 0x20 | 0x09 | 0x0A | 0x0B | 0x0C | 0x0D -> Tdec.accept_byte d; skip_white d
+let uchar = Uchar.unsafe_of_int
+
+let rec skip_white d = match Textdec.current d with
+| 0x20 | 0x09 | 0x0A | 0x0B | 0x0C | 0x0D -> nextc d; skip_white d
 | _ -> ()
 
-let dec_token ~stop d =
-  let rec loop d = match dec_byte d with
+let decode_token ~stop d =
+  let rec loop d = match Textdec.current d with
   | 0x28 | 0x29 | 0x3B | 0x22
   | 0x20 | 0x09 | 0x0A | 0x0B | 0x0C | 0x0D
-  | 0xFFFF -> Tdec.tok_pop d
-  | c when c = stop -> Tdec.tok_pop d
-  | _ -> Tdec.tok_accept_uchar d; loop d
+  | 0x11_000F -> Textdec.lexeme_pop d
+  | c when c = stop -> Textdec.lexeme_pop d
+  | u -> Textdec.lexeme_add d (uchar u); nextc d; loop d
   in
   loop d
 
-let rec dec_string ~sbyte ~sline ~stop d = match dec_byte d with
-| 0xFFFF -> err_eoi_value ~sbyte ~sline d
-| c when c = stop -> Tdec.accept_byte d; Tdec.tok_pop d
-| _ -> Tdec.tok_accept_uchar d; dec_string ~sbyte ~sline ~stop d
+let rec decode_string ~start ~stop d = match Textdec.current d with
+| 0x11_000F -> err_eoi_value ~start d
+| c when c = stop -> nextc d; Textdec.lexeme_pop d
+| u -> Textdec.lexeme_add d (uchar u); nextc d; decode_string ~start ~stop d
 
-let rec dec_tex i ~sbyte ~sline d = match dec_byte d with
-| 0xFFFF -> err_eoi_value ~sbyte ~sline d
-| 0x007D ->
-    if i = 0 then (Tdec.accept_byte d; Tdec.tok_pop d) else
-    (Tdec.tok_accept_uchar d; dec_tex (i - 1) ~sbyte ~sline d)
-| c ->
+let rec decode_tex i ~start d = match Textdec.current d with
+| 0x11_000F -> err_eoi_value ~start d
+| 0x007D as u ->
+    if i = 0 then (nextc d; Textdec.lexeme_pop d) else
+    (Textdec.lexeme_add d (uchar u); nextc d; decode_tex (i - 1) ~start d)
+| c as u ->
     let i = if c = 0x007B then i + 1 else i in
-    Tdec.tok_accept_uchar d; dec_tex i ~sbyte ~sline d
+    Textdec.lexeme_add d (uchar u); nextc d; decode_tex i ~start d
 
-let dec_value d =
-  let sbyte = Tdec.pos d and sline = Tdec.line d in
-  match dec_byte d with
-  | 0x007B (* { *) -> Tdec.accept_byte d; dec_tex 0 ~sbyte ~sline d
-  | 0x0022 -> Tdec.accept_byte d; dec_string ~sbyte ~sline ~stop:0x0022 d
-  | _ -> dec_token ~stop:0x002C d
+let decode_value d =
+let start = Textdec.pos d in
+  match Textdec.current d with
+  | 0x007B (* { *) -> nextc d; decode_tex 0 ~start d
+  | 0x0022 -> nextc d; decode_string ~start ~stop:0x0022 d
+  | _ -> decode_token ~stop:0x002C d
 
-let dec_field d acc =
-  let sbyte = Tdec.pos d and sline = Tdec.line d in
-  let id = dec_token ~stop:0x003D (* = *) d in
+let decode_field d acc =
+let start = Textdec.pos d in
+  let id = decode_token ~stop:0x003D (* = *) d in
   skip_white d;
-  match dec_byte d with
-  | 0xFFFF -> err_eoi_field ~sbyte ~sline d
+  match Textdec.current d with
+  | 0x11_000F -> err_eoi_field ~start d
   | 0x003D (* = *) ->
-      Tdec.accept_byte d;
+      nextc d;
       skip_white d;
-      begin match dec_byte d with
-      | 0xFFFF -> err_eoi_field ~sbyte ~sline d
+      begin match Textdec.current d with
+      | 0x11_000F -> err_eoi_field ~start d
       | _ ->
-          String.Map.add (String.Ascii.lowercase id) (dec_value d) acc
+          String.Map.add (String.Ascii.lowercase id) (decode_value d) acc
       end
   | _ -> err_expected d "'='"
 
-let rec dec_fields ~sbyte ~sline d acc =
+let rec decode_fields ~start d acc =
   skip_white d;
-  match dec_byte d with
-  | 0xFFFF -> err_eoi_entry ~sbyte ~sline d
+  match Textdec.current d with
+  | 0x11_000F -> err_eoi_entry ~start d
   | 0x007D (* } *) -> acc
   | _ ->
-      let acc = dec_field d acc in
+      let acc = decode_field d acc in
       skip_white d;
-      match dec_byte d with
-      | 0x002C (* , *) -> Tdec.accept_byte d; dec_fields ~sbyte ~sline d acc
+      match Textdec.current d with
+      | 0x002C (* , *) -> nextc d; decode_fields ~start d acc
       | 0x007D (* } *) -> acc
-      | 0xFFFF -> err_eoi_entry ~sbyte ~sline d
+      | 0x11_000F -> err_eoi_entry ~start d
       | b -> err_expected d "',' or '}'"
 
-let dec_entry d =
-  let sbyte = Tdec.pos d and sline = Tdec.line d in
-  Tdec.accept_byte d (* @ *);
-  let type' = dec_token ~stop:0x007B d (* { *) in
-  match dec_byte d with
+let decode_entry d =
+let start = Textdec.pos d in
+  nextc d (* @ *);
+  let type' = decode_token ~stop:0x007B d (* { *) in
+  match Textdec.current d with
   | 0x007B ->
-      Tdec.accept_byte d;
-      let cite_key = dec_token ~stop:0x002C d (* , *) in
+      nextc d;
+      let cite_key = decode_token ~stop:0x002C d (* , *) in
       skip_white d;
-      begin match dec_byte d with
+      begin match Textdec.current d with
       | 0x002C (* , *) ->
-          Tdec.accept_byte d;
-          let fields = dec_fields ~sbyte ~sline d String.Map.empty in
-          let loc = Tdec.loc_to_here d ~sbyte ~sline in
-          Tdec.accept_byte d;
+          nextc d;
+          let fields = decode_fields ~start d String.Map.empty in
+          let loc = Textdec.textloc_span d ~start in
+          nextc d;
           { type'; cite_key; fields; loc }
       | _ -> err_expected d "','"
       end
   | _ -> err_expected d "'{'"
 
-let dec_entries d =
+let decode_entries d =
   let rec loop d acc =
     skip_white d;
-    match dec_byte d with
-    | 0x0040 (* @ *) -> loop d (dec_entry d :: acc)
-    | 0xFFFF -> List.rev acc
-    | b -> err_illegal_uchar d
+    match Textdec.current d with
+    | 0x0040 (* @ *) -> loop d (decode_entry d :: acc)
+    | 0x11_000F -> List.rev acc
+    | u -> err_illegal_uchar d u
   in
   loop d []
 
 let of_string ?(file = Fpath.dash) s =
   try
     let file = Fpath.to_string file in
-    let d = Tdec.create ~file s in
-    Ok (dec_entries d)
-  with Tdec.Err (loc, msg) -> Error (msg, loc)
+    let d = Textdec.make ~file s in
+    Ok (nextc d; decode_entries d)
+  with Error (loc, msg) -> Result.Error (msg, loc)
 
 let of_string' ?file s =
   Result.map_error (fun e -> Fmt.str "%a" pp_error e) @@
