@@ -16,7 +16,7 @@ let page_html g =
   let (y, m, d), ((hh,mm, _), _) = Ptime.to_date_time ~tz_offset_s updated in
   let link_project =
     let href = Bibliography.project_href b in
-    let t = Bibliography.project_title b in
+    let t = "Epistemology of Climate Change research group" in
     Html_kit.link ~href (El.txt t)
   in
   let suggest =
