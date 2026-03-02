@@ -36,8 +36,7 @@ let suggestion_notification env id =
       Uimsg.hello Uimsg.someone_made_new_suggestion_here url
     (* TODO add link how to deactivate. *)
   in
-  ignore (fun () -> Email.send ~sender ~recipient ~subject ~body);
-  Ok ()
+  Email.send ~sender ~recipient ~subject ~body
 
 let fill_in_with_doi g db env req s =
   let* self = Html_kit.url_of_req_referer req in
