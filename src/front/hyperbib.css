@@ -181,7 +181,7 @@ body { width: 100vw; height: 100vh; margin: 0; }
 
 .ui * + * { margin-top: var(--size-half-line); }
 .entity * + * { margin-top: var(--size-half-line); }
-section > * + * { margin-top: var(--size-half-line); }
+section * + * { margin-top: var(--size-half-line); }
 
 h1, h2, h3
 { font-family: var(--font-headings), sans-serif; }

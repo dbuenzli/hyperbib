@@ -109,8 +109,7 @@ let doi s = match Suggestion.doi s with
 | None -> El.void
 | Some d as doi ->
     (* Why does doi_link take an option ? try to remove that. *)
-    Html_kit.doi_link doi (El.txt (" doi:" ^ Doi.to_string d))
-
+    El.small [Html_kit.doi_link doi (El.txt (" doi:" ^ Doi.to_string d))]
 
 let created g s =
   (* FIXME move the messages to Uimsg *)
