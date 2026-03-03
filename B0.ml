@@ -157,6 +157,12 @@ let hyperbib =
   let meta =
     B0_meta.empty
     |> ~~ B0_unit.Action.cwd (`In (`Scope_dir, ~/"app"))
+    |> ~~
+      (* TODO b0: this is a hack to avoid the problem that since we require
+         [hyperbib_js] dynamically we need to add the unit manually on the
+         build for bytecode to be generated. It seems we still don't
+         have everything right with the 'kind of code' build orchestration. *)
+      B0_unit.Action.units [hyperbib_js]
   in
   let wrap proc b = B0_build.require_unit b hyperbib_js; proc b in
   let requires = hyperbib_requires in
@@ -164,13 +170,7 @@ let hyperbib =
 
 (* Test *)
 
-let test ?doc ?run:(r = true) ?(requires = []) ?(srcs = []) src =
-  let srcs = (`File src) :: srcs in
-  let requires = hyperbib_base :: requires in
-  let meta = B0_meta.(empty |> tag test |> ~~ run r) in
-  let name = Fpath.basename ~drop_exts:true src in
-  B0_ocaml.exe name ~srcs ~requires ~meta ?doc
-
+let test ?(requires = []) = B0_ocaml.test ~requires:(hyperbib_base :: requires)
 let test_blobstore = test ~/"test/test_blobstore.ml"
 let test_orcid = test ~/"test/test_orcid.ml"
 
@@ -243,30 +243,40 @@ let default =
     |> ~~ B0_meta.issues "https://github.com/dbuenzli/hyperbib/issues"
     |> ~~ B0_meta.description_tags ["app"; "bibliography"; "org:erratique"]
     |> ~~ B0_opam.depends
-      [ "ocaml", {|>= "5.2.0"|};
-        "ocamlfind", {|build|};
-        "b0", {|build|};
-        "cmdliner", {|>= "1.3.0"|};
+      [ "b0", {|build|};
+        "brr", {||};
         "bytesrw", {||};
-        "ptime", {|>= "1.2.0"|};
-        "webs", {||};
-        "more", {||};
-        "htmlit", {||};
-        "htmlact", {||};
-        "conf-sqlite2", {||};
+        "cmdliner", {|>= "1.3.0"|};
+        "conf-sqlite3", {||};
         "conf-xxhash", {||};
         "conf-zstd", {||};
-        "rel", {||};
+        "htmlact", {||};
+        "htmlit", {||};
+        "js_of_ocaml-compiler", {||};
+        "jsont", {||};
+        "more", {||};
         "note", {||};
-        "brr", {||};
-        "js_of_ocaml", {||};]
+        "negsp", {||};
+        "ocaml", {|>= "5.4.0"|};
+        "ocamlfind", {|build|};
+        "ptime", {|>= "1.2.0"|};
+        "rel", {||};
+        "typegist", {||};
+        "webs", {||};
+        ]
     |> ~~ B0_opam.pin_depends
-      [ "bytesrw.dev", "git+https://erratique.ch/repos/bytesrw.git#master";
-        "jsont.dev", "git+https://erratique.ch/repos/jsont.git#master";
+      [
+        "b0.dev", "git+https://erratique.ch/repos/b0.git#master";
+        "bytesrw.dev", "git+https://erratique.ch/repos/bytesrw.git#main";
         "htmlact.dev", "git+https://erratique.ch/repos/htmlact.git#master";
+        "htmlit.dev", "git+https://erratique.ch/repos/htmlit.git#main";
+        "jsont.dev", "git+https://erratique.ch/repos/jsont.git#main";
+        "more.dev", "git+https://erratique.ch/repos/more.git#main";
+        "negsp.dev", "git+https://erratique.ch/repos/negsp.git#main";
         "rel.dev", "git+https://erratique.ch/repos/rel.git#master";
-        "typegist.dev", "git+https://erratique.ch/repos/typegist.git#master";
-        "webs.dev", "git+https://erratique.ch/repos/webs.git#master"]
+        "typegist.dev", "git+https://erratique.ch/repos/typegist.git#main";
+        "webs.dev", "git+https://erratique.ch/repos/webs.git#master"
+      ]
     |> ~~ B0_opam.build {|[["b0"]]|}
     |> B0_meta.tag B0_opam.tag
     |> B0_meta.tag B0_release.tag
