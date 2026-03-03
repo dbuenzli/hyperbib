@@ -58,9 +58,10 @@ let page_html g =
           particular authors may end up being duplicated at the moment.
           Work is in progress to cleanup the data.";
     ];
+    (*
     El.p [
     let href = Kurl.Fmt.url (Page.Gen.url_fmt g) (Search.Url.v (Index None)) in
-    Html_kit.link ~href (El.txt "Search") ]
+    Html_kit.link ~href (El.txt "Search") ] *)
   ]
 
 let page g =
