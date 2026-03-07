@@ -67,7 +67,9 @@ let fill_in_with_doi g db env req s =
             let timestamp = Suggestion.timestamp s in
             let doi = Suggestion.doi s and comment = Suggestion.comment s in
             let email = Suggestion.email s in
-            Suggestion.make ~id ~timestamp ~doi ~suggestion ~comment ~email ()
+            let reference = None in
+            Suggestion.make
+              ~id ~timestamp ~doi ~suggestion ~comment ~email ~reference ()
           in
           match msg with
           | None -> Ok s
@@ -128,11 +130,14 @@ let suggestion_of_req g req =
           Suggestion_html.suggest_form
             ~invalid_user_doi:doi ~force_rescue:true ~msg g @@
           Suggestion.make ~id ~timestamp ~doi:None ~suggestion ~comment ~email
+            ~reference:None
             ()
         in
         Error (Page.part_response ~log html)
   in
-  Ok (Suggestion.make ~id ~timestamp ~doi ~suggestion ~comment ~email ())
+  let reference = None in
+  Ok (Suggestion.make ~id ~timestamp ~doi ~suggestion ~comment ~email
+        ~reference ())
 
 (* Responses *)
 

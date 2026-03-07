@@ -14,17 +14,19 @@ module Suggestion = struct
       doi : Doi.t option;
       suggestion : string;
       comment : string;
-      email : string }
+      email : string;
+      reference : Reference.Id.t option;
+    }
 
-  let make ~id ~timestamp ~doi ~suggestion ~comment ~email () =
-    { id; timestamp; doi; suggestion; comment; email }
+  let make ~id ~timestamp ~doi ~suggestion ~comment ~email ~reference () =
+    { id; timestamp; doi; suggestion; comment; email; reference }
 
-  let row id timestamp doi suggestion comment email =
-    { id; timestamp; doi; suggestion; comment; email }
+  let row id timestamp doi suggestion comment email reference =
+    { id; timestamp; doi; suggestion; comment; email; reference }
 
   let new' =
     { id = Id.zero; timestamp = 0; doi = None; suggestion = "";  comment = "";
-      email = ""; }
+      email = ""; reference = None}
 
   let id s = s.id
   let timestamp s = s.timestamp
@@ -32,6 +34,7 @@ module Suggestion = struct
   let suggestion s = s.suggestion
   let comment s = s.comment
   let email s = s.email
+  let reference s = s.reference
 
   (* Table *)
 
@@ -41,11 +44,23 @@ module Suggestion = struct
   let suggestion' = Col.make "suggestion" Type.text suggestion
   let comment' = Col.make "comment" Type.text comment
   let email' = Col.make "email" Type.text email
+  let reference' =
+    Col.make "reference" (Type.option Reference.Id.type') reference
+
   let table =
     let primary_key = Table.Primary_key.make [Def id'] in
-    let indices = [ Table.Index.make [Col.Def doi']] in
-    Table.make "suggestion" ~primary_key ~indices @@
-    Row.(unit row * id' * timestamp' * doi' * suggestion' * comment' * email')
+    let foreign_keys =
+      [ Table.Foreign_key.make ~cols:[Def reference']
+          ~parent:(Table (Reference.table, [Def Reference.id']))
+          ~on_delete:`Set_null ()]
+    in
+    let indices =
+      [ Table.Index.make [Def doi'];
+        Table.Index.make [Def reference']]
+    in
+    Table.make "suggestion" ~primary_key ~foreign_keys ~indices @@
+    Row.(unit row * id' * timestamp' * doi' * suggestion' * comment' *
+         email' * reference')
 end
 
 include Suggestion

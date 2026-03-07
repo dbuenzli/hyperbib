@@ -16,11 +16,13 @@ type t
 
 val make :
   id:Id.t -> timestamp:int -> doi:Doi.t option -> suggestion:string ->
-  comment:string -> email:string -> unit -> t
+  comment:string -> email:string -> reference:Reference.Id.t option -> unit -> t
 (** [make …] is a suggestion with given properties. See accessors for
     semantics. *)
 
-val row : Id.t -> int -> Doi.t option -> string -> string -> string -> t
+val row :
+  Id.t -> int -> Doi.t option -> string -> string -> string ->
+  Reference.Id.t option -> t
 (** [row …] is unlabelled {!make}. *)
 
 val new' : t
@@ -44,6 +46,9 @@ val comment : t -> string
 val email : t -> string
 (** [email s], if any, is a private email to contact the suggester. *)
 
+val reference : t -> Reference.Id.t option
+(** [reference s] is a reference created for the suggestion, if any. *)
+
 (** {1:table Table and queries} *)
 
 val id' : (t, Id.t) Rel.Col.t
@@ -52,6 +57,7 @@ val doi' : (t, Doi.t option) Rel.Col.t
 val suggestion' : (t, string) Rel.Col.t
 val comment' : (t, string) Rel.Col.t
 val email' : (t, string) Rel.Col.t
+val reference' : (t, Reference.Id.t option) Rel.Col.t
 val table : t Rel.Table.t
 
 include Entity.IDENTIFIABLE_WITH_QUERIES with type t := t and module Id := Id
