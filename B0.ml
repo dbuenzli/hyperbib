@@ -55,7 +55,7 @@ let front_to_static_dir b =
   let m = B0_build.memo b in
   B0_memo.run_proc m @@ fun () ->
   let dst = B0_build.in_scope_dir b static_dir in
-  let exe = B0_unit.get_meta B0_unit.exe_file (B0_build.current b) in
+  let exe = B0_unit.find_meta_or_error B0_unit.exe_file (B0_build.current b) in
   let* exe = B0_memo.fail_if_error m exe in
   B0_memo.copy m exe ~dst:Fpath.(dst / basename exe);
   let has_map = B0_unit.find_meta B0_jsoo.source_map (B0_build.current b) in

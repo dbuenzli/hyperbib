@@ -10,7 +10,8 @@ b0 -- hyperbib serve --editable=unsafe --insecure-cookie
 Or using the B0 `.show-url` action to reload your browser:
 
 ```
-b0 -- .show-url http://localhost:8000/persons -- hyperbib serve …
+b0 -- .show-url http://localhost:8000/persons \
+   -- hyperbib serve --editable=unsafe --insecure-cookie
 ```
 
 There are also a few component oriented tests that can be invoked with: 
@@ -126,20 +127,4 @@ The goal is to have as little as possible here and push the `htmlact`
 way.  A few more things could be removed if we improve it, e.g. with
 local DOM tree substitutions.
 
-
-
-
 [loc]: https://www.loc.gov/preservation/resources/rfs/data.html
-
-
-
-
-
-
-
-
-
-
-
-
-
