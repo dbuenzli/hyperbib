@@ -58,11 +58,11 @@ val sub_with_immutable_session : sub_with_immutable_session -> sub
 type t = Service_env.t -> Http.Request.t -> Http.Response.t
 (** The type for the web service. *)
 
-val v :
+val make :
   service_path:Http.Path.t -> private_key:Webs_authenticatable.Private_key.t ->
   secure_cookie:bool -> sub Kurl.tree ->
   fallback:sub_with_immutable_session -> t
-(** [v ~service_path ~private_key ~secure_cookie tree ~fallback] serves
+(** [make ~service_path ~private_key ~secure_cookie tree ~fallback] serves
     [tree] with a fallback to [fallback] if nothing matches. The root
     of the service is on [service_path], [private_key] is for session
     authentication and [secure_cookie] indicates whether secure cookies

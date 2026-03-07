@@ -150,7 +150,7 @@ let adjust_env_and_session env sess =
           let env = env' caps ~auth_ui ~user_view in
           env, sess
 
-let v ~service_path ~private_key ~secure_cookie tree ~fallback env =
+let make ~service_path ~private_key ~secure_cookie tree ~fallback env =
   let serve session request =
     let session = match session with
     | Ok v -> v

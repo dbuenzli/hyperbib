@@ -34,7 +34,7 @@ let static_dir e = e.static_dir
 let suggestion_notification e = e.suggestion_notification
 let url_fmt e = Page.Gen.url_fmt e.page_gen
 
-let v ~conf ~caps ~db_pool ~editable ~page_gen () =
+let make ~conf ~caps ~db_pool ~editable ~page_gen () =
   (* FIXME store these things in the db or in a json file. *)
   let max_pending_suggestions = 30 in
   let email_sender = "relay@philoclimate.ch" in

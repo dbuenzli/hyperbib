@@ -16,10 +16,10 @@ type t
 (** The type for service environments. Provides globals, current user
     capbilities and database access for services. *)
 
-val v :
+val make :
   conf:Hyperbib_conf.t -> caps:User.Caps.t -> db_pool:Db.pool ->
   editable:editable -> page_gen:Page.Gen.t -> unit -> t
-(** [v …] is an environment with given properties. See corresponding
+(** [make …] is an environment with given properties. See corresponding
     accessors for semantics. *)
 
 val adjust : t -> User.Caps.t -> Page.Gen.t -> t

@@ -41,13 +41,13 @@ let setup_env ~conf ~db_pool ~editable ~service_path ~testing  =
     Page.Gen.v ~now bib url_fmt ~auth_ui ~user_view ~private_data ~testing
   in
   let caps = User.Caps.none in
-  Ok (Service_env.v ~conf ~caps ~db_pool ~editable ~page_gen ())
+  Ok (Service_env.make ~conf ~caps ~db_pool ~editable ~page_gen ())
 
 let setup_service ~conf ~service_path ~secure_cookie ~env =
   let pk_file = Hyperbib_conf.authentication_private_key conf in
   let* private_key = Service.setup_private_key ~file:pk_file in
   let tree = Service_tree.v and fallback = Static_file_service.v in
-  Ok (Service.v ~service_path ~private_key ~secure_cookie tree ~fallback env)
+  Ok (Service.make ~service_path ~private_key ~secure_cookie tree ~fallback env)
 
 let start_backup_thread ~conf ~db_pool ~backup_every_s =
   match backup_every_s with
