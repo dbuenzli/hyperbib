@@ -41,10 +41,12 @@ val create_person : string
 val create_container : string
 val create_and_add_container : string
 val create_reference : string
+val created_reference : string
 val date : string
 val details : string
 val delete : string
 val deleted : string
+val delete_suggestion : string
 val description : string
 val document_in_bib : Doi.t -> string
 val document_suggested : Doi.t -> string
@@ -80,6 +82,8 @@ val here : string
 val in' : string
 val integrate : string
 val integrate_suggestion : string
+val integrated_suggestions : string
+val integrated_as : string
 val isbn : string
 val issn : string
 val issue : string
@@ -185,8 +189,10 @@ val suggestions : string
 val suggestion_form_descr : string
 val suggestions_too_many : string
 val suggested_reference : string
+val suggestions_can_be_deleted : string
 val system_thinks_you_are_a_bot : string
 val these_n_references : int -> string
+val this_reference : string
 val this_is_a_testing_site : string
 val this_cannot_be_undone : string
 val this_will_also_delete : string

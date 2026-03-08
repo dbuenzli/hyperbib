@@ -49,6 +49,12 @@ val email : t -> string
 val reference : t -> Reference.Id.t option
 (** [reference s] is a reference created for the suggestion, if any. *)
 
+(** {1:predicates Predicates and comparisons} *)
+
+val is_integrated : t -> bool
+(** [is_integreated s] is [Option.is_some (reference s)]. *)
+
+
 (** {1:table Table and queries} *)
 
 val id' : (t, Id.t) Rel.Col.t

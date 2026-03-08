@@ -66,6 +66,8 @@ end
 include Suggestion
 include Entity.Identifiable_queries (Suggestion)
 
+let is_integrated s = Option.is_some (reference s)
+
 open Rel_query.Syntax
 
 let list =

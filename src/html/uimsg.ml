@@ -41,9 +41,11 @@ let create_person = "Create person"
 let create_container = "Create container"
 let create_and_add_container = "Create container"
 let create_reference = "Create reference"
+let created_reference = "Created reference"
 let date = "Date"
 let details = "Details"
 let delete = "Delete"
+let delete_suggestion = "Delete suggestion"
 let deleted = "Deleted"
 let description = "Description"
 let document_in_bib doi =
@@ -96,6 +98,8 @@ let isbn = "ISBN"
 let issue = "Issue"
 let integrate = "Integrate"
 let integrate_suggestion = "Integrate suggestion"
+let integrated_suggestions = "Integrated suggestions"
+let integrated_as = "integrated as"
 let it_is_still_applied_to = "It is still applied to"
 let it_will_be_removed_from = "It will be removed from"
 let kind_not_found k = Fmt.str "%s not found" k
@@ -215,12 +219,16 @@ let suggestions_too_many =
    too many pending suggestions."
 
 let suggested_reference = "Suggested reference"
+let suggestions_can_be_deleted =
+  "These suggestions can be deleted, a reference was created for them."
+
 let system_thinks_you_are_a_bot =
   "The system thinks you are a robot. If that is not the case please \
    accept your apologies and contact one of the humans responsible for \
    the bibliography."
 
 let this_cannot_be_undone = "This cannot be undone."
+let this_reference = "this reference"
 let the_email_address_will_be_deleted =
   "The email address will be deleted from the system."
 

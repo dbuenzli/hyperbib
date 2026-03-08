@@ -104,6 +104,7 @@ let suggest_form ?invalid_user_doi ?force_rescue ?(msg = El.void) g s =
       buttons ?force_rescue g]
 
 let pending_anchor = "pending"
+let integrated_anchor = "integrated"
 
 let doi s = match Suggestion.doi s with
 | None -> El.void
@@ -145,7 +146,16 @@ let confirm_delete g s =
     Html_kit.htmlact_delete uf confirm ~target (El.txt Uimsg.confirm_delete)
   in
   let bs = Hui.group ~align:`Justify ~dir:`H [delete_button; cancel_button] in
-  let really = El.p [El.txt Uimsg.really_delete_suggestion; doi s; El.txt "?"]in
+  let really = El.p @@ match Suggestion.reference s with
+  | None ->
+      [El.txt Uimsg.really_delete_suggestion; El.sp; doi s; El.txt "?"]
+  | Some id ->
+      let integrated = Reference.Url.v (Page (None, id)) in
+      let url = Kurl.Fmt.url uf integrated in
+      let this_ref = El.a ~at:At.[href url] [El.txt Uimsg.this_reference] in
+      [El.txt Uimsg.delete_suggestion; El.sp;
+       El.txt Uimsg.integrated_as; El.sp; this_ref; El.txt "?"]
+  in
   let sugg =
     El.p ~at:[Hclass.message; Hclass.info] [El.txt (Suggestion.suggestion s)]
   in
@@ -197,28 +207,36 @@ let edit_ui g s =
   if not (Page.Gen.editable g) then El.void else
   let uf = Page.Gen.url_fmt g in
   let id = Suggestion.id s in
-  let integrate = Suggestion.Url.v (Page {id; created = false}) in
-  let integrate = Html_kit.htmlact_integrate_button uf integrate in
   let del =
     Html_kit.htmlact_delete_button uf (Suggestion.Url.v (Confirm_delete id))
   in
+  let left = match Suggestion.reference s with
+  | None ->
+      let integrate = Suggestion.Url.v (Page {id; created = false}) in
+      Html_kit.htmlact_integrate_button uf integrate
+  | Some id ->
+      let integrated = Reference.Url.v (Page (None, id)) in
+      let url = Kurl.Fmt.url uf integrated in
+      El.a ~at:At.[href url; Hclass.entity_ui; Hclass.Margin.top_050]
+        [El.txt Uimsg.created_reference]
+  in
   let at = [Hclass.entity_ui; Hclass.Margin.top_000] in
-  let ui = Hui.group ~at ~align:`Justify ~dir:`H [integrate; del] in
+  let ui = Hui.group ~at ~align:`Justify ~dir:`H [left; del] in
   El.splice [ui; El.hr ()]
 
-let view_fields ?(no_ui = false) g ~self s =
+let view_fields ?(ui = true) g ~self s =
   let id = Int.to_string (Suggestion.Id.to_int ((Suggestion.id s))) in
   let timestamp = view_timestamp g s in
   let preamble = El.p [timestamp; doi s] in
   let suggestion = view_suggestion g s in
   let private' = view_private g s in
-  let ui = if no_ui then El.void else edit_ui g s in
+  let ui = if ui then edit_ui g s else El.void in
   El.div ~at:[At.id id; Hclass.entity; Hclass.vspace_025; Hclass.fade]
     [ Html_kit.anchor_a id; preamble; suggestion; private'; ui]
 
 let integrate_html g ~self s ~form =
   let h1 = El.h1 [El.txt Uimsg.integrate_suggestion] in
-  El.section [h1; view_fields g ~self ~no_ui: true s; El.hr (); form]
+  El.section [h1; view_fields g ~self ~ui:false s; El.hr (); form]
 
 let integrate g s ~form =
   let id = Suggestion.id s in
@@ -236,7 +254,26 @@ let index_html g ~self ss ~is_full =
   | false ->
       if ss = [] then El.p [El.txt Uimsg.no_pending_suggestions] else El.void
   in
-  let pendings = match ss with
+  let integrated, pending = List.partition Suggestion.is_integrated ss in
+  let integrated = match integrated with
+  | [] -> El.void
+  | ss when Page.Gen.only_public g -> El.void
+  | ss ->
+      let count = Html_kit.item_count (List.length ss) in
+      let h2 =
+        El.h2 ~at:At.[id integrated_anchor]
+          [ Html_kit.anchor_a integrated_anchor;
+            El.txt Uimsg.integrated_suggestions; El.sp; count]
+      in
+      let suggestions =
+        El.div ~at:[Hclass.vspace_075] (List.map (view_fields g ~self) ss)
+      in
+      let can_be_deleted =
+        El.p [El.small [El.txt Uimsg.suggestions_can_be_deleted]]
+      in
+      El.splice [h2; can_be_deleted; suggestions]
+  in
+  let pending = match pending with
   | [] -> El.void
   | ss ->
       let count = Html_kit.item_count (List.length ss) in
@@ -250,7 +287,7 @@ let index_html g ~self ss ~is_full =
       in
       El.splice [h2; suggestions]
   in
-  El.section [h1; preamble; pendings]
+  El.section [h1; preamble; integrated; pending]
 
 let index g ss ~is_full =
   let self = Suggestion.Url.v Index in

@@ -21,7 +21,7 @@ val suggest_form :
 val created : Page.Gen.t -> Suggestion.t -> Page.t
 
 val view_fields :
-  ?no_ui:bool -> Page.Gen.t -> self:Kurl.t -> Suggestion.t -> El.html
+  ?ui:bool -> Page.Gen.t -> self:Kurl.t -> Suggestion.t -> El.html
 
 val integrate : Page.Gen.t -> Suggestion.t -> form:El.html -> Page.t
 
