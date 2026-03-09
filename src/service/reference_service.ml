@@ -206,6 +206,9 @@ let create app req = (* create and update are very similar factor out a bit. *)
   Service_env.with_db_transaction' `Immediate app @@ fun db ->
   let* q = Http.Request.to_query req in
   let* vs = reference_cols_of_query q in
+  let* from_suggestion =
+    Hquery.find_id (module Suggestion.Id) Hquery.suggestion_key q
+  in
   let vs =
     (* These things are not set in the ui but we have an integrity constraint *)
     Col.Value (Reference.abstract', "") :: vs
@@ -219,22 +222,33 @@ let create app req = (* create and update are very similar factor out a bit. *)
   let* vs = maybe_create_container db vs q in
   let created = Col.Value (Reference.created_ptime_s', Unix.gettimeofday ()) in
   let vs = created :: vs in
+  Db.http_resp_error @@
   let* id =
-    Db.insert' (module Reference.Id) db
-      (Reference.create_cols ~ignore_id:true vs)
+    let reference = (Reference.create_cols ~ignore_id:true vs) in
+    Db.insert (module Reference.Id) db reference
   in
-  let* () =
-    Reference.Subject.set_list ~reference:id sids db |> Db.http_resp_error in
+  let* () = Reference.Subject.set_list ~reference:id sids db in
   let* () =
     Reference.Contributor.set_list ~reference:id ~authors:aids ~editors:eids db
-    |> Db.http_resp_error
   in
-  let* () =
-    Reference.Cites.set_list ~reference:id ~dois:cites db
-    |> Db.http_resp_error
+  let* () = Reference.Cites.set_list ~reference:id ~dois:cites db in
+  let* () = match from_suggestion with
+  | None -> Ok ()
+  | Some sid ->
+      let reference = Col.Value (Suggestion.reference', Some id) in
+      let update = Suggestion.update sid [reference] in
+      Db.exec db update
   in
   let uf = Service_env.url_fmt app in
-  let headers = Html_kit.htmlact_redirect uf (entity_page_url id) in
+  let url = match from_suggestion with
+  | None -> Kurl.Fmt.url uf (entity_page_url id)
+  | Some id ->
+      let url = Kurl.Fmt.url uf (Suggestion.Url.v Index) in
+      (* Highlight suggestion we created the reference for *)
+      let id = Suggestion.Id.to_int id in
+      String.concat "#" [url; string_of_int id]
+  in
+  let headers = Http.Headers.(empty |> def Htmlact.redirect url) in
   Ok (Http.Response.empty ~headers Http.Status.ok_200)
 
 let update env req id =
