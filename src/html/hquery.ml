@@ -87,6 +87,15 @@ let find_ids
       in
       loop Id.Set.empty [] ids
 
+let find_id (type id) (module Id : Rel_kit.ID with type t = id) key q =
+  match Http.Query.find_first key q with
+  | None -> Ok None
+  | Some id ->
+      match Id.of_string id with
+      | Error e ->
+          let reason = Fmt.str "key%s : %s" key e in
+          Http.Response.bad_request_400 ~reason ()
+      | Ok i -> Ok (Some i)
 
 (* Generic rel *)
 
@@ -205,8 +214,11 @@ let key_for_rel ?suff t c =
 
 (* Hyperbib stuff *)
 
+
 let is_undo = "is-undo"
 let key_is_undo = key is_undo bool
+
+let suggestion_key = "x-suggestion"
 
 let date_key = "x-date"
 let find_date q = match Http.Query.find_first date_key q with

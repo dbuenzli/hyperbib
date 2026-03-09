@@ -85,6 +85,13 @@ val find_ids :
   uniquify:bool -> string -> Http.Query.t ->
   ('id list, Http.Response.t) result
 
+val find_id :
+  (module Rel_kit.ID with type t = 'id) ->
+  string -> Http.Query.t ->
+  ('id option, Http.Response.t) result
+
+val suggestion_key : string
+
 val date_key : string
 val find_date : Http.Query.t -> (Date.partial option, string) result
 

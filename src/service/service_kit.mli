@@ -17,9 +17,11 @@ val lookup_doi :
 
 val empty_reference_form :
   ?msg:El.html -> Page.Gen.t -> self:Kurl.t ->
-  cancel:Entity.Url.cancel_url -> El.html
+  cancel:Entity.Url.cancel_url -> from_suggestion:Suggestion.Id.t option ->
+  El.html
 
 val fill_in_reference_form :
   ?suggestion_dupe_check:bool->
   Service_env.t -> Db.t -> self:Kurl.t -> cancel:Entity.Url.cancel_url ->
-  doi:string -> (string option * El.html, Http.Response.t) result
+  from_suggestion:Suggestion.Id.t option -> doi:string ->
+  (string option * El.html, Http.Response.t) result

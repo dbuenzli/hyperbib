@@ -25,6 +25,7 @@ val edit_form :
 
 val filled_in_form :
   Page.Gen.t -> self:Kurl.t -> cancel:Entity.Url.cancel_url ->
+  from_suggestion:Suggestion.Id.t option ->
   Reference.t -> msg:El.html ->
   authors:Person.t Import.entity list -> editors:Person.t Import.entity list ->
   container:Container.t Import.entity option -> cites:Doi.t list -> El.html

@@ -201,8 +201,16 @@ let edit_cites cites = (* Hidden for now *)
   El.splice (List.map cite cites)
 
 let edit_reference
-    g ~self ~submit r ~authors ~editors ~subjects ~container ~cites =
+    g ~self ~from_suggestion ~submit r ~authors ~editors ~subjects ~container
+    ~cites
+  =
   let uf = Page.Gen.url_fmt g in
+  let from_suggestion = match from_suggestion with
+  | None -> El.void
+  | Some id ->
+      let sid = Suggestion.Id.to_string id in
+      El.input ~at:At.[hidden; name Hquery.suggestion_key; value sid] ()
+  in
   let title = edit_title r in
   let details =
     let open' = match submit with `New _ -> At.true' "open" | _ -> At.void in
@@ -236,7 +244,8 @@ let edit_reference
   let public = edit_public r in
   let buttons = edit_buttons uf ~submit r in
   Html_kit.form_no_submit
-    [ title; details; El.hr (); subjects; note; private_note; public; buttons ]
+    [ from_suggestion; title; details; El.hr (); subjects; note;
+      private_note; public; buttons ]
 
 let fill_ui g ~doi =
   let label =
@@ -264,10 +273,10 @@ let fill_ui g ~doi =
   El.splice [El.form ~at [label; input]; El.hr ()]
 
 let filled_in_form
-    g ~self ~cancel r ~msg ~authors ~editors ~container ~cites
+    g ~self ~cancel ~from_suggestion r ~msg ~authors ~editors ~container ~cites
   =
   let form =
-    edit_reference g ~self ~submit:(`New cancel) r
+    edit_reference g ~self ~from_suggestion ~submit:(`New cancel) r
       ~authors ~editors ~subjects:[] ~container ~cites
   in
   let at = At.[Hclass.entity; Hclass.editing] in
@@ -281,7 +290,8 @@ let edit_form g r ~render_data:rs =
   let container = Option.map (fun c -> `Exists c) (find_container r rs) in
   let h1 = h1_reference (Page.Gen.url_fmt g) ~self r in
   let form =
-    edit_reference g ~self ~submit:`Edit r ~authors ~editors ~subjects
+    edit_reference
+      g ~self ~from_suggestion:None ~submit:`Edit r ~authors ~editors ~subjects
       ~container ~cites:[] (* Not exposed in the UI. *)
   in
   let at = At.[Hclass.entity; Hclass.editing] in
@@ -295,7 +305,8 @@ let new_form g r ~cancel =
     let at = At.[Hclass.entity; Hclass.editing] in
     let authors = [] and editors = [] and subjects = [] in
     El.section ~at
-      [ edit_reference g ~self ~submit:(`New cancel) r
+      [ edit_reference
+          g ~self ~from_suggestion:None ~submit:(`New cancel) r
           ~authors ~editors ~subjects ~container:None ~cites:[] ]
   in
   let content = El.section [fill_ui; form] in

@@ -190,19 +190,20 @@ let view_fields env req id =
 let integrate env req id =
   let* () = Entity_service.check_edit_authorized env in
   Service_env.with_db_transaction' `Immediate env @@ fun db ->
+  let g = Service_env.page_gen env in
   let* s = get_suggestion db id in
   let self = Suggestion.Url.v (Page { id; created = false}) in
   let suggs = Suggestion.Url.v Index in
   let cancel = Some (Kurl.Fmt.url (Service_env.url_fmt env) suggs) in
+  let from_suggestion = Some id in
   let* explain, form = match Suggestion.doi s with
   | None ->
-      let g = Service_env.page_gen env in
-      Ok (None, Service_kit.empty_reference_form g ~self ~cancel)
+      Ok (None,
+          Service_kit.empty_reference_form g ~self ~cancel ~from_suggestion)
   | Some doi ->
       Service_kit.fill_in_reference_form ~suggestion_dupe_check:false
-        env db ~self ~cancel ~doi:(Doi.to_string doi)
+        env db ~self ~cancel ~from_suggestion ~doi:(Doi.to_string doi)
   in
-  let g = Service_env.page_gen env in
   let page = Suggestion_html.integrate g s ~form in
   Ok (Page.response page)
 
