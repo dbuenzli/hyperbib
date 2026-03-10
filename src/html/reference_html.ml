@@ -248,6 +248,7 @@ let edit_reference
       private_note; public; buttons ]
 
 let fill_ui g ~doi =
+  let doi = Option.fold ~none:"" ~some:Doi.to_string doi in
   let label =
     let at = [Hclass.Font.small] in
     El.span ~at [El.txt Uimsg.fill_in_form_with_doi]
@@ -268,19 +269,33 @@ let fill_ui g ~doi =
     let url = Reference.Url.v (Fill_in_form (`Doi "")) in
     let r = Html_kit.htmlact_request (Page.Gen.url_fmt g) url in
     let t = Htmlact.target ":up .entity" in
-    [r; t; Hclass.vspace_0125]
+    let q = Htmlact.query  ":up form" in
+    [r; t; q; Hclass.vspace_0125]
   in
   El.splice [El.form ~at [label; input]; El.hr ()]
 
 let filled_in_form
-    g ~self ~cancel ~from_suggestion r ~msg ~authors ~editors ~container ~cites
+    ?(msg = El.void) g ~self ~cancel ~from_suggestion r ~authors ~editors
+    ~container ~cites
   =
+  let at = At.[Hclass.entity; Hclass.editing] in
   let form =
     edit_reference g ~self ~from_suggestion ~submit:(`New cancel) r
       ~authors ~editors ~subjects:[] ~container ~cites
   in
-  let at = At.[Hclass.entity; Hclass.editing] in
   El.section ~at [msg; form]
+
+let new_form
+    ?(msg = El.void) g ~self ~cancel ~from_suggestion ~doi r
+    ~authors ~editors ~container ~cites
+  =
+  let fill_ui = fill_ui g ~doi in
+  let form =
+    filled_in_form
+      g ~self ~cancel ~from_suggestion r ~msg ~authors
+      ~editors ~container ~cites
+  in
+  El.section [fill_ui; form]
 
 let edit_form g r ~render_data:rs =
   let self = Reference.Url.page r in
@@ -297,19 +312,13 @@ let edit_form g r ~render_data:rs =
   let at = At.[Hclass.entity; Hclass.editing] in
   El.section ~at [h1; form]
 
-let new_form g r ~cancel =
+let new_form_page g r ~cancel =
   let self = Reference.Url.v (New_form { cancel }) in
   let title = Html_kit.title ~sub:Uimsg.new_reference ~sup:Uimsg.reference in
-  let fill_ui = fill_ui g ~doi:"" in
-  let form =
-    let at = At.[Hclass.entity; Hclass.editing] in
-    let authors = [] and editors = [] and subjects = [] in
-    El.section ~at
-      [ edit_reference
-          g ~self ~from_suggestion:None ~submit:(`New cancel) r
-          ~authors ~editors ~subjects ~container:None ~cites:[] ]
+  let content =
+    new_form g ~self ~cancel ~from_suggestion:None ~doi:None r
+      ~authors:[] ~editors:[] ~container:None ~cites:[]
   in
-  let content = El.section [fill_ui; form] in
   Page.with_content ?ui_ext:None g ~self ~title ~content
 
 let view_title ~linkify uf ~self r =

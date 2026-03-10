@@ -198,11 +198,29 @@ let integrate env req id =
   let from_suggestion = Some id in
   let* explain, form = match Suggestion.doi s with
   | None ->
-      Ok (None,
-          Service_kit.empty_reference_form g ~self ~cancel ~from_suggestion)
-  | Some doi ->
-      Service_kit.fill_in_reference_form ~suggestion_dupe_check:false
-        env db ~self ~cancel ~from_suggestion ~doi:(Doi.to_string doi)
+      let form =
+        Reference_html.new_form
+          g ~self ~cancel Reference.new' ~from_suggestion ~doi:None
+          ~authors:[] ~editors:[] ~container:None ~cites:[]
+      in
+      Ok (None, form)
+  | Some doi as d ->
+      let* res =
+        Service_kit.fill_in_reference_form
+          ~suggestion_dupe_check:false
+          env db ~self ~cancel ~from_suggestion ~doi:(Doi.to_string doi)
+      in
+      match res with
+      | Ok form -> Ok (None, form (* no fill-in UI *))
+      | Error (log, error) ->
+          let g = Service_env.page_gen env in
+          let msg = Html_kit.p_error_msg error in
+          let form =
+            Reference_html.new_form
+              g ~self ~cancel Reference.new' ~msg ~from_suggestion ~doi:d
+              ~authors:[] ~editors:[] ~container:None ~cites:[]
+          in
+          Ok (log, form)
   in
   let page = Suggestion_html.integrate g s ~form in
   Ok (Page.response page)

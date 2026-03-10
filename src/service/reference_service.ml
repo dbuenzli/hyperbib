@@ -93,25 +93,42 @@ let new_form app req ~cancel =
   let* () = Entity_service.check_edit_authorized app in
   Service_env.with_db_transaction' `Deferred app @@ fun db ->
   let g = Service_env.page_gen app in
-  let page = Reference_html.new_form g Reference.new' ~cancel in
+  let page = Reference_html.new_form_page g Reference.new' ~cancel in
   Ok (Page.response page)
 
 let fill_in_form env req (`Doi doi) =
   let* () = Entity_service.check_edit_authorized env in
   Service_env.with_db_transaction' `Deferred env @@ fun db ->
-  let* cancel =
+  let* q = Http.Request.to_query req in
+  let* from_suggestion =
+    Hquery.find_id (module Suggestion.Id) Hquery.suggestion_key q
+  in
+  let* self, cancel =
     Result.map_error
       (* Bof *)
       (fun e ->
          Result.get_error (Http.Response.bad_request_400 ~log:e ())) @@
-    let* bare = Kurl.Bare.of_req_referer req in
-    Ok (Entity.Url.cancel_url_of_query (Kurl.Bare.query bare))
+    let* self = Kurl.Bare.of_req_referer req in
+    Ok (Kurl.v Kurl.any self,
+        Entity.Url.cancel_url_of_query (Kurl.Bare.query self))
   in
-  (* FIXME replace by let* self = Hfrag.url_of_req_referer req in *)
-  let self (* XXX *) = Reference.Url.v (New_form { cancel }) in
-  let* log, part =
+  let* res =
     Service_kit.fill_in_reference_form
-      env db ~self ~cancel ~from_suggestion:None ~doi
+      env db ~self ~cancel ~from_suggestion ~doi
+  in
+  let log, part = match res with
+  | Ok form -> None, form
+  | Error (log, error) ->
+      (* XXX we should preserve more of stuff from the query
+         see issue #6 *)
+      let g = Service_env.page_gen env in
+      let msg = Html_kit.p_error_msg error in
+      let form =
+        Reference_html.filled_in_form
+          g Reference.new' ~self ~cancel ~from_suggestion ~msg ~authors:[]
+          ~editors:[] ~container:None ~cites:[]
+      in
+      log, form
   in
   Ok (Page.part_response ?log part)
 

@@ -209,3 +209,7 @@ let uppercase_span ?(at = []) t =
   El.span ~at:(Hclass.uppercase :: at) [El.txt t]
 
 let description ?(at = []) html = El.p ~at:(Hclass.description :: at) [html]
+
+let p_error_msg ?(at = []) error =
+  let at = (Hclass.message :: Hclass.error :: at) in
+  El.p ~at [El.txt error]

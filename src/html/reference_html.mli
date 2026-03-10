@@ -24,13 +24,18 @@ val edit_form :
   Page.Gen.t -> Reference.t -> render_data:Reference.render_data -> El.html
 
 val filled_in_form :
-  Page.Gen.t -> self:Kurl.t -> cancel:Entity.Url.cancel_url ->
-  from_suggestion:Suggestion.Id.t option ->
-  Reference.t -> msg:El.html ->
+  ?msg:El.html -> Page.Gen.t -> self:Kurl.t -> cancel:Entity.Url.cancel_url ->
+  from_suggestion:Suggestion.Id.t option -> Reference.t ->
   authors:Person.t Import.entity list -> editors:Person.t Import.entity list ->
   container:Container.t Import.entity option -> cites:Doi.t list -> El.html
 
 val new_form :
+  ?msg:El.html -> Page.Gen.t -> self:Kurl.t -> cancel:Entity.Url.cancel_url ->
+  from_suggestion:Suggestion.Id.t option -> doi:Doi.t option -> Reference.t ->
+  authors:Person.t Import.entity list -> editors:Person.t Import.entity list ->
+  container:Container.t Import.entity option -> cites:Doi.t list -> El.html
+
+val new_form_page :
   Page.Gen.t -> Reference.t -> cancel:Entity.Url.cancel_url -> Page.t
 
 val deleted : Page.Gen.t -> Reference.t -> El.html

@@ -38,50 +38,19 @@ let lookup_doi env doi =
   in
   Ok (doi, Import.Doi.get_ref httpc ~cache:doi_cache doi)
 
-let resp_err_doi_not_found g ~self ~cancel ~from_suggestion doi =
-  (* move to reference_html *)
-  (* FIXME it would nice to preserve the form user input here *)
-  let at = [Hclass.message; Hclass.error] in
-  let msg = El.div ~at [El.txt (Uimsg.doi_not_found doi)] in
-  Reference_html.filled_in_form
-    g Reference.new' ~self ~cancel ~from_suggestion ~msg ~authors:[]
-    ~editors:[] ~container:None ~cites:[]
-
-let resp_err_doi_no_extract g ~self ~cancel ~from_suggestion doi =
-  (* FIXME it would nice to preserve the form user input here *)
-  let at = [Hclass.message; Hclass.error] in
-  let msg = El.div ~at [El.txt (Uimsg.doi_extract_error doi)] in
-  Reference_html.filled_in_form g
-    Reference.new' ~self ~cancel ~from_suggestion ~msg ~authors:[] ~editors:[]
-    ~container:None ~cites:[]
-
-let empty_reference_form ?(msg = El.void) g ~self ~cancel ~from_suggestion =
-  Reference_html.filled_in_form g Reference.new'
-    ~self ~cancel ~from_suggestion ~msg ~authors:[] ~editors:[]
-    ~container:None ~cites:[]
-
-let resp_err_doi_error g ~self ~cancel ~from_suggestion =
-  (* move to reference_html *)
-  (* FIXME it would nice to preserve the form user input here *)
-  let at = [Hclass.message; Hclass.error] in
-  let msg = El.p ~at [El.txt Uimsg.doi_error]in
-  empty_reference_form ~msg g ~self ~cancel ~from_suggestion
-
 let fill_in_reference_form
     ?suggestion_dupe_check env db ~self ~cancel ~from_suggestion ~doi
   =
-  let g = Service_env.page_gen env in
   match Doi.extract doi with
   | None ->
-      Ok (None, resp_err_doi_no_extract g ~self ~cancel ~from_suggestion doi)
+      Ok (Error (None, Uimsg.doi_extract_error doi))
   | Some doi ->
       let* doi, ref = lookup_doi env doi in
       match ref with
-      | Error e ->
-          Ok (Some e, resp_err_doi_error g ~self ~cancel ~from_suggestion)
-      | Ok None ->
-          Ok (None, resp_err_doi_not_found g ~self ~cancel ~from_suggestion doi)
+      | Error e -> Ok (Error (Some e, Uimsg.doi_error))
+      | Ok None -> Ok (Error (None, Uimsg.doi_not_found doi))
       | Ok (Some ref) ->
+          let g = Service_env.page_gen env in
           let r =
             Import.Doi.reference_of_ref ~public:false ~container_id:None ref
           in
@@ -101,4 +70,4 @@ let fill_in_reference_form
               g ~self ~cancel ~from_suggestion r ~msg ~authors ~editors
               ~container ~cites
           in
-          Ok (None, html)
+          Ok (Ok html)

@@ -124,3 +124,6 @@ val uppercase_span : ?at:At.t list -> string -> El.html
 
 val description : ?at:At.t list -> El.html -> El.html
 (** [description p] is an {!Hclass.description} paragraph. *)
+
+val p_error_msg :?at:At.t list -> string -> El.html
+(** [p_error_msg msg] is [msg] in an error paragraph. *)

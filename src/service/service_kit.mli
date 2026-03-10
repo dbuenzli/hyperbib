@@ -15,13 +15,16 @@ val lookup_doi :
   Service_env.t -> Doi.t ->
   (Doi.t * (Import.Doi.ref option, string) result, Http.Response.t) result
 
-val empty_reference_form :
-  ?msg:El.html -> Page.Gen.t -> self:Kurl.t ->
-  cancel:Entity.Url.cancel_url -> from_suggestion:Suggestion.Id.t option ->
-  El.html
-
+(*
 val fill_in_reference_form :
   ?suggestion_dupe_check:bool->
   Service_env.t -> Db.t -> self:Kurl.t -> cancel:Entity.Url.cancel_url ->
   from_suggestion:Suggestion.Id.t option -> doi:string ->
   (string option * El.html, Http.Response.t) result
+*)
+
+val fill_in_reference_form :
+  ?suggestion_dupe_check:bool -> Service_env.t -> Db.t -> self:Kurl.t ->
+  cancel:Entity.Url.cancel_url -> from_suggestion:Suggestion.Id.t option ->
+  doi:string ->
+  ((El.html, string option * string) result, Http.Response.t) result
