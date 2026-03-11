@@ -5,6 +5,10 @@
 {1:service Service}
 
 {!modules:
+Hyperbib_std.Adhoc
+Adhoc_html
+Adhoc_schema
+Adhoc_service
 Bibliography
 Bibliography_service
 Bibtex
@@ -31,7 +35,6 @@ Hclass
 Help_html
 Home_html
 Hquery
-Html_kit
 Hui
 Icon
 Import
@@ -48,10 +51,8 @@ Reference
 Reference_html
 Reference_service
 Schema
-Schema_kit
 Service
 Service_env
-Service_kit
 Stamp
 Static_file
 Static_file_service

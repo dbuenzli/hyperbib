@@ -26,7 +26,7 @@ module Kurl = Webs_bazaar.Kurl
 module At = Htmlit.At
 module El = Htmlit.El
 
-module Bazaar = struct
+module Adhoc = struct
   let cp_dir_content
       ~dotfiles ~follow_symlinks ~recurse ~of_dir:src ~inside_dir:dst ()
     =

@@ -39,7 +39,8 @@ module Bag = Rel_query.Bag
 
 (** {1:other Other needs} *)
 
-module Bazaar : sig
+(** Ad hoc needs *)
+module Adhoc : sig
 
   val cp_dir_content :
     dotfiles:bool -> follow_symlinks:bool -> recurse:bool ->

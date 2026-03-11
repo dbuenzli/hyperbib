@@ -85,10 +85,10 @@ let check_reference_dois db ~repair =
      let update oldr newr =
        let set =
          let ignore = Col.[Def Reference.Cites.reference'] in
-         Bazaar.col_values (Table.row Reference.Cites.table) ~ignore newr
+         Adhoc.col_values (Table.row Reference.Cites.table) ~ignore newr
        in
        let where = (* XXX this is basically primary_key *)
-         Bazaar.col_values (Table.row Reference.Cites.table) oldr
+         Adhoc.col_values (Table.row Reference.Cites.table) oldr
        in
        Rel_sql.update Db.dialect Reference.Cites.table ~set ~where
      in
