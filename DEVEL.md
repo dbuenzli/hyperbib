@@ -26,29 +26,26 @@ All the source is in [`src`](src):
 
 * The directory has a few project pervasives modules and a few generic
   modules independent from the project.
-  
+
 * [`src/tool`](src/tool) has the commands and implementation of the 
   `hyperbib` tool.
 
-* [`src/schema`](src/schema), has the database schemas 
-  their HTML rendering in [`src/html`](src/html)
-  and their service in [`src/service`](src/service) which are 
-  eventually aggregated in the final URL request tree by
-  [`src/service_tree.ml`](src/service_tree.ml).
-
-* [`src/html`](src/html) also has the page generation mecanism and a few
-  more generic helper modules which could eventually be a bit
-  generalized and maybe libraryficated.
+* [`src/service`](src/service) has the database schemas, their HTML
+  rendering and their services which are eventually aggregated in the
+  final URL request tree by [`src/service_tree.ml`](src/service_tree.ml).
 
 * [`src/front`](src/front) has the front end support see below.
+
+* [`src/moveout`](src/moveout) has a few modules that should eventually
+  be moved to dedicated libraries.
 
 In general given a schema entity, for example a `Person.t`. The following
 modules are defined:
 
-* `src/schema/person.ml[i]`. Defines the OCaml datatype, it's representation
+* `src/service/person.ml[i]`. Defines the OCaml datatype, it's representation
   as a table, related database queries and operations and the definition of 
   a `Kurl` URL request kind for it in `Person.Url`.
-* `src/html/person_html.ml[i]`. This has HTML rendering fragments for 
+* `src/service/person_html.ml[i]`. This has HTML rendering fragments for 
   handling the datatype. In general this should be pure function from 
   data, no database or network access here.
 * `src/service/person_service.ml[i]`. Service implementation for the 
@@ -101,7 +98,7 @@ Documents associated to bibiographic records are stored on the file
 system by using the [`src/blobstorage.mli`](src/blobstorage.mli)
 abstraction which stores blobs indexed by their XXH3-128 hash. The
 metadata is stored in the database in the
-[`src/schema/doc.mli`](src/schema/doc.mli) table.
+[`src/service/doc.mli`](src/service/doc.mli) table.
 
 # Web service
 

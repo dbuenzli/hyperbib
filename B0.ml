@@ -133,8 +133,6 @@ let hyperbib_base_lib =
     in
     [ `Dir ~/"src";
       `Dir ~/"src/service";
-      `Dir ~/"src/schema";
-      `Dir ~/"src/html";
       `Dir ~/"src/moveout";
       `X stamp_mli_src;
       `Fut stamp ]
