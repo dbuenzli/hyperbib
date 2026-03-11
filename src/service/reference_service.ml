@@ -113,7 +113,7 @@ let fill_in_form env req (`Doi doi) =
         Entity.Url.cancel_url_of_query (Kurl.Bare.query self))
   in
   let* res =
-    Service_kit.fill_in_reference_form
+    Adhoc_service.fill_in_reference_form
       env db ~self ~cancel ~from_suggestion ~doi
   in
   let log, part = match res with

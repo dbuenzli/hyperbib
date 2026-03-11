@@ -47,7 +47,7 @@ let fill_in_with_doi g db env req s =
       let log = "Missing DOI" in
       Error (Page.part_response ~log html)
   | Some doi ->
-      let* doi, ref = Service_kit.lookup_doi env doi in
+      let* doi, ref = Adhoc_service.lookup_doi env doi in
       let g = Service_env.page_gen env in
       match ref with
       | Error log ->
@@ -61,7 +61,7 @@ let fill_in_with_doi g db env req s =
           Error (Page.part_response ~log html)
       | Ok (Some ref) ->
           let suggestion = Import.Doi.ref_to_short_text_citation ref in
-          let* msg = Service_kit.find_dupe_doi g ~self db doi in
+          let* msg = Adhoc_service.find_dupe_doi g ~self db doi in
           let s =
             let id = Suggestion.Id.zero in
             let timestamp = Suggestion.timestamp s in
@@ -206,7 +206,7 @@ let integrate env req id =
       Ok (None, form)
   | Some doi as d ->
       let* res =
-        Service_kit.fill_in_reference_form
+        Adhoc_service.fill_in_reference_form
           ~suggestion_dupe_check:false
           env db ~self ~cancel ~from_suggestion ~doi:(Doi.to_string doi)
       in
