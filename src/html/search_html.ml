@@ -24,7 +24,7 @@ let search_bar g query =
   in
   let at =
     let url = Search.Url.v (Results None) in
-    let r = Html_kit.htmlact_request (Page.Gen.url_fmt g) url in
+    let r = Adhoc_html.htmlact_request (Page.Gen.url_fmt g) url in
     let t = Htmlact.target ":up .search-results" in
     let layout = Negsp.Layout.sidebar ~gap:(`Sp `XXS) `End () in
     (Hclass.search :: r :: t :: layout)

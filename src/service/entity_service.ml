@@ -42,7 +42,7 @@ let create
   let* vs = Hquery.careless_find_table_cols ~ignore:[Def E.id'] E.table q in
   let* id = Db.insert' (module Id) db (E.create_cols ~ignore_id:true vs) in
   let uf = Service_env.url_fmt env in
-  let headers = Html_kit.htmlact_redirect uf (entity_page_url id) in
+  let headers = Adhoc_html.htmlact_redirect uf (entity_page_url id) in
   Ok (Http.Response.empty ~headers Http.Status.ok_200)
 
 let delete

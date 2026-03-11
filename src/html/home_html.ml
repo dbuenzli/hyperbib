@@ -17,11 +17,11 @@ let page_html g =
   let link_project =
     let href = Bibliography.project_href b in
     let t = "Epistemology of Climate Change research group" in
-    Html_kit.link ~href (El.txt t)
+    Adhoc_html.link ~href (El.txt t)
   in
   let suggest =
     let href = Kurl.Fmt.url (Page.Gen.url_fmt g) (Suggestion.Url.v Index) in
-    Html_kit.link ~href (El.txt Uimsg.your_suggestions_for_addition)
+    Adhoc_html.link ~href (El.txt Uimsg.your_suggestions_for_addition)
   in
   El.section [
     El.header [
@@ -51,9 +51,9 @@ let page_html g =
       El.strong [El.txt "Warning. "];
       El.txt "The current bibliographic data \
               was automatically sourced from ";
-      Html_kit.link ~href:crossref_org_href (El.txt "Crossref");
+      Adhoc_html.link ~href:crossref_org_href (El.txt "Crossref");
       El.txt " as provided by the ";
-      Html_kit.link ~href:Doi.default_resolver (El.txt "DOI system");
+      Adhoc_html.link ~href:Doi.default_resolver (El.txt "DOI system");
       El.txt ". This means that some of the data is noisy. In
           particular authors may end up being duplicated at the moment.
           Work is in progress to cleanup the data.";
@@ -61,7 +61,7 @@ let page_html g =
     (*
     El.p [
     let href = Kurl.Fmt.url (Page.Gen.url_fmt g) (Search.Url.v (Index None)) in
-    Html_kit.link ~href (El.txt "Search") ] *)
+    Adhoc_html.link ~href (El.txt "Search") ] *)
   ]
 
 let page g =

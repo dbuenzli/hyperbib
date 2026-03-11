@@ -33,20 +33,20 @@ let ui_ext g ~self =
     let cancel = Some (Kurl.Fmt.url uf self) in
     let dst = Reference.Url.v (New_form { cancel }) in
     let href = Kurl.Fmt.rel_url uf ~src:self ~dst in
-    Html_kit.new_entity_button ~href ~label:Uimsg.new_reference
+    Adhoc_html.new_entity_button ~href ~label:Uimsg.new_reference
   in
   Hui.group ~at:At.[Hclass.entity_menu] ~dir:`H [new_button]
 
 let h1_reference uf ~self ?title r =
   let entity_kind =
     let kind = Uimsg.references in
-    Html_kit.entity_kind_index uf ~self ~kind (Reference.Url.v Index)
+    Adhoc_html.entity_kind_index uf ~self ~kind (Reference.Url.v Index)
   in
   El.h1 [entity_kind]
 
 let entity_cancel_button uf s =
   let cancel = Reference.Url.v (View_fields (Reference.id s)) in
-  Html_kit.htmlact_cancel_button uf cancel
+  Adhoc_html.htmlact_cancel_button uf cancel
 
 let confirm_delete g r =
   let self = Reference.Url.page r in
@@ -55,8 +55,8 @@ let confirm_delete g r =
   let cancel_button = entity_cancel_button uf r in
   let delete_button =
     let confirm = Reference.Url.v (Delete (Reference.id r)) in
-    let target = Html_kit.target_entity_up in
-    Html_kit.htmlact_delete uf confirm ~target (El.txt Uimsg.confirm_delete)
+    let target = Adhoc_html.target_entity_up in
+    Adhoc_html.htmlact_delete uf confirm ~target (El.txt Uimsg.confirm_delete)
   in
   let bs = Hui.group ~align:`Justify ~dir:`H [delete_button; cancel_button] in
   let really =
@@ -175,7 +175,7 @@ let edit_submit uf ~submit r =
   | `New _ -> Reference.Url.v Create, Uimsg.create_reference
   | `Edit -> Reference.Url.v (Update (Reference.id r)), Uimsg.save_reference
   in
-  let r = Html_kit.htmlact_request uf url and e = Htmlact.effect' `Element in
+  let r = Adhoc_html.htmlact_request uf url and e = Htmlact.effect' `Element in
   let q = Htmlact.query "form:up" in
   let rescue = Htmlact.query_rescue (`Bool true) in
   let t = Htmlact.target ":up :up :up :up" in
@@ -243,7 +243,7 @@ let edit_reference
   let private_note = edit_private_note r in
   let public = edit_public r in
   let buttons = edit_buttons uf ~submit r in
-  Html_kit.form_no_submit
+  Adhoc_html.form_no_submit
     [ from_suggestion; title; details; El.hr (); subjects; note;
       private_note; public; buttons ]
 
@@ -267,7 +267,7 @@ let fill_ui g ~doi =
   in
   let at =
     let url = Reference.Url.v (Fill_in_form (`Doi "")) in
-    let r = Html_kit.htmlact_request (Page.Gen.url_fmt g) url in
+    let r = Adhoc_html.htmlact_request (Page.Gen.url_fmt g) url in
     let t = Htmlact.target ":up .entity" in
     let q = Htmlact.query  ":up form" in
     [r; t; q; Hclass.vspace_0125]
@@ -314,7 +314,7 @@ let edit_form g r ~render_data:rs =
 
 let new_form_page g r ~cancel =
   let self = Reference.Url.v (New_form { cancel }) in
-  let title = Html_kit.title ~sub:Uimsg.new_reference ~sup:Uimsg.reference in
+  let title = Adhoc_html.title ~sub:Uimsg.new_reference ~sup:Uimsg.reference in
   let content =
     new_form g ~self ~cancel ~from_suggestion:None ~doi:None r
       ~authors:[] ~editors:[] ~container:None ~cites:[]
@@ -322,11 +322,11 @@ let new_form_page g r ~cancel =
   Page.with_content ?ui_ext:None g ~self ~title ~content
 
 let view_title ~linkify uf ~self r =
-  let title = El.txt_of Html_kit.sentencify (Reference.non_empty_title r) in
+  let title = El.txt_of Adhoc_html.sentencify (Reference.non_empty_title r) in
   let at = [Hclass.value; Hui.Class.for_col Reference.title'; viz r] in
   if not linkify then El.span ~at [title] else
   let href = Kurl.Fmt.rel_url uf ~src:self ~dst:(Reference.Url.page r) in
-  Html_kit.link ~at ~href title
+  Adhoc_html.link ~at ~href title
 
 let undo_make_all_authors_public_button uf rid ~ids =
   let id i =
@@ -336,20 +336,20 @@ let undo_make_all_authors_public_button uf rid ~ids =
   let is_undo = El.input ~at:At.[hidden; name Hquery.is_undo; value "true"]() in
   let url = Reference.Url.v (Change_authors_publicity rid) in
   let label = Uimsg.undo_make_all_authors_public in
-  Html_kit.htmlact_button
-    ~query:":scope > *" ~target:Html_kit.target_entity uf url
+  Adhoc_html.htmlact_button
+    ~query:":scope > *" ~target:Adhoc_html.target_entity uf url
     ~at:Hui.Class.[tiny] (El.splice (El.txt label :: is_undo :: ids))
 
 let make_all_authors_public_button uf rid =
   let label = Uimsg.make_all_authors_public in
   let url = Reference.Url.v (Change_authors_publicity rid) in
-  Html_kit.htmlact_button ~target:Html_kit.target_entity uf url
+  Adhoc_html.htmlact_button ~target:Adhoc_html.target_entity uf url
     ~at:Hui.Class.[tiny] (El.txt label)
 
 let view_persons ?(ui = El.void) ~class' uf ~self = function
 | [] -> El.void
 | ps ->
-    let persons = List.map (Html_kit.link_person uf ~self) ps in
+    let persons = List.map (Adhoc_html.link_person uf ~self) ps in
     let persons = El.splice ~sep:(El.txt ", ") persons in
     El.splice [ El.span ~at:[class'] [persons; ui]]
 
@@ -390,10 +390,10 @@ let view_container ~details uf ~self r rd c =
       in
       let title = match loc with
       | "" ->
-          El.span ~at:[viz r] [Html_kit.link_container uf ~self c; El.txt ". "]
+          El.span ~at:[viz r] [Adhoc_html.link_container uf ~self c; El.txt ". "]
       | loc ->
           El.span ~at:[viz r]
-            [ Html_kit.link_container uf ~self c;
+            [ Adhoc_html.link_container uf ~self c;
               El.span ~at:loc_at [El.txt_of (Fmt.str ", %s. ") loc]]
       in
       El.splice [eds; title]
@@ -403,26 +403,26 @@ let view_publisher r = match Reference.publisher r with
 
 let view_year uf ~self r = match Reference.year r with
 | 0 -> El.void
-| n -> El.splice [Html_kit.link_year uf ~self (Reference.year r); El.sp]
+| n -> El.splice [Adhoc_html.link_year uf ~self (Reference.year r); El.sp]
 
 let view_subjects uf ~self r = function
 | [] -> El.void
 | ss ->
-    let ss = List.map (Html_kit.link_subject ~self uf) ss in
+    let ss = List.map (Adhoc_html.link_subject ~self uf) ss in
     El.p [El.splice ~sep:(El.txt ", ") ss]
 
 let view_doi_link r =
-  Html_kit.doi_link (Reference.doi r) (El.txt Uimsg.full_text)
+  Adhoc_html.doi_link (Reference.doi r) (El.txt Uimsg.full_text)
 
 let view_cites_link uf ~self r =
   let href = Kurl.Fmt.rel_url uf ~src:self ~dst:(Reference.Url.page r) in
   let href = String.concat "#" [href; cites_anchor] in
-  Html_kit.link ~href (El.txt Uimsg.cites)
+  Adhoc_html.link ~href (El.txt Uimsg.cites)
 
 let view_cited_by_link uf ~self r =
   let href = Kurl.Fmt.rel_url uf ~src:self ~dst:(Reference.Url.page r) in
   let href = String.concat "#" [href; cited_by_anchor] in
-  Html_kit.link ~href (El.txt Uimsg.cited_by)
+  Adhoc_html.link ~href (El.txt Uimsg.cited_by)
 
 let note_html cl viz ~label ~in_details = function
 | "" -> El.void
@@ -456,7 +456,7 @@ let view_reference_docs r g ~self = function
           Option.map Doi.to_string (Reference.doi r)
       | slug -> slug
       in
-      Html_kit.link_reference_doc r ~name ~self uf b
+      Adhoc_html.link_reference_doc r ~name ~self uf b
     in
     El.splice (List.map reference_doc bs)
 
@@ -490,7 +490,7 @@ let list_item g ~self r rs =
   let docs = find_docs r rs in
   let more_details = view_more_details ~notes:true g ~self r docs in
   let at = At.[Hclass.ref_item; id anchor_id; viz r] in
-  El.li ~at [Html_kit.anchor_a anchor_id; ref; subjects; more_details]
+  El.li ~at [Adhoc_html.anchor_a anchor_id; ref; subjects; more_details]
 
 let list_by_desc_date uf ~self rs =
   let refs = List.sort (Fun.flip Reference.compare_by_date) rs.Reference.list in
@@ -501,16 +501,16 @@ let list_section
     ?(anchor_id = Uimsg.references_anchor) ?title g ~self ~descr ~descr_zero rs
   =
   let title = match title with
-  | None -> Html_kit.uppercase_span (Uimsg.references)
+  | None -> Adhoc_html.uppercase_span (Uimsg.references)
   | Some t -> t
   in
-  let count = Html_kit.item_count (List.length rs.Reference.list) in
+  let count = Adhoc_html.item_count (List.length rs.Reference.list) in
   let aid = anchor_id in
-  let title = [Html_kit.anchor_a aid; title; El.sp; count] in
+  let title = [Adhoc_html.anchor_a aid; title; El.sp; count] in
   let content = match List.length rs.Reference.list with
-  | 0 -> Html_kit.description (El.txt descr_zero)
+  | 0 -> Adhoc_html.description (El.txt descr_zero)
   | _ ->
-      El.splice [Html_kit.description (El.txt descr);
+      El.splice [Adhoc_html.description (El.txt descr);
                  list_by_desc_date g ~self rs]
   in
   El.section [El.h2 ~at:At.[id aid] title; content]
@@ -518,9 +518,9 @@ let list_section
 let edit_ui g uf r =
   if not (Page.Gen.editable g) then El.void else
   let rid = Reference.id r in
-  let edit = Html_kit.htmlact_edit_button uf (Reference.Url.v (Edit_form rid)) in
+  let edit = Adhoc_html.htmlact_edit_button uf (Reference.Url.v (Edit_form rid)) in
   let del =
-    Html_kit.htmlact_delete_button uf (Reference.Url.v (Confirm_delete rid))
+    Adhoc_html.htmlact_delete_button uf (Reference.Url.v (Confirm_delete rid))
   in
   let left = Hui.group ~dir:`H [edit] in
   Hui.group ~at:[Hclass.entity_ui] ~align:`Justify ~dir:`H [left; del]
@@ -566,29 +566,29 @@ let view_full g ~self r ~render_data ~cites ~cited_by =
     let descr = Uimsg.cites_descr in
     let descr_zero = Uimsg.cites_descr_zero in
     let anchor_id = cites_anchor in
-    let title = Html_kit.uppercase_span Uimsg.cites in
+    let title = Adhoc_html.uppercase_span Uimsg.cites in
     list_section g ~anchor_id ~title ~self ~descr ~descr_zero cites
   in
   let cited_by =
     let descr = Uimsg.cited_by_descr in
     let descr_zero = Uimsg.cited_by_descr_zero in
     let anchor_id = cited_by_anchor in
-    let title = Html_kit.uppercase_span Uimsg.cited_by in
+    let title = Adhoc_html.uppercase_span Uimsg.cited_by in
     list_section g ~anchor_id ~title ~self ~descr ~descr_zero cited_by
   in
   El.section [ view_fields g ~self r ~render_data; cites; cited_by ]
 
 let deleted g s =
-  let reference = Html_kit.uncapitalize Uimsg.reference in
+  let reference = Adhoc_html.uncapitalize Uimsg.reference in
   let goto = Reference.Url.v Reference.Url.Index in
   let goto = Kurl.Fmt.url (Page.Gen.url_fmt g) goto in
   let goto =
-    Html_kit.link ~href:goto (El.txt_of Uimsg.goto_kind_index reference)
+    Adhoc_html.link ~href:goto (El.txt_of Uimsg.goto_kind_index reference)
   in
   let msg = El.txt_of Uimsg.reference_deleted (Reference.title s) in
   El.section [ El.h1 [El.txt Uimsg.deleted]; El.p [msg]; El.p [goto]]
 
-let page_title r = Html_kit.title ~sub:(Reference.title r) ~sup:Uimsg.reference
+let page_title r = Adhoc_html.title ~sub:(Reference.title r) ~sup:Uimsg.reference
 let page_full_title g r = Page.full_title g ~title:(page_title r)
 let page g r ~render_data ~cites ~cited_by =
   let self = Reference.Url.page r in
@@ -602,10 +602,10 @@ let page_404 g ~self =
 
 let index_html g ~self rs =
   let h1 =
-    let count = Html_kit.item_count (List.length rs.Reference.list) in
-    El.h1 [Html_kit.uppercase_span Uimsg.references; El.sp; count ]
+    let count = Adhoc_html.item_count (List.length rs.Reference.list) in
+    El.h1 [Adhoc_html.uppercase_span Uimsg.references; El.sp; count ]
   in
-  let descr = Html_kit.description (El.txt Uimsg.reference_list_descr) in
+  let descr = Adhoc_html.description (El.txt Uimsg.reference_list_descr) in
   let index = list_by_desc_date g ~self rs in
   El.section [ h1; descr; index ]
 

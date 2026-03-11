@@ -47,7 +47,7 @@ let get_page_data db g r =
 let view_fields_resp ?authors_ui env db req id =
   let* r = get_reference db id in
   let g = Service_env.page_gen env in
-  let* self = Html_kit.url_of_req_referer req in
+  let* self = Adhoc_html.url_of_req_referer req in
   let rid = Reference.Id.v (Reference.id r) in
   let ref = Reference.find_id rid in
   let only_public = Page.Gen.only_public g in
@@ -122,7 +122,7 @@ let fill_in_form env req (`Doi doi) =
       (* XXX we should preserve more of stuff from the query
          see issue #6 *)
       let g = Service_env.page_gen env in
-      let msg = Html_kit.p_error_msg error in
+      let msg = Adhoc_html.p_error_msg error in
       let form =
         Reference_html.filled_in_form
           g Reference.new' ~self ~cancel ~from_suggestion ~msg ~authors:[]
@@ -297,10 +297,10 @@ let update env req id =
      if we update the title.
      let self = Reference.Url.page r (* assume comes from that page *)
   *)
-  let* self = Html_kit.url_of_req_referer req in
+  let* self = Adhoc_html.url_of_req_referer req in
   let title = Reference_html.page_full_title g r in
   let html = Reference_html.view_full g ~self r ~render_data ~cites ~cited_by in
-  let headers = Html_kit.htmlact_page_location_update uf self ~title () in
+  let headers = Adhoc_html.htmlact_page_location_update uf self ~title () in
   Ok (Page.part_response ~headers html)
 
 let doc env request (_, ref_id) docid =

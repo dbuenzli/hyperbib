@@ -26,7 +26,7 @@ let doi_input g ?invalid_user_doi s =
   in
   let fill_in =
     let r =
-      Html_kit.htmlact_request (Page.Gen.url_fmt g) (Suggestion.Url.v Fill_in)
+      Adhoc_html.htmlact_request (Page.Gen.url_fmt g) (Suggestion.Url.v Fill_in)
     in
     let t = Htmlact.target "form:up" in
     let q = Htmlact.query "form:up" in
@@ -72,7 +72,7 @@ let buttons ?(force_rescue = false) g =
   let uf = Page.Gen.url_fmt g in
   let submit =
     let label = Uimsg.submit_suggestion in
-    let r = Html_kit.htmlact_request uf (Suggestion.Url.v Create) in
+    let r = Adhoc_html.htmlact_request uf (Suggestion.Url.v Create) in
     let t = Htmlact.target "form:up" in
     let e = Htmlact.effect' `Element in
     let q = Htmlact.query "form:up" in
@@ -99,7 +99,7 @@ let suggest_form ?invalid_user_doi ?force_rescue ?(msg = El.void) g s =
   let comment = input_comment s in
   let email = input_email s in
   let at = At.[class' "suggest"] in
-  Html_kit.form_no_submit ~at
+  Adhoc_html.form_no_submit ~at
     [ doi; msg; suggestion; comment; email; bot_honeypot;
       buttons ?force_rescue g]
 
@@ -110,7 +110,7 @@ let doi s = match Suggestion.doi s with
 | None -> El.void
 | Some d as doi ->
     (* Why does doi_link take an option ? try to remove that. *)
-    El.small [Html_kit.doi_link doi (El.txt (" doi:" ^ Doi.to_string d))]
+    El.small [Adhoc_html.doi_link doi (El.txt (" doi:" ^ Doi.to_string d))]
 
 let created g s =
   (* FIXME move the messages to Uimsg *)
@@ -129,7 +129,7 @@ let created g s =
     let id = Suggestion.Id.to_int (Suggestion.id s) in
     let pending = String.concat "#" [pending; string_of_int id]in
     El.p [El.txt "has been added to the list of ";
-          Html_kit.link ~href:pending (El.txt "pending suggestions.")]
+          Adhoc_html.link ~href:pending (El.txt "pending suggestions.")]
   in
   let content = El.section [h1; thanks; theref; sugg; added] in
   Page.with_content g ~self ~title ~content
@@ -138,12 +138,12 @@ let confirm_delete g s =
   let uf = Page.Gen.url_fmt g in
   let cancel_button =
     let cancel = Suggestion.Url.v (View_fields (Suggestion.id s)) in
-    Html_kit.htmlact_cancel_button uf cancel
+    Adhoc_html.htmlact_cancel_button uf cancel
   in
   let delete_button =
     let confirm = Suggestion.Url.v (Delete (Suggestion.id s)) in
-    let target = Html_kit.target_entity in
-    Html_kit.htmlact_delete uf confirm ~target (El.txt Uimsg.confirm_delete)
+    let target = Adhoc_html.target_entity in
+    Adhoc_html.htmlact_delete uf confirm ~target (El.txt Uimsg.confirm_delete)
   in
   let bs = Hui.group ~align:`Justify ~dir:`H [delete_button; cancel_button] in
   let really = El.p @@ match Suggestion.reference s with
@@ -165,7 +165,7 @@ let confirm_delete g s =
       let subject = Uimsg.about_your_suggestion in
       let bib = Page.Gen.bibliography g in
       let body = Bibliography.suggester_email_message bib in
-      let mailto = Html_kit.mailto_link ~subject ~body ~email (El.txt email) in
+      let mailto = Adhoc_html.mailto_link ~subject ~body ~email (El.txt email) in
       El.p [El.txt Uimsg.you_may_want_to_send_an_email; El.sp; mailto; El.sp;
             El.txt Uimsg.to_notify_the_suggestion_was_treated],
       El.splice [El.sp; El.txt Uimsg.the_email_address_will_be_deleted]
@@ -187,7 +187,7 @@ let view_private_email g s =
   let email = Suggestion.email s in
   if Page.Gen.only_public g || email = "" then El.void else
   let subject = Uimsg.about_your_suggestion in
-  let mailto = Html_kit.mailto_link ~subject ~email (El.txt email) in
+  let mailto = Adhoc_html.mailto_link ~subject ~email (El.txt email) in
   El.em [El.txt Uimsg.suggested_by; El.sp; mailto; El.br ()]
 
 let view_private g s =
@@ -208,12 +208,12 @@ let edit_ui g s =
   let uf = Page.Gen.url_fmt g in
   let id = Suggestion.id s in
   let del =
-    Html_kit.htmlact_delete_button uf (Suggestion.Url.v (Confirm_delete id))
+    Adhoc_html.htmlact_delete_button uf (Suggestion.Url.v (Confirm_delete id))
   in
   let left = match Suggestion.reference s with
   | None ->
       let integrate = Suggestion.Url.v (Page {id; created = false}) in
-      Html_kit.htmlact_integrate_button uf integrate
+      Adhoc_html.htmlact_integrate_button uf integrate
   | Some id ->
       let integrated = Reference.Url.v (Page (None, id)) in
       let url = Kurl.Fmt.url uf integrated in
@@ -232,7 +232,7 @@ let view_fields ?(ui = true) g ~self s =
   let private' = view_private g s in
   let ui = if ui then edit_ui g s else El.void in
   El.div ~at:[At.id id; Hclass.entity; Hclass.vspace_025; Hclass.fade]
-    [ Html_kit.anchor_a id; preamble; suggestion; private'; ui]
+    [ Adhoc_html.anchor_a id; preamble; suggestion; private'; ui]
 
 let integrate_html g ~self s ~form =
   let h1 = El.h1 [El.txt Uimsg.integrate_suggestion] in
@@ -245,7 +245,7 @@ let integrate g s ~form =
   Page.with_content g ~self ~title:Uimsg.suggestions ~content
 
 let index_html g ~self ss ~is_full =
-  let h1 = El.h1 [Html_kit.uppercase_span Uimsg.suggestions ] in
+  let h1 = El.h1 [Adhoc_html.uppercase_span Uimsg.suggestions ] in
   let preamble = match Page.Gen.only_public g with
   | true ->
       if is_full then too_many_suggestions else
@@ -259,10 +259,10 @@ let index_html g ~self ss ~is_full =
   | [] -> El.void
   | ss when Page.Gen.only_public g -> El.void
   | ss ->
-      let count = Html_kit.item_count (List.length ss) in
+      let count = Adhoc_html.item_count (List.length ss) in
       let h2 =
         El.h2 ~at:At.[id integrated_anchor]
-          [ Html_kit.anchor_a integrated_anchor;
+          [ Adhoc_html.anchor_a integrated_anchor;
             El.txt Uimsg.integrated_suggestions; El.sp; count]
       in
       let suggestions =
@@ -276,10 +276,10 @@ let index_html g ~self ss ~is_full =
   let pending = match pending with
   | [] -> El.void
   | ss ->
-      let count = Html_kit.item_count (List.length ss) in
+      let count = Adhoc_html.item_count (List.length ss) in
       let h2 =
         El.h2 ~at:At.[id pending_anchor]
-          [ Html_kit.anchor_a pending_anchor;
+          [ Adhoc_html.anchor_a pending_anchor;
             El.txt Uimsg.pending_suggestions; El.sp; count];
       in
       let suggestions =

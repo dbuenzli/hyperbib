@@ -39,7 +39,7 @@ let suggestion_notification env id =
   Email.send ~sender ~recipient ~subject ~body
 
 let fill_in_with_doi g db env req s =
-  let* self = Html_kit.url_of_req_referer req in
+  let* self = Adhoc_html.url_of_req_referer req in
   match Suggestion.doi s with
   | None ->
       let msg = err_doi_unspecified_msg in
@@ -161,7 +161,7 @@ let create env req =
   let iid = Suggestion.Id.to_int id in
   let () = suggestion_notification env iid |> Log.if_error ~use:() in
   let redirect = Suggestion.Url.v (Page {id; created = true}) in
-  let headers = Html_kit.htmlact_redirect uf redirect in
+  let headers = Adhoc_html.htmlact_redirect uf redirect in
   Ok (Http.Response.empty ~headers Http.Status.ok_200)
 
 let delete env id =
@@ -184,7 +184,7 @@ let view_fields env req id =
   Service_env.with_db_transaction' `Deferred env @@ fun db ->
   let* s = get_suggestion db id in
   let g = Service_env.page_gen env in
-  let* self = Html_kit.url_of_req_referer req in
+  let* self = Adhoc_html.url_of_req_referer req in
   Ok (Page.part_response (Suggestion_html.view_fields g s ~self))
 
 let integrate env req id =
@@ -214,7 +214,7 @@ let integrate env req id =
       | Ok form -> Ok (None, form (* no fill-in UI *))
       | Error (log, error) ->
           let g = Service_env.page_gen env in
-          let msg = Html_kit.p_error_msg error in
+          let msg = Adhoc_html.p_error_msg error in
           let form =
             Reference_html.new_form
               g ~self ~cancel Reference.new' ~msg ~from_suggestion ~doi:d

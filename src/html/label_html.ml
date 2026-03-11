@@ -74,15 +74,15 @@ let index_html g ~self ls =
   let anchor_id s = Label.Id.to_string (Label.id s) in
   let label l =
     let viz = if Label.public l then At.void else Hclass.private' in
-    let label = Html_kit.link_label uf ~self l in
+    let label = Adhoc_html.link_label uf ~self l in
     let label_descr = match Label.note l with
     | "" -> El.void
     | d -> El.p ~at:At.[Hclass.field; Hclass.description; viz] [El.txt d]
     in
     let lid = anchor_id l in
-    El.li ~at:At.[id lid] [Html_kit.anchor_a lid; label; El.sp; label_descr]
+    El.li ~at:At.[id lid] [Adhoc_html.anchor_a lid; label; El.sp; label_descr]
   in
-  let title = [Html_kit.uppercase_span Uimsg.labels ] in
+  let title = [Adhoc_html.uppercase_span Uimsg.labels ] in
   let labels = List.map label ls in
   let labels = El.nav ~at:At.[Hclass.index; Hui.Class.label] labels in
   El.section [ El.h1 title; labels ]

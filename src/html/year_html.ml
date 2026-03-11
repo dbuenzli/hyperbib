@@ -16,19 +16,21 @@ let page_html g ~self ~year refs =
 
 let page g ~year refs =
   let self = Year.Url.page year in
-  let title = Html_kit.title ~sub:(fmt_year year) ~sup:Uimsg.year in
+  let title = Adhoc_html.title ~sub:(fmt_year year) ~sup:Uimsg.year in
   let content = page_html g ~self ~year refs in
   Page.with_content g ~self ~title ~content
 
 let year_index g ~self years =
   let year (y, c) =
-    let text = El.splice [El.txt_of fmt_year y; El.sp; Html_kit.item_count c] in
-    Html_kit.link_year (Page.Gen.url_fmt g) ~self ~text y
+    let text =
+      El.splice [El.txt_of fmt_year y; El.sp; Adhoc_html.item_count c]
+    in
+    Adhoc_html.link_year (Page.Gen.url_fmt g) ~self ~text y
   in
   El.nav ~at:At.[Hclass.year; Hclass.index] (List.map year years)
 
 let index_html g ~self years =
-  let count = Html_kit.item_count (List.length years) in
+  let count = Adhoc_html.item_count (List.length years) in
   let h1 = El.h1 [El.txt Uimsg.years; El.sp; count] in
   let descr = El.p ~at:[Hclass.description] [El.txt Uimsg.year_index_descr] in
   let index = year_index g ~self years in

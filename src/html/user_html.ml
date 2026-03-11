@@ -72,6 +72,6 @@ let page_html g ~self username =
 
 let page g ~username =
   let self = Kurl.V (User.Url.kind, Login { goto = None }) in
-  let title = Html_kit.title ~sub:username ~sup:Uimsg.user in
+  let title = Adhoc_html.title ~sub:username ~sup:Uimsg.user in
   let content = page_html g ~self username in
   Page.with_content g ~self ~title ~content
