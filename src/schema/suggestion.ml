@@ -40,7 +40,7 @@ module Suggestion = struct
 
   let id' = Col.make "id" Id.type' id
   let timestamp' = Col.make "timestamp" Type.int timestamp
-  let doi' = Col.make "doi" Type.(option Schema_kit.Doi_rel.t) doi
+  let doi' = Col.make "doi" Type.(option Adhoc_schema.Doi_rel.t) doi
   let suggestion' = Col.make "suggestion" Type.text suggestion
   let comment' = Col.make "comment" Type.text comment
   let email' = Col.make "email" Type.text email
@@ -78,8 +78,8 @@ let list_stmt = Rel_query.Sql.(func @@ ret (Table.row table) list)
 
 let find_doi doi =
   let* r = Bag.table table in
-  let is_doi = Option.(equal (some Schema_kit.Doi_rel.t doi) (r #. doi')
-                         ~eq:Schema_kit.Doi_rel.equal)
+  let is_doi = Option.(equal (some Adhoc_schema.Doi_rel.t doi) (r #. doi')
+                         ~eq:Adhoc_schema.Doi_rel.equal)
   in
   Bag.where is_doi (Bag.yield r)
 

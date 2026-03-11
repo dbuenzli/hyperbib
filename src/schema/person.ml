@@ -98,7 +98,7 @@ module Person = struct
   let id' = Col.make "id" Id.type' id
   let last_name' = Col.make "last_name" Type.text last_name
   let first_names' = Col.make "first_names" Type.text first_names
-  let orcid' = Col.make "orcid" Type.(option Schema_kit.Orcid_rel.t) orcid
+  let orcid' = Col.make "orcid" Type.(option Adhoc_schema.Orcid_rel.t) orcid
   let note' = Col.make "note" Type.text note
   let private_note' = Col.make "private_note" Type.text private_note
   let public' = Col.make "public" Type.bool public
@@ -118,7 +118,7 @@ module Label = Label.For_entity (Person)
 include Entity.Publicable_queries (Person)
 
 open Rel_query.Syntax
-open Schema_kit
+open Adhoc_schema
 
 let select sel =
   (* TODO the structure of this query is wrong. select should

@@ -111,9 +111,9 @@ module Reference = struct
 
   let date_year' = Col.make "date_year" Type.(option int) date_year
   let date_md' =
-    Col.make "date_md" Type.(option Schema_kit.Date_md_partial_rel.t) date_md
+    Col.make "date_md" Type.(option Adhoc_schema.Date_md_partial_rel.t) date_md
 
-  let doi' = Col.make "doi" Type.(option Schema_kit.Doi_rel.t) doi
+  let doi' = Col.make "doi" Type.(option Adhoc_schema.Doi_rel.t) doi
   let isbn' = Col.make "isbn" Type.text isbn
   let issue' = Col.make "issue" Type.text issue
   let note' = Col.make "note" Type.text note
@@ -400,7 +400,7 @@ module Cites = struct
   let doi c = c.doi
 
   let reference' = Col.make "reference" Id.type' reference
-  let doi' = Col.make "doi" Schema_kit.Doi_rel.t doi
+  let doi' = Col.make "doi" Adhoc_schema.Doi_rel.t doi
   let table =
     let primary_key = Table.Primary_key.make [Def reference'; Def doi'] in
     let foreign_keys =
@@ -413,7 +413,7 @@ module Cites = struct
     Row.(unit row * reference' * doi')
 
   open Rel_query.Syntax
-  open Schema_kit
+  open Adhoc_schema
 
   let create c = Rel_sql.insert_into Db.dialect table c
   let of_ref_ids rids =
@@ -631,7 +631,7 @@ let replace_container_stmt ~this ~by =
   let by = Col.Value (container', (Some by)) in
   Rel_sql.update Db.dialect table ~set:[by] ~where:[this]
 
-open Schema_kit
+open Adhoc_schema
 
 let ids_citing_doi doi =
   let* c = Bag.table Cites.table in

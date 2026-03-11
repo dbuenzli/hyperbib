@@ -39,7 +39,7 @@ let get_page_data db g r =
   let* cites = Reference.render_data ~only_public cites db in
   let cited_by = match Reference.doi r with
   | None -> Bag.empty
-  | Some doi -> Reference.citing_doi (Schema_kit.Doi_rel.v doi)
+  | Some doi -> Reference.citing_doi (Adhoc_schema.Doi_rel.v doi)
   in
   let* cited_by = Reference.render_data ~only_public cited_by db in
   Ok (render_data, cites, cited_by)
