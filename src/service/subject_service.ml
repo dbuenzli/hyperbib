@@ -9,10 +9,10 @@ open Rel
 
 (* Data lookups *)
 
-let select_subjects db ~only_public sel =
+let select_subjects db ~only_public ~exclude sel =
   (* FIXME only_public, FIXME Ask escape % and _ in selector, order by *)
   if String.trim sel = "" then Ok [] else
-  let* ss = Db.list db (Subject.select_stmt sel) in
+  let* ss = Db.list db (Subject.select_stmt ~exclude sel) in
   Ok (List.sort Subject.order_by_name ss)
 
 let get_subject = Entity_service.get_entity (module Subject)
@@ -163,9 +163,9 @@ let input env ~for_list ~input_name id =
   Service_env.with_db_transaction' `Deferred env @@ fun db ->
   let uf = Page.Gen.url_fmt (Service_env.page_gen env) in
   let* s = get_subject db id in
-  let finder = match for_list with
-  | true -> Entity_html.subject_input_finder uf ~for_list ~input_name
-  | false -> El.void
+  let finder =
+    if not for_list then El.void else
+    Entity_html.subject_input_finder uf ~for_list ~input_name ~exclude:None
   in
   let s = Entity_html.subject_input uf ~for_list ~input_name s in
   Ok (Page.part_response (El.splice [s; finder]))
@@ -174,17 +174,19 @@ let input_finder env ~for_list ~input_name =
   let* () = Entity_service.check_edit_authorized env in
   Service_env.with_db_transaction' `Deferred env @@ fun db ->
   let uf = Page.Gen.url_fmt (Service_env.page_gen env) in
-  let finder = Entity_html.subject_input_finder uf ~for_list ~input_name in
+  let finder =
+    Entity_html.subject_input_finder uf ~for_list ~input_name ~exclude:None
+  in
   Ok (Page.part_response finder)
 
-let input_finder_find env ~for_list ~input_name sel =
+let input_finder_find env ~for_list ~input_name ~exclude sel =
   let* () = Entity_service.check_edit_authorized env in
   Service_env.with_db_transaction `Deferred env @@ fun db ->
   let g = Service_env.page_gen env in
   let uf = Page.Gen.url_fmt g in
   let only_public = Page.Gen.only_public g in
   let* parents = Subject.id_map db Subject.parents_stmt Subject.id in
-  let* ss = select_subjects db ~only_public sel in
+  let* ss = select_subjects db ~only_public ~exclude sel in
   let finder =
     Entity_html.subject_input_finder_results uf
       ~for_list ~input_name ~parents ss
@@ -227,8 +229,8 @@ let resp r env sess req = match (r : Subject.Url.t) with
 | Input (for_list, input_name, id) -> input env ~for_list ~input_name id
 | Input_create (for_list, n, s) -> Http.Response.not_implemented_501 ()
 | Input_finder (for_list, input_name) -> input_finder env ~for_list ~input_name
-| Input_finder_find (for_list, input_name, sel) ->
-    input_finder_find env ~for_list ~input_name sel
+| Input_finder_find (for_list, input_name, exclude, sel) ->
+    input_finder_find env ~for_list ~input_name ~exclude sel
 | Update id -> update env req id
 | View_fields id  -> view_fields env req id
 

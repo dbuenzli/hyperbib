@@ -281,14 +281,16 @@ let subject_input_finder_results uf ~for_list ~input_name ~parents ss =
   let tip = Uimsg.add_subject and creatable = None in
   input_finder_results (module Subject) ~creatable ~tip ~render uf ~action ss
 
-let subject_input_finder uf ~for_list ~input_name =
+let subject_input_finder uf ~for_list ~input_name ~exclude =
   let res =
     let parents = Subject.Id.Map.empty in
     subject_input_finder_results uf ~for_list ~input_name ~parents []
   in
   let input_subject_id = input_entity_id ~input_name None in
   let input =
-    let req = Subject.Url.v (Input_finder_find (for_list, input_name, "")) in
+    let req =
+      Subject.Url.v (Input_finder_find (for_list, input_name, exclude, ""))
+    in
     let kind = Uimsg.subject and at = [Hclass.subject] in
     entity_input_finder ~at ~kind uf req ~value:""
   in

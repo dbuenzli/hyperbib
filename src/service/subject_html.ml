@@ -156,7 +156,8 @@ let replace_form g s ~ref_count =
   let intro = El.p [El.txt_of Uimsg.replace_subject_by (Subject.name s)] in
   let input_subject =
     let for_list = false and input_name = Entity.Url.replace_by in
-    Entity_html.subject_input_finder uf ~for_list ~input_name
+    let exclude = Some (Subject.id s) in
+    Entity_html.subject_input_finder uf ~for_list ~input_name ~exclude
   in
   let msg = match ref_count with
   | 0 -> El.void
@@ -168,7 +169,9 @@ let replace_form g s ~ref_count =
                 refs; El.txt "."]
   in
   let at =
-    let r = Adhoc_html.htmlact_request uf (Subject.Url.v (Replace (Subject.id s))) in
+    let r =
+      Adhoc_html.htmlact_request uf (Subject.Url.v (Replace (Subject.id s)))
+    in
     let e = Htmlact.effect' `Element in
     At.[Hclass.entity; Hclass.editing; r; e]
   in

@@ -169,7 +169,9 @@ let edit_subjects uf ss =
   let input_name = Reference.Subject.(Hquery.key_for_rel table subject') in
   let for_list = true in
   let ss = List.map (Entity_html.subject_input uf ~for_list ~input_name) ss in
-  let add = Entity_html.subject_input_finder uf ~for_list ~input_name in
+  let add =
+    Entity_html.subject_input_finder uf ~for_list ~input_name ~exclude:None
+  in
   El.div ~at [label; El.div ~at:[Hclass.list (* bad *)] (ss @ [add])]
 
 let edit_submit uf ~submit r =
