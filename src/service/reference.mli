@@ -83,8 +83,8 @@ val is_monograph_part : t -> bool
 (** [is_monograph_part r] is [true] iff [r] is part of a book
     or proceedings. *)
 
-val year : t -> int
-(** [year r] is [r]'s year. If the information is not available this is [0]. *)
+val year : t -> Date.year option
+(** [year r] is [r]'s year. *)
 
 val non_empty_title : t -> string
 (** [non_empty_title r] is [r]'s title or {!Uimsg.untitled} if it

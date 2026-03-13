@@ -17,7 +17,10 @@ let page env year =
   let g = Service_env.page_gen env in
   let only_public = Rel_query.Bool.v (Page.Gen.only_public g) in
   let refs = Reference.list ~only_public in
-  let refs = Year.filter ~year:(Rel_query.Int.v year) refs in
+  let refs =
+    let year = Rel_query.Option.v Rel.Type.int year in
+    Year.filter ~year refs
+  in
   let* render_data = Reference.render_data ~only_public refs db in
   let page = Year_html.page g ~year render_data in
   Ok (Page.response page)

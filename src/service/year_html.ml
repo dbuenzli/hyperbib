@@ -5,10 +5,9 @@
 
 open Hyperbib_std
 
-let fmt_year y = Fmt.str "%04d" y
-
 let page_html g ~self ~year refs =
-  let h1 = El.h1 [El.txt_of fmt_year year] in
+  let year = match year with None -> "No date" | Some y -> Fmt.str "%d" y in
+  let h1 = El.h1 [El.txt year] in
   let descr = Uimsg.year_page_order_descr in
   let descr_zero = Uimsg.year_page_order_descr_zero in
   let refs = Reference_html.list_section g ~self ~descr ~descr_zero refs in
@@ -16,14 +15,14 @@ let page_html g ~self ~year refs =
 
 let page g ~year refs =
   let self = Year.Url.page year in
-  let title = Adhoc_html.title ~sub:(fmt_year year) ~sup:Uimsg.year in
+  let title = Adhoc_html.title ~sub:(Adhoc_html.year year) ~sup:Uimsg.year in
   let content = page_html g ~self ~year refs in
   Page.with_content g ~self ~title ~content
 
 let year_index g ~self years =
   let year (y, c) =
     let text =
-      El.splice [El.txt_of fmt_year y; El.sp; Adhoc_html.item_count c]
+      El.splice [El.txt_of Adhoc_html.year y; El.sp; Adhoc_html.item_count c]
     in
     Adhoc_html.link_year (Page.Gen.url_fmt g) ~self ~text y
   in

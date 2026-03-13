@@ -22,6 +22,9 @@ val title : sub:string -> sup:string -> string
 val ellipsify : string -> string
 (** [ellipsify s] adds … at the end of [s]. *)
 
+val year : Date.year option -> string
+(** [year] formats the year or [n.d.] if [None]. *)
+
 (** {1:htmlact_requests Htmlact requests} *)
 
 val htmlact_request : Kurl.fmt -> Kurl.t -> At.t
@@ -110,7 +113,7 @@ val link_container : Container.t linker
 val link_label : Label.t linker
 val link_person : Person.t linker
 val link_subject : Subject.t linker
-val link_year : Date.year linker
+val link_year : Date.year option linker
 val link_reference_doc :
   ?name:string -> Reference.t -> Reference.Doc.t linker
 

@@ -123,7 +123,7 @@ module Static_html = struct
   let write_year ~dir db g (year, _) =
     let only_public = Rel_query.Bool.true' in
     let all = Reference.list ~only_public in
-    let refs = Year.filter ~year:(Rel_query.Int.v year) all in
+    let refs = Year.filter ~year:(Rel_query.Option.v Rel.Type.int year) all in
     let* render_data = refs_render_data ~only_public refs db in
     write_page ~dir g (Year_html.page g ~year render_data)
 

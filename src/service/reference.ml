@@ -94,7 +94,7 @@ module Reference = struct
 
   let date_year r = Option.map fst r.date
   let date_md r = Option.join (Option.map snd r.date)
-  let year r = match r.date with None -> 0 | Some (y, _) -> y
+  let year r = match r.date with None -> None | Some (y, _) -> Some y
   let non_empty_title r = match r.title with "" -> Uimsg.untitled | t -> t
   let compare_by_date r0 r1 = compare r0.date r1.date
 

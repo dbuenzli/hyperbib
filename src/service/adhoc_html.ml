@@ -18,6 +18,8 @@ let title ~sub ~sup = String.concat " – " [sub; sup]
 
 let ellipsify s = s ^ "…"
 
+let year = function None -> "n.d." |  Some y -> Fmt.str "%d" y
+
 (* Htmlact requests *)
 
 let htmlact_request uf u =
@@ -159,7 +161,7 @@ type 'a linker = ?text:El.html -> Kurl.fmt -> self:Kurl.t -> 'a -> El.html
 
 let link_year ?text uf ~self y =
   let href = Kurl.Fmt.rel_url uf ~src:self ~dst:(Year.Url.page y) in
-  let text = match text with None -> El.txt_of (Fmt.str "%d") y | Some t -> t in
+  let text = match text with None -> El.txt_of year y | Some t -> t in
   link ~at:[Hclass.year; Hclass.value] ~href text
 
 let link_person ?text uf ~self p =

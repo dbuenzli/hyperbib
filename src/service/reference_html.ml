@@ -405,9 +405,8 @@ let view_container ~details uf ~self r rd c =
 let view_publisher r = match Reference.publisher r with
 | "" -> El.void | p -> El.txt_of (Fmt.str " %s. ") p
 
-let view_year uf ~self r = match Reference.year r with
-| 0 -> El.void
-| n -> El.splice [Adhoc_html.link_year uf ~self (Reference.year r); El.sp]
+let view_year uf ~self r =
+  El.splice [Adhoc_html.link_year uf ~self (Reference.year r); El.sp]
 
 let view_subjects uf ~self r = function
 | [] -> El.void
