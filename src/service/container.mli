@@ -118,8 +118,11 @@ val match' :
 val match_stmt :
   title:string -> isbn:string -> issn:string -> t Rel_sql.Stmt.t
 
-val select : string Rel_query.value -> (t, Bag.unordered) Rel_query.Bag.t
-val select_stmt : string -> t Rel_sql.Stmt.t
+val select :
+  Id.t option Rel_query.value -> string Rel_query.value ->
+  (t, Bag.unordered) Rel_query.Bag.t
+
+val select_stmt : exclude:Id.t option -> string -> t Rel_sql.Stmt.t
 
 val id_map :
   Db.t -> 'a Rel_sql.Stmt.t -> ('a -> Id.t) -> ('a Id.Map.t, Db.error) result
@@ -144,7 +147,7 @@ module Url : sig
   | Input of Entity.Url.input_name * Id.t
   | Input_create of Entity.Url.input_name * container
   | Input_finder of Entity.Url.input_name
-  | Input_finder_find of Entity.Url.input_name * string
+  | Input_finder_find of Entity.Url.input_name * Id.t option * string
   | New_form of { cancel : Entity.Url.cancel_url }
   | Page of named_id
   | Replace of Id.t

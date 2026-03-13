@@ -156,7 +156,10 @@ let replace_form g c ~ref_count =
     El.p [El.txt intro]
   in
   let input_name = Entity.Url.replace_by in
-  let input_container = Entity_html.container_input_finder uf ~input_name in
+  let input_container =
+    let exclude = Some (Container.id c) in
+    Entity_html.container_input_finder uf ~input_name ~exclude
+  in
   let msg = match ref_count with
   | 0 -> El.void
   | n ->
@@ -173,7 +176,7 @@ let replace_form g c ~ref_count =
     let e = Htmlact.effect' `Element in
     At.[Hclass.entity; Hclass.editing; r; e]
   in
-  let replace = El.div ~at:[Hclass.replace] [input_container]in
+  let replace = El.div ~at:[Hclass.replace] [input_container] in
   El.form ~at [h1; intro; replace; msg; buttons]
 
 let view_note = Entity_html.view_note (module Container)

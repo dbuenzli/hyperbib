@@ -92,7 +92,7 @@ let match_stmt =
 
 let match_stmt ~title ~isbn ~issn = match_stmt title isbn issn
 
-let select sel = (* TODO This query looks wrong. It's the reason why
+let select exclude sel = (* TODO This query looks wrong. It's the reason why
                     we have Id.to_text. We should likely have two
                     different sel. If we want to use a single [sel]
                     it should be converted at the statement binding
@@ -100,12 +100,14 @@ let select sel = (* TODO This query looks wrong. It's the reason why
   (* FIXME trim spaces in both pattern and scrutinee *)
   let open Rel_query.Syntax in
   let* c = Bag.table table in
+  let is_exclude = Option.has_value ~eq:Id.equal (c #. id') exclude in
   let sel_by_id = Text.(Id.to_text (c #. id') = sel) in
   let sel_by_title = Text.(like (c #. title') (sel ^ v "%") ) in
-  Bag.where (sel_by_id || sel_by_title) (Bag.yield c)
+  Bag.where ((sel_by_id || sel_by_title) && not is_exclude) (Bag.yield c)
 
-let select_stmt =
-  Rel_query.Sql.(func @@ text @-> ret (Table.row table) select)
+let select_stmt ~exclude sel =
+  Rel_query.Sql.(func @@ text @-> option Id.type' @->
+                         ret (Table.row table) select) sel exclude
 
 let id_map db st id =
   let add r acc = Id.Map.add (id r) r acc in
@@ -132,7 +134,7 @@ module Url = struct
   | Input of Entity.Url.input_name * Id.t
   | Input_create of Entity.Url.input_name * container
   | Input_finder of Entity.Url.input_name
-  | Input_finder_find of Entity.Url.input_name * string
+  | Input_finder_find of Entity.Url.input_name * Id.t option * string
   | New_form of { cancel : Entity.Url.cancel_url }
   | Page of named_id
   | Replace of Id.t
@@ -191,9 +193,11 @@ module Url = struct
       Kurl.ok (Input_finder n)
   | ["part"; "input-finder-find"] ->
       let* `GET = Kurl.allow Http.Method.[get] u in
-      let* n = Entity.Url.input_name_of_query (Kurl.Bare.query u) in
-      let q = Entity.Url.select_of_query (Kurl.Bare.query u) in
-      Kurl.ok (Input_finder_find (n, q))
+      let query = Kurl.Bare.query u in
+      let* n = Entity.Url.input_name_of_query query in
+      let* exclude = Entity.Url.exclude_id_of_query (module Id) query in
+      let sel = Entity.Url.select_of_query query in
+      Kurl.ok (Input_finder_find (n, exclude, sel))
   | ["action"; "duplicate"; id] ->
       let* `POST, id = Entity.Url.meth_id (module Id) u Http.Method.[post] id in
       Kurl.ok (Duplicate id)
@@ -251,9 +255,12 @@ module Url = struct
   | Input_finder n ->
       let query = Entity.Url.input_name_to_query n in
       Kurl.bare `GET ["part"; "input-finder"] ~query
-  | Input_finder_find (n, sel) ->
+  | Input_finder_find (n, exclude, sel) ->
       let query = Entity.Url.select_to_query sel in
       let query = Entity.Url.input_name_to_query ?init:query n in
+      let query =
+        Entity.Url.exclude_id_to_query ~init:query (module Id) exclude
+      in
       Kurl.bare `GET ["part"; "input-finder-find"] ~query
   | Update id ->
       Kurl.bare `PUT [Id.to_string id]

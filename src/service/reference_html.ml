@@ -88,7 +88,7 @@ let edit_isbn r =
 let edit_container uf r c =
   let input_name = Rel.Col.name Reference.container' in
   let input = match c with
-  | None -> Entity_html.container_input_finder uf ~input_name
+  | None -> Entity_html.container_input_finder uf ~input_name ~exclude:None
   | Some (`Exists c) -> Entity_html.container_input uf ~input_name c
   | Some (`To_create c) -> Entity_html.container_input_create uf ~input_name c
   in

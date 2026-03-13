@@ -122,7 +122,8 @@ val container_input_create :
     {!container_input_finder}. *)
 
 val container_input_finder :
-  Kurl.fmt -> input_name:Entity.Url.input_name -> El.html
+  Kurl.fmt -> input_name:Entity.Url.input_name ->
+  exclude:Container.Id.t option -> El.html
 (** [input_container] is a text field to search for a container to input
     in an hidden input element named [input_name]. *)
 

@@ -341,11 +341,11 @@ let container_input_finder_results uf ~input_name ~creatable:c cs =
   let creatable = Option.map (container_creatable_result uf ~input_name) c in
   input_finder_results (module Container) ~creatable ~tip ~render uf ~action cs
 
-let container_input_finder uf ~input_name =
+let container_input_finder uf ~input_name ~exclude =
   let res = container_input_finder_results uf ~input_name ~creatable:None [] in
   let input_container_id = input_entity_id ~input_name None in
   let input =
-    let req = Container.Url.v (Input_finder_find (input_name, "")) in
+    let req = Container.Url.v (Input_finder_find (input_name, exclude, "")) in
     let r = Adhoc_html.htmlact_request uf req in
     let t = Htmlact.target (":up :up ol") in
     let e = Htmlact.event ~debounce_ms:250 "input" in

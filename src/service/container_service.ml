@@ -9,10 +9,10 @@ open Rel
 
 (* Data lookups *)
 
-let select_containers db ~only_public sel =
+let select_containers db ~only_public ~exclude sel =
   (* FIXME only_public, FIXME Ask escape % and _ in selector, order by *)
   if String.trim sel = "" then Ok [] else
-  let* cs = Db.list db (Container.select_stmt sel) in
+  let* cs = Db.list db (Container.select_stmt ~exclude sel) in
   Ok (List.sort Container.order_by_title cs)
 
 let get_container = Entity_service.get_entity (module Container)
@@ -189,7 +189,8 @@ let input_finder env ~input_name =
   let* () = Entity_service.check_edit_authorized env in
   Service_env.with_db_transaction' `Deferred env @@ fun db ->
   let uf = Page.Gen.url_fmt (Service_env.page_gen env) in
-  let sel = Entity_html.container_input_finder uf ~input_name in
+  let exclude = None in
+  let sel = Entity_html.container_input_finder uf ~input_name ~exclude in
   Ok (Page.part_response sel)
 
 let creatable_container_of_sel sel =
@@ -199,13 +200,13 @@ let creatable_container_of_sel sel =
     ~id:Container.Id.zero ~title:sel ~isbn:"" ~issn:"" ~note:"" ~private_note:""
     ~public:false ()
 
-let input_finder_find env ~input_name sel =
+let input_finder_find env ~input_name ~exclude sel =
   let* () = Entity_service.check_edit_authorized env in
   Service_env.with_db_transaction `Deferred env @@ fun db ->
   let g = Service_env.page_gen env in
   let uf = Page.Gen.url_fmt g in
   let only_public = Page.Gen.only_public g in
-  let* cs = select_containers db ~only_public sel in
+  let* cs = select_containers db ~only_public ~exclude sel in
   let creatable = creatable_container_of_sel sel in
   let sel =
     Entity_html.container_input_finder_results uf ~input_name ~creatable cs
@@ -248,7 +249,8 @@ let resp r env sess req = match (r : Container.Url.t) with
 | Input (input_name, id) -> input env ~input_name id
 | Input_create (input_name, c) -> input_create env ~input_name c
 | Input_finder input_name -> input_finder env ~input_name
-| Input_finder_find (input_name, sel) -> input_finder_find env ~input_name sel
+| Input_finder_find (input_name, exclude, sel) ->
+    input_finder_find env ~input_name ~exclude sel
 | Update id -> update env req id
 | View_fields id  -> view_fields env req id
 
