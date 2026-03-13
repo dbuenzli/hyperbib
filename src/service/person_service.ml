@@ -35,10 +35,10 @@ let get_person_for_page_ref =
   Entity_service.entity_for_page_ref
     ~page_url ~page_404 ~entity_find_id_stmt ~entity_public ~entity_res_name
 
-let select_persons db ~only_public sel =
+let select_persons db ~only_public ~exclude sel =
   (* FIXME only_public, FIXME Rel escape % and _ in selector, order by *)
   if String.trim sel = "" then Ok [] else
-  let* ps = Db.list db (Person.select_stmt sel) in
+  let* ps = Db.list db (Db.show_sql (Person.select_stmt ~exclude sel)) in
   Ok (List.sort Person.order_by_last_name ps)
 
 let view_fields_resp app db req id =
@@ -46,7 +46,6 @@ let view_fields_resp app db req id =
   let g = Service_env.page_gen app in
   let* self = Adhoc_html.url_of_req_referer req in
   Ok (Page.part_response (Person_html.view_fields g p ~self))
-
 
 let person_columns_of_query req =
   let add_orcid_of_query q vs = (* FIXME codec columns and validation *)
@@ -156,9 +155,9 @@ let input env ~for_list ~input_name ~role id =
   Service_env.with_db_transaction' `Deferred env @@ fun db ->
   let uf = Page.Gen.url_fmt (Service_env.page_gen env) in
   let* p = get_person db id in
-  let finder = match for_list with
-  | true -> Entity_html.person_input_finder uf ~for_list ~input_name ~role
-  | false -> El.void
+  let finder =
+    if not for_list then El.void else
+    Entity_html.person_input_finder uf ~for_list ~input_name ~role ~exclude:None
   in
   let p = Entity_html.person_input uf ~for_list ~input_name ~role p in
   Ok (Page.part_response (El.splice [p; finder]))
@@ -168,9 +167,9 @@ let input_create env ~for_list ~input_name ~role p =
   Service_env.with_db_transaction' `Deferred env @@ fun db ->
   let uf = Page.Gen.url_fmt (Service_env.page_gen env) in
   let p = Entity_html.person_input_create uf ~for_list ~input_name ~role p in
-  let finder = match for_list with
-  | true -> Entity_html.person_input_finder uf ~for_list ~input_name ~role
-  | false -> El.void
+  let finder =
+    if not for_list then El.void else
+    Entity_html.person_input_finder uf ~for_list ~input_name ~role ~exclude:None
   in
   Ok (Page.part_response (El.splice [p; finder]))
 
@@ -178,16 +177,18 @@ let input_finder env ~for_list ~input_name ~role =
   let* () = Entity_service.check_edit_authorized env in
   Service_env.with_db_transaction' `Deferred env @@ fun db ->
   let uf = Page.Gen.url_fmt (Service_env.page_gen env) in
-  let finder = Entity_html.person_input_finder uf ~for_list ~input_name ~role in
+  let finder =
+    Entity_html.person_input_finder uf ~for_list ~input_name ~role ~exclude:None
+  in
   Ok (Page.part_response finder)
 
-let input_finder_find env ~for_list ~input_name ~role sel =
+let input_finder_find env ~for_list ~input_name ~role ~exclude sel =
   let* () = Entity_service.check_edit_authorized env in
   Service_env.with_db_transaction `Deferred env @@ fun db ->
   let g = Service_env.page_gen env in
   let uf = Page.Gen.url_fmt g in
   let only_public = Page.Gen.only_public g in
-  let* ps = select_persons db ~only_public sel in
+  let* ps = select_persons db ~only_public ~exclude sel in
   let creatable = creatable_person_of_sel sel in
   let res =
     Entity_html.person_input_finder_results
@@ -293,8 +294,8 @@ let resp r env sess req = match (r : Person.Url.t) with
     input_create env ~for_list ~input_name ~role p
 | Input_finder (for_list, input_name, role) ->
     input_finder env ~for_list ~input_name ~role
-| Input_finder_find (for_list, input_name, role, sel) ->
-    input_finder_find env ~for_list ~input_name ~role sel
+| Input_finder_find (for_list, input_name, role, exclude, sel) ->
+    input_finder_find env ~for_list ~input_name ~role ~exclude sel
 | New_form { cancel } -> new_form env req ~cancel
 | Page ref -> page env ref
 | Replace id -> replace env req id

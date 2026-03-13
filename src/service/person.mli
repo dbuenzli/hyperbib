@@ -133,8 +133,11 @@ module Label : Label.APPLICATION
 
 include Entity.PUBLICABLE_QUERIES with type t := t and module Id := Id
 
-val select : string Rel_query.value -> (t, Bag.unordered) Bag.t
-val select_stmt : string -> t Rel_sql.Stmt.t
+val select :
+  Id.t option Rel_query.value -> string Rel_query.value ->
+  (t, Bag.unordered) Bag.t
+
+val select_stmt : exclude:Id.t option -> string -> t Rel_sql.Stmt.t
 
 val match' :
   last:string Rel_query.value -> first:string Rel_query.value ->
@@ -177,7 +180,8 @@ module Url : sig
   | Input_finder of
       Entity.Url.for_list * Entity.Url.input_name * Role.t option
   | Input_finder_find of
-      Entity.Url.for_list * Entity.Url.input_name * Role.t option * string
+      Entity.Url.for_list * Entity.Url.input_name * Role.t option *
+      Id.t option (* exclude *) * string (* prefix *)
   | Update of Id.t
   | View_fields of Id.t (** *)
   (** The type for person URL requests. *)

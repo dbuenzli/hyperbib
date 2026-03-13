@@ -176,7 +176,8 @@ let replace_form g p ~ref_count =
   in
   let input_person =
     let for_list = false and input_name = Entity.Url.replace_by in
-    Entity_html.person_input_finder uf ~for_list ~input_name ~role:None
+    Entity_html.person_input_finder
+      uf ~for_list ~input_name ~exclude:(Some (Person.id p)) ~role:None
   in
   let msg = match ref_count with
   | 0 -> El.void

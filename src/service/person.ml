@@ -120,17 +120,22 @@ include Entity.Publicable_queries (Person)
 open Rel_query.Syntax
 open Adhoc_schema
 
-let select sel =
+let select exclude sel =
   (* TODO the structure of this query is wrong. select should
      have two args. *)
   let* p = Bag.table table in
+  let is_exclude = Option.has_value ~eq:Id.equal (p #. id') exclude in
   let sel_by_id = Text.(Id.to_text (p #. id') = sel) in
   let sel_by_last = Text.like (p #. last_name') Text.(sel ^ v "%") in
   let sel_by_first = Text.like (p #. first_names') Text.(sel ^ v "%") in
-  Bag.where (sel_by_id || sel_by_last || sel_by_first) (Bag.yield p)
+  Bag.where
+    ((sel_by_id || sel_by_last || sel_by_first) && not is_exclude)
+    (Bag.yield p)
 
-let select_stmt =
-  Rel_query.Sql.(func @@ text @-> ret (Table.row table) select)
+let select_stmt ~exclude sel =
+  Rel_query.Sql.(func @@
+                 text @-> option Id.type' @->
+                 ret (Table.row table) select) sel exclude
 
 let match' ~last ~first ~orcid =
   let* p = Bag.table table in
@@ -223,7 +228,8 @@ module Url = struct
   | Input_finder of
       Entity.Url.for_list * Entity.Url.input_name * Role.t option
   | Input_finder_find of
-      Entity.Url.for_list * Entity.Url.input_name * Role.t option * string
+      Entity.Url.for_list * Entity.Url.input_name * Role.t option *
+      Id.t option * string
   | Update of Id.t
   | View_fields of Id.t
 
@@ -272,11 +278,13 @@ module Url = struct
       Kurl.ok (Input_finder (for_list, input_name, role))
   | ["part"; "input-finder-find"] ->
       let* `GET = Kurl.allow Http.Method.[get] u in
-      let* for_list = Entity.Url.for_list_of_query (Kurl.Bare.query u) in
-      let* input_name = Entity.Url.input_name_of_query (Kurl.Bare.query u) in
-      let* role = role_of_query (Kurl.Bare.query u) in
-      let q = Entity.Url.select_of_query (Kurl.Bare.query u) in
-      Kurl.ok (Input_finder_find (for_list, input_name, role, q))
+      let query = Kurl.Bare.query u in
+      let* for_list = Entity.Url.for_list_of_query query in
+      let* input_name = Entity.Url.input_name_of_query query in
+      let* role = role_of_query query in
+      let* exclude = Entity.Url.exclude_id_of_query (module Id) query in
+      let sel = Entity.Url.select_of_query (Kurl.Bare.query u) in
+      Kurl.ok (Input_finder_find (for_list, input_name, role, exclude, sel))
   | ["action"; "duplicate"; id] ->
       let* `POST, id = Entity.Url.meth_id (module Id) u Http.Method.[post] id in
       Kurl.ok (Duplicate id)
@@ -343,11 +351,14 @@ module Url = struct
       let query = Entity.Url.input_name_to_query ~init:query n in
       let query = role_to_query ~init:query role in
       Kurl.bare `GET ["part"; "input-finder"] ~query
-  | Input_finder_find (for_list, n, role, sel) ->
+  | Input_finder_find (for_list, n, role, exclude, sel) ->
       let query = Entity.Url.select_to_query sel in
-      let query = Entity.Url.input_name_to_query ?init:query n in
-      let query = Entity.Url.for_list_to_query ~init:query for_list in
+      let query = Entity.Url.for_list_to_query ?init:query for_list in
+      let query = Entity.Url.input_name_to_query ~init:query n in
       let query = role_to_query ~init:query role in
+      let query =
+        Entity.Url.exclude_id_to_query (module Id) ~init:query exclude
+      in
       Kurl.bare `GET ["part"; "input-finder-find"] ~query
   | Update id ->
       Kurl.bare `PUT [Id.to_string id]

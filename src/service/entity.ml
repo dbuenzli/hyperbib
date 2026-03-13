@@ -189,11 +189,33 @@ module Url = struct
   | None -> Ok false
   | Some bool ->
       match bool_of_string_opt bool with
-      | None -> Http.Response.bad_request_400 ~reason:"%S: not a boolean" ()
+      | None ->
+          let reason = Fmt.str "%S: not a boolean" bool in
+          Http.Response.bad_request_400 ~reason ()
       | Some bool -> Ok bool
 
   let for_list_to_query ?(init = Http.Query.empty) b =
     init |> Http.Query.def for_list (string_of_bool b)
+
+
+  let exclude_id = "exclude-id"
+  let exclude_id_of_query
+      (type id) (module Id : Rel_kit.INTABLE_ID with type t = id) q
+    =
+    match Http.Query.find_first exclude_id q with
+    | None -> Ok None
+    | Some id ->
+        match Id.of_string id with
+        | Ok id -> Ok (Some id)
+        | Error e -> Http.Response.bad_request_400 ~reason:e ()
+
+  let exclude_id_to_query
+      (type id) (module Id : Rel_kit.INTABLE_ID with type t = id)
+      ?(init = Http.Query.empty) (exclude : id option)
+    =
+    match exclude with
+    | None -> init
+    | Some id -> Http.Query.def exclude_id (Id.to_string id) init
 
 
   let input_name_to_query ?(init = Http.Query.empty) n =

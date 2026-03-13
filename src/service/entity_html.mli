@@ -69,7 +69,7 @@ val person_input_create :
 
 val person_input_finder :
   Kurl.fmt -> for_list:bool -> input_name:Entity.Url.input_name ->
-  role:Person.Role.t option -> El.html
+  role:Person.Role.t option -> exclude:Person.Id.t option -> El.html
 (** [person_input_finder] is a text field to search for a person to input
     in an hidden input element named [input_name]. If [for_list] is [true]
     this is for a list of persons; if [false] it's for selecting a single

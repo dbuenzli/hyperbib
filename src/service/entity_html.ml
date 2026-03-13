@@ -227,15 +227,15 @@ let person_input_finder_results uf ~for_list ~input_name ~role ~creatable:p ps =
   in
   input_finder_results (module Person) ~creatable ~tip ~render uf ~action ps
 
-let person_input_finder uf ~for_list ~input_name ~role =
+let person_input_finder uf ~for_list ~input_name ~role ~exclude =
   let res =
     person_input_finder_results uf ~for_list ~input_name ~role
       ~creatable:None []
   in
-  let input_subject_id = input_entity_id ~input_name None in
+  let input_person_id = input_entity_id ~input_name None in
   let input =
     let req =
-      Person.Url.v (Input_finder_find (for_list, input_name, role, ""))
+      Person.Url.v (Input_finder_find (for_list, input_name, role, exclude, ""))
     in
     let kind = match role with
     | Some Person.Role.Author -> Uimsg.author
@@ -246,7 +246,7 @@ let person_input_finder uf ~for_list ~input_name ~role =
   in
   let finder = El.div ~at:[Hui.Class.finder] [input; res] in
   let at = [Hclass.entity; Hclass.subject] in
-  El.div ~at [input_subject_id; finder]
+  El.div ~at [input_person_id; finder]
 
 (* Subjects *)
 

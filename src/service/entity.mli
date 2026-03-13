@@ -195,6 +195,15 @@ module Url : sig
   val for_list_of_query : Http.Query.t -> (for_list, Http.Response.t) result
   val for_list_to_query : ?init:Http.Query.t -> for_list -> Http.Query.t
 
+  val exclude_id : string
+  val exclude_id_of_query :
+    (module Rel_kit.INTABLE_ID with type t = 'id) ->
+    Http.Query.t -> ('id option, Http.Response.t) result
+
+  val exclude_id_to_query :
+    (module Rel_kit.INTABLE_ID with type t = 'id) ->
+    ?init:Http.Query.t -> 'id option -> Http.Query.t
+
   (** {1:meth Methods} *)
 
   val meth_id :

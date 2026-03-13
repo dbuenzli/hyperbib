@@ -156,7 +156,9 @@ let edit_contributor role uf ps =
   | None -> Uimsg.persons
   in
   let label = El.span ~at:[Hui.Class.label] [El.txt label] in
-  let finder = Entity_html.person_input_finder uf ~for_list ~input_name ~role in
+  let finder =
+    Entity_html.person_input_finder uf ~for_list ~input_name ~role ~exclude:None
+  in
   let ps = List.map contributor ps in
   let ps = El.div ~at:[Hui.Class.ordering; Hclass.list] (ps @ [finder]) in
   El.div ~at [label; ps]
