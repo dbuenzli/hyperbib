@@ -38,7 +38,7 @@ let get_person_for_page_ref =
 let select_persons db ~only_public ~exclude sel =
   (* FIXME only_public, FIXME Rel escape % and _ in selector, order by *)
   if String.trim sel = "" then Ok [] else
-  let* ps = Db.list db (Db.show_sql (Person.select_stmt ~exclude sel)) in
+  let* ps = Db.list db (Person.select_stmt ~exclude sel) in
   Ok (List.sort Person.order_by_last_name ps)
 
 let view_fields_resp app db req id =
