@@ -5,7 +5,6 @@
 
 open Hyperbib_std
 
-
 val confirm_delete : Page.Gen.t -> Subject.t -> ref_count:int -> El.html
 
 val deleted : Page.Gen.t -> Subject.t -> El.html

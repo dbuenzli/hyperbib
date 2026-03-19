@@ -46,7 +46,6 @@ module Doi = struct
       ~private_note:"" ~public ~publisher:r.publisher ~title:(title r)
       ~type':r.type' ~volume:(none_is_empty r.volume)
 
-
   let cites_of_ref (r : ref) = cited_dois r
 
   let get_container ~create_public:public db ref =

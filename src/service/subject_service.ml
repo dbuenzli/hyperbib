@@ -10,7 +10,7 @@ open Rel
 (* Data lookups *)
 
 let select_subjects db ~only_public ~exclude sel =
-  (* FIXME only_public, FIXME Ask escape % and _ in selector, order by *)
+  (* FIXME only_public, FIXME Rel escape % and _ in selector, order by *)
   if String.trim sel = "" then Ok [] else
   let* ss = Db.list db (Subject.select_stmt ~exclude sel) in
   Ok (List.sort Subject.order_by_name ss)
@@ -84,7 +84,9 @@ let duplicate env req src =
   let* () = Db.exec' db (Reference.Subject.copy_applications_stmt ~src ~dst) in
   let* () = Db.exec' db (Subject.Label.copy_applications_stmt ~src ~dst) in
   let uf = Service_env.url_fmt env in
-  let headers = Adhoc_html.htmlact_redirect uf (Subject.Url.v (Page (None, dst))) in
+  let headers =
+    Adhoc_html.htmlact_redirect uf (Subject.Url.v (Page (None, dst)))
+  in
   Ok (Http.Response.empty ~headers Http.Status.ok_200)
 
 let duplicate_form env req id =
@@ -144,7 +146,9 @@ let replace env req this =
   let* () = Db.exec' db copy in
   let* () = Db.exec' db (Subject.delete this) in
   let uf = Service_env.url_fmt env in
-  let headers = Adhoc_html.htmlact_redirect uf (Subject.Url.v (Page (None, by))) in
+  let headers =
+    Adhoc_html.htmlact_redirect uf (Subject.Url.v (Page (None, by)))
+  in
   Ok (Http.Response.empty ~headers Http.Status.ok_200)
 
 let replace_form env req this =
