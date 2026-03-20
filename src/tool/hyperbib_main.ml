@@ -16,7 +16,7 @@ let cmd =
   ]
   in
   Cmd.group (Cmd.info "hyperbib" ~version:Stamp.version ~doc ~man) @@
-  [ Cmd_db.cmd; Cmd_config.cmd; Cmd_doc.cmd; Cmd_export.cmd;
+  [ Cmd_db.cmd; Cmd_cache.cmd; Cmd_config.cmd; Cmd_doc.cmd; Cmd_export.cmd;
     Cmd_import.cmd; Cmd_run.cmd; Cmd_serve.cmd; Cmd_user.cmd; ]
 
 let main () =
