@@ -173,6 +173,13 @@ let test ?(requires = []) = B0_ocaml.test ~requires:(hyperbib_base :: requires)
 let test_blobstore = test ~/"test/test_blobstore.ml"
 let test_orcid = test ~/"test/test_orcid.ml"
 
+(* Install *)
+
+let opam_install =
+  let doc = "Build app and generate a hyperbib.install" in
+  B0_unit.of_action "opam-install" ~doc @@ fun env _ ~args ->
+  Error "TODO"
+
 (* Actions *)
 
 let deploy_remote = "philo:"
@@ -241,6 +248,7 @@ let default =
     |> ~~ B0_meta.repo "git+https://erratique.ch/repos/hyperbib.git"
     |> ~~ B0_meta.issues "https://github.com/dbuenzli/hyperbib/issues"
     |> ~~ B0_meta.description_tags ["app"; "bibliography"; "org:erratique"]
+    |> ~~ B0_opam.build {|[["b0 -- opam-install"]]|}
     |> ~~ B0_opam.depends
       [ "b0", {|build|};
         "brr", {||};
@@ -276,7 +284,6 @@ let default =
         "typegist.dev", "git+https://erratique.ch/repos/typegist.git#main";
         "webs.dev", "git+https://erratique.ch/repos/webs.git#master"
       ]
-    |> ~~ B0_opam.build {|[["b0"]]|}
     |> B0_meta.tag B0_opam.tag
     |> B0_meta.tag B0_release.tag
   in
