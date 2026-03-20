@@ -6,39 +6,39 @@
 open Hyperbib_std
 open Result.Syntax
 
-let add ~name ~password ~force config =
+let add ~config ~username ~password ~force =
   Log.if_error ~use:Hyperbib_cli.Exit.some_error @@
   let users_file = Hyperbib_config.users_file config in
   let* users = User.load users_file in
-  match User.mem ~name users with
+  match User.mem ~name:username users with
   | true when not force ->
       Log.err begin fun m ->
         m "User %a already exists. Use %a to bypass."
-          Fmt.code name Fmt.code "--force"
+          Fmt.code username Fmt.code "--force"
       end;
       Ok Hyperbib_cli.Exit.user_exists
   | _ ->
-      let users = User.add ~name ~password users in
+      let users = User.add ~name:username ~password users in
       let* () = User.save users_file users in
       Ok Hyperbib_cli.Exit.ok
 
-let list config =
+let list ~config =
   Log.if_error ~use:Hyperbib_cli.Exit.some_error @@
   let users_file = Hyperbib_config.users_file config in
   let* users = User.load users_file in
   User.fold (fun u () -> Log.stdout (fun m -> m "%s" (User.name u))) users ();
   Ok Hyperbib_cli.Exit.ok
 
-let delete ~name config =
+let delete ~config ~username =
   Log.if_error ~use:Hyperbib_cli.Exit.some_error @@
   let users_file = Hyperbib_config.users_file config in
   let* users = User.load users_file in
-  match User.mem ~name users with
+  match User.mem ~name:username users with
   | false ->
-      Log.warn (fun m -> m "No user named %a." Fmt.code name);
+      Log.warn (fun m -> m "No user named %a." Fmt.code username);
       Ok Hyperbib_cli.Exit.ok
   | true ->
-      let users = User.remove ~name users in
+      let users = User.remove ~name:username users in
       let* () = User.save users_file users in
       Ok Hyperbib_cli.Exit.ok
 
@@ -46,6 +46,8 @@ let delete ~name config =
 
 open Cmdliner
 open Cmdliner.Term.Syntax
+
+let exits = Hyperbib_cli.Exit.Info.user_cmd
 
 let username =
   let doc = "The username." and docv = "USERNAME" in
@@ -63,32 +65,33 @@ let add_cmd =
   let doc = "Add an application user" in
   let man =
     [ `S Manpage.s_description;
-      `P "The $(tname) command adds an application user."; ]
+      `P "The $(cmd) command adds an application user."; ]
   in
-  Hyperbib_cli.cmd_with_config "add" ~doc ~man @@
-  let+ name = username and+ password and+ force in
-  add ~name ~password ~force
+  Cmd.make (Cmd.info "add" ~doc ~man ~exits) @@
+  let+ config = Hyperbib_cli.config and+ username and+ password and+ force in
+  add ~config ~username ~password ~force
 
 let delete_cmd =
   let doc = "Delete an applicatino user" in
   let man =
     [ `S Manpage.s_description;
-      `P "The $(tname) command deletes an application user."; ]
+      `P "The $(cmd) command deletes an application user."; ]
   in
-  Hyperbib_cli.cmd_with_config "delete" ~doc ~man @@
-  let+ name = username in
-  delete ~name
+  Cmd.make (Cmd.info "delete" ~doc ~man ~exits) @@
+  let+ config = Hyperbib_cli.config and+ username in
+  delete ~config ~username
 
 let list_cmd =
   let doc = "Lists application users" in
   let man =
     [ `S Manpage.s_description;
-      `P "The $(tname) command lists application users."; ]
+      `P "The $(cmd) command lists application users."; ]
   in
-  Hyperbib_cli.cmd_with_config "list" ~doc ~man @@
-  Term.(const list)
+  Cmd.make (Cmd.info "list" ~doc ~man ~exits) @@
+  let+ config = Hyperbib_cli.config in
+  list ~config
 
 let cmd =
   let doc = "Manage application users" in
-  Hyperbib_cli.cmd_group "user" ~doc @@
-  [add_cmd; list_cmd]
+  Cmd.group (Cmd.info "user" ~doc) @@
+  [add_cmd; delete_cmd; list_cmd]

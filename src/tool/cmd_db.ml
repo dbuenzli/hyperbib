@@ -19,7 +19,7 @@ let make_backup db_file db =
 
 (* Backup *)
 
-let backup config file =
+let backup ~config ~file =
   Log.if_error ~use:Hyperbib_cli.Exit.some_error @@
   let db_file = Hyperbib_config.db_file config in
   let file = match file with
@@ -44,7 +44,10 @@ let do_changes (col_renames, table_renames) db =
   else
   List.iter_stop_on_error (Db.exec db) stmts |> Db.string_error
 
-let changes config (col_renames, table_renames as r) format exec no_backup =
+let changes
+    ~config ~renames:(col_renames, table_renames as r) ~format ~exec
+    ~no_backup
+  =
   Log.if_error ~use:Hyperbib_cli.Exit.some_error @@
   let db_file = Hyperbib_config.db_file config in
   Result.join @@ Db.string_error @@ Db.with_open db_file @@ fun db ->
@@ -73,7 +76,7 @@ let changes config (col_renames, table_renames as r) format exec no_backup =
   in
   Ok Hyperbib_cli.Exit.ok
 
-let restore ~backup ~last config =
+let restore ~config ~backup ~last =
   Log.if_error ~use:Hyperbib_cli.Exit.some_error @@
   let db_file = Hyperbib_config.db_file config in
   let* backup = match backup with
@@ -92,7 +95,7 @@ let restore ~backup ~last config =
 
 (* Reset *)
 
-let reset config no_backup (* populate *) =
+let reset ~config ~no_backup (* populate *) =
   Log.if_error ~use:Hyperbib_cli.Exit.some_error @@ Result.join @@
   let db_file = Hyperbib_config.db_file config in
   let* exists = Os.File.exists db_file in
@@ -114,7 +117,7 @@ let output_schema ~format s = match format with
 | `Ocaml kind ->
     Log.stdout (fun m -> m "@[%a@]" (Rel.Schema.pp_ocaml kind) s)
 
-let schema config which format =
+let schema ~config ~which ~format =
   Log.if_error ~use:Hyperbib_cli.Exit.some_error @@
   let* () = match which with
   | `App -> output_schema ~format Schema.v; Ok ()
@@ -130,7 +133,7 @@ let schema config which format =
 
 (* SQL prompt *)
 
-let sql config args =
+let sql ~config ~args =
   Log.if_error ~use:Hyperbib_cli.Exit.some_error @@
   let db_file = Hyperbib_config.db_file config in
   let args = match List.rev args with
@@ -147,35 +150,37 @@ let sql config args =
 open Cmdliner
 open Cmdliner.Term.Syntax
 
-let exits = Hyperbib_cli.Exit.Info.base_cmd
-
 let backup_cmd =
   let doc = "Make a backup of the database" in
   let man = [
     `S Manpage.s_description;
-    `P "$(tname) makes a backup of the live database."; ]
+    `P "$(cmd) makes a backup of the live database."; ]
   in
-  let dst =
-    let doc = "The backup file. If unspecified a new timestamped file is \
-               written in data directory of the application directory."
+  Cmd.make (Cmd.info "backup" ~doc ~man) @@
+  let+ config = Hyperbib_cli.config
+  and+ file =
+    let doc =
+      "The backup file. If unspecified a new timestamped file is written \
+       in data directory of the application directory."
     in
     Arg.(value & pos 0 (some More_cli.filepath) None & info [] ~doc)
   in
-  Cmd.make (Cmd.info "backup" ~doc ~man) @@
-  Term.(const backup $ Hyperbib_cli.config $ dst)
+  backup ~config ~file
 
 let changes_cmd =
   let doc = "Compare live database and application schema" in
   let man = [
     `S Manpage.s_description;
-    `P "$(tname) outputs the steps needed to bring the live database \
+    `P "$(cmd) outputs the steps needed to bring the live database \
         schema to the one expected by the application.";
     `P "Table and column renames are not detected automatically and need \
         to be specified via the $(b,--rename) option.";
     `P "$(b,WARNING) always make a database backup before executing \
         these steps, $(b,--exec) does that by default."; ]
   in
-  let format =
+  Cmd.make (Cmd.info "changes" ~doc ~man) @@
+  let+ config = Hyperbib_cli.config and+ renames = Rel_cli.renames ()
+  and+ format =
     let formats = [ "pseudo-sql", `Pseudo_sql; "sqlite3", `Sqlite3; ] in
     let doc = Printf.sprintf
         "Changes output format, by default outputs SQL data definitions for \
@@ -185,19 +190,17 @@ let changes_cmd =
     in
     let docv = "FMT" in
     Arg.(value & opt (some (enum formats)) None & info ["format"] ~doc ~docv)
-  in
-  let exec =
+  and+ exec =
     let doc = "Execute the steps." in
     Arg.(value & flag & info ["exec"] ~doc)
-  in
-  let no_backup =
-    let doc = "Do not perform a database backup before executing. \
-               $(b,WARNING) this may be dangerous for your data." in
+  and+ no_backup =
+    let doc =
+      "Do not perform a database backup before executing. $(b,WARNING) \
+       this may be dangerous for your data."
+    in
     Arg.(value & flag & info ["no-backup"] ~doc)
   in
-  Cmd.make (Cmd.info "changes" ~doc ~man) @@
-  Term.(const changes $ Hyperbib_cli.config $ Rel_cli.renames () $ format $
-        exec $ no_backup)
+  changes ~config ~renames ~format ~exec ~no_backup
 
 let restore_cmd =
   let doc = "Restore a database backup" in
@@ -205,8 +208,9 @@ let restore_cmd =
     `S Manpage.s_description;
     `P "$(cmd) restores a backup of the database."; ]
   in
-  Hyperbib_cli.cmd_with_config "restore" ~doc ~man @@
-  let+ backup =
+  Cmd.make (Cmd.info "restore" ~doc ~man) @@
+  let+ config = Hyperbib_cli.config
+  and+ backup =
     let doc = "$(docv) is the backup file to restore." in
     let docv = "BACKUP.sqlite3" in
     Arg.(value & pos 0 (some More_cli.filepath) None & info [] ~doc ~docv)
@@ -214,34 +218,40 @@ let restore_cmd =
     let doc = "Use the last automated backup." in
     Arg.(value & flag & info ["l"; "last"] ~doc)
   in
-  restore ~backup ~last
+  restore ~config ~backup ~last
 
 let reset_cmd =
   let doc = "Reset the database" in
   let man = [
     `S Manpage.s_description;
-    `P "$(tname) clears the database and creates the app schema. A backup is \
+    `P "$(cmd) clears the database and creates the app schema. A backup is \
         made if the database exists, use $(b,--no-backup) to prevent that."; ]
   in
-  let no_backup =
-    let doc = "Do not perform a database backup before reseting. \
-               $(b,WARNING) this destroys all data." in
+  Cmd.make (Cmd.info "reset" ~doc ~man) @@
+  let+ config = Hyperbib_cli.config
+  and+ no_backup =
+    let doc =
+      "Do not perform a database backup before reseting. $(b,WARNING) this \
+       destroys all data."
+    in
     Arg.(value & flag & info ["no-backup"] ~doc)
   in
 (*  let populate =
     let doc = "Populate the tables with basic app data." in
     Arg.(value & flag & info ["p"; "populate"] ~doc)
   in *)
-  Cmd.make (Cmd.info "reset" ~doc ~exits ~man) @@
-  Term.(const reset $ Hyperbib_cli.config $ no_backup (* $ populate *))
+  reset ~config ~no_backup
 
 let schema_cmd =
   let doc = "Output the app or live database schema" in
   let man = [
     `S Manpage.s_description;
-    `P "$(tname) outputs the app or live database schema in various formats."]
+    `P "$(cmd) outputs the app or live database schema in various formats."]
   in
-  let which =
+  Cmd.make (Cmd.info "schema" ~doc ~man) @@
+  let+ config = Hyperbib_cli.config
+  and+ format = Rel_cli.schema_format ~default:`Sqlite3 ()
+  and+ which =
     let e = ["app", Some `App; "live", Some `Live] in
     let doc = Fmt.str
         "Schema to output. Must be %s. $(b,app) is the schema assumed by \
@@ -251,9 +261,7 @@ let schema_cmd =
     let docv = "WHICH" in
     Arg.(required & pos 0 (Arg.enum e) None & info [] ~doc ~docv)
   in
-  Cmd.make (Cmd.info "schema" ~doc ~exits ~man) @@
-  Term.(const schema $ Hyperbib_cli.config $ which $
-        Rel_cli.schema_format ~default:`Sqlite3 ())
+  schema ~config ~which ~format
 
 let sql_cmd =
   let doc = "Get an SQL prompt on the database" in
@@ -261,21 +269,22 @@ let sql_cmd =
     `S Manpage.s_synopsis;
     `P "$(cmd) [$(i,OPTION)]… $(b,--) $(i,OPTION)… [$(i,SQL)]";
     `S Manpage.s_description;
-    `P "$(tname) gets you an interactive SQL prompt to interact with \
+    `P "$(cmd) gets you an interactive SQL prompt to interact with \
         the database via the $(b,sqlite3) tool."; ]
   in
-  let args =
+  Cmd.make (Cmd.info "sql" ~doc ~man) @@
+  let+ config = Hyperbib_cli.config
+  and+ args =
     let doc = "Arguments for the sqlite3 tool." and docv = "ARG" in
     Arg.(value & pos_all string [] & info [] ~doc ~docv)
   in
-  Cmd.make (Cmd.info "sql" ~doc ~exits ~man) @@
-  Term.(const sql $ Hyperbib_cli.config $ args)
+  sql ~config ~args
 
 let cmd =
   let doc = "Manage the application database" in
   let man = [
     `S Manpage.s_description;
-    `P "The $(tname) command manages the application database."; ]
+    `P "The $(cmd) command manages the application database."; ]
   in
-  Cmd.group (Cmd.info "db" ~doc ~exits ~man) @@
+  Cmd.group (Cmd.info "db" ~doc ~man) @@
   [backup_cmd; changes_cmd; reset_cmd; restore_cmd; schema_cmd; sql_cmd]

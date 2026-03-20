@@ -6,7 +6,7 @@
 open Hyperbib_std
 open Result.Syntax
 
-let doi ~reset ~dois ~files ~dry_run config =
+let doi ~config ~reset ~dois ~files ~dry_run =
   Log.if_error ~use:Hyperbib_cli.Exit.some_error @@
   let files = match dois, files with [], [] -> [Fpath.dash] | _ -> files in
   let dois_of_file file acc =
@@ -70,8 +70,9 @@ let doi_cmd =
     `P "Note that it won't work well if your text format needs to \
         escape the DOIs, e.g. on BibTeX files." ]
   in
-  Hyperbib_cli.cmd_with_config "doi" ~doc ~man @@
-  let+ reset and+ dry_run
+  Cmd.make (Cmd.info "doi" ~doc ~man) @@
+  let+ config = Hyperbib_cli.config
+  and+ reset and+ dry_run
   and+ dois =
     let doc = "Import reference $(docv). Repeatable." in
     let doi_conv = Arg.conv' Doi.(of_string, pp) ~docv:"DOI" in
@@ -83,7 +84,7 @@ let doi_cmd =
     let path_conv = Arg.conv' Fpath.(of_string, pp) in
     Arg.(value & pos_all path_conv [] & info [] ~doc ~docv ~absent)
   in
-  doi ~reset ~dois ~files ~dry_run
+  doi ~config ~reset ~dois ~files ~dry_run
 
 let cmd =
   let doc = "Bulk import data in the database" in
@@ -91,5 +92,5 @@ let cmd =
     `S Manpage.s_description;
     `P "The $(cmd) command imports data in the database."  ]
   in
-  Hyperbib_cli.cmd_group "import" ~doc ~man @@
+  Cmd.group (Cmd.info "import" ~doc ~man) @@
   [doi_cmd]

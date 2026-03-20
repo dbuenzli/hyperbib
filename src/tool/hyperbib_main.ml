@@ -6,19 +6,21 @@
 open Hyperbib_std
 open Cmdliner
 
-let cmds =
+let version = Stamp.version
+
+let cmd =
+  let doc = "Annotates bibliographies" in
+  let man = [
+    `S Manpage.s_description;
+    `P "$(cmd) is a web application to annotate bibliographies."
+  ]
+  in
+  Cmd.group (Cmd.info "hyperbib" ~version:Stamp.version ~doc ~man) @@
   [ Cmd_db.cmd; Cmd_config.cmd; Cmd_doc.cmd; Cmd_export.cmd;
     Cmd_import.cmd; Cmd_run.cmd; Cmd_serve.cmd; Cmd_user.cmd; ]
 
-let hyperbib =
-  let doc = "Annotates bibliographies" in
-  let exits = Hyperbib_cli.Exit.Info.base_cmd in
-  let default = Term.(ret (const (`Help (`Auto, None)))) in
-  let info = Cmd.info "hyperbib" ~version:Stamp.version ~doc ~exits in
-  Cmd.group info ~default cmds
-
 let main () =
-  Log.time (fun _ m -> m "total time hyperbib %s" Stamp.version) @@ fun () ->
-  match Cmd.eval_value' hyperbib with `Ok e -> e | `Exit c -> Os.Exit.code c
+  Log.time (fun _ m -> m "total time hyperbib %s" version) @@ fun () ->
+  match Cmd.eval_value' cmd with `Ok e -> e | `Exit c -> Os.Exit.code c
 
 let () = if !Sys.interactive then () else Os.Exit.exit (main ())

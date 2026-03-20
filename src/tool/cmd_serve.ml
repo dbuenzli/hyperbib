@@ -22,7 +22,7 @@ let log_startup c env =
     Log.warn (fun m -> m "Anyone can edit the bibliography, no login required.")
 
 let log_shutdown () =
-  Log.stdout (fun m -> m "Everyone has been served! Goodbye.")
+  Log.stdout (fun m -> m "Everyone has been served. Goodbye!")
 
 let setup_db ~read_only ~db_pool =
   Result.join @@ Db.string_error @@ Rel_pool.with' db_pool @@ fun db ->
@@ -62,8 +62,8 @@ let finish ~db_pool =
   Result.map_error errs (Rel_pool.dispose db_pool)
 
 let serve
-    listener service_path max_connections backup_every_s editable
-    insecure_cookie testing config
+  ~config ~listener ~service_path ~max_connections ~backup_every_s ~editable
+  ~insecure_cookie ~testing
   =
   Log.if_error ~use:Hyperbib_cli.Exit.some_error @@
   let service_path = Option.value ~default:[""] service_path in
@@ -115,12 +115,12 @@ let backup_every_s =
 let editable =
   let enum = ["no", `No; "with-login", `With_login; "unsafe", `Unsafe; ] in
   let mode = Arg.enum enum in
-  let doc =
-    Fmt.str "Make bibliography editable according to $(docv). \
-             Must be one of %s. Respectively: no edits are allowed
-             (the database is open in read only mode), a login is \
-             required (see command $(b,add-user)), everyone can publicly \
-             edit (not recommended for public facing services)."
+  let doc = Fmt.str
+      "Make bibliography editable according to $(docv). \
+       Must be one of %s. Respectively: no edits are allowed \
+       (the database is open in read only mode), a login is \
+       required (see command $(b,add-user)), everyone can publicly \
+       edit (not recommended for public facing services)."
       (Arg.doc_alts_enum enum)
   in
   Arg.(value & opt mode `With_login &
@@ -134,11 +134,11 @@ let testing =
   Arg.(value & flag & info ["testing"]  ~doc)
 
 let insecure_cookie =
-  let doc = "Do no use $(b,Secure) cookies for sessions. By default \
-             $(b,Secure) cookie are used. Most browsers treat localhost \
-             over HTTP as secure but others like Safari do not. Use \
-             this option if you want to use the app with Safari via HTTP \
-             on localhost."
+  let doc =
+    "Do no use $(b,Secure) cookies for sessions. By default $(b,Secure) \
+     cookie are used. Most browsers treat localhost over HTTP as secure but \
+     others like Safari do not. Use this option if you want to use the app \
+     with Safari via HTTP on localhost."
   in
   Arg.(value & flag & info ["insecure-cookie"] ~doc)
 
@@ -148,7 +148,11 @@ let cmd =
     `S Manpage.s_description;
     `P "The $(cmd) command serves the web application."; ]
   in
-  Hyperbib_cli.cmd_with_config "serve" ~doc ~man @@
-  Term.(const serve $ Webs_cli.listener () $
-        Webs_cli.service_path () $ Webs_cli.max_connections () $
-        backup_every_s $ editable $ insecure_cookie $ testing)
+  Cmd.make (Cmd.info "serve" ~doc ~man) @@
+  let+ config = Hyperbib_cli.config
+  and+ listener = Webs_cli.listener ()
+  and+ service_path = Webs_cli.service_path ()
+  and+ max_connections = Webs_cli.max_connections ()
+  and+ backup_every_s and+ editable and+ insecure_cookie and+ testing in
+  serve ~config ~listener ~service_path ~max_connections ~backup_every_s
+    ~editable ~insecure_cookie ~testing

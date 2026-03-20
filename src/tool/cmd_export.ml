@@ -8,7 +8,7 @@ open Result.Syntax
 
 (* BibTeX export *)
 
-let bibtex ~outf config =
+let bibtex ~config ~outf =
   Log.if_error ~use:Hyperbib_cli.Exit.some_error @@
   Hyperbib_config.with_db_transaction config `Deferred @@ fun db ->
   let* b = Bibliography.get () in
@@ -32,7 +32,7 @@ let page_gen ~file_browsable bibliography =
   let testing = false in
   Page.Gen.v ~now bibliography uf ~auth_ui ~user_view ~private_data ~testing
 
-let html ~dest ~file_browsable config =
+let html ~config ~dest ~file_browsable =
   Log.if_error ~use:Hyperbib_cli.Exit.some_error @@
   Hyperbib_config.with_db_transaction config `Deferred @@ fun db ->
   let* b = Bibliography.get () in
@@ -52,12 +52,13 @@ let bibtex =
     `P "The $(cmd) command exports the public bibliography as a \
         BibTeX file." ]
   in
-  Hyperbib_cli.cmd_with_config "bibtex" ~doc ~man @@
-  let+ outf =
+  Cmd.make (Cmd.info "bibtex" ~doc ~man) @@
+  let+ config = Hyperbib_cli.config
+  and+ outf =
     let doc = "Write BibTeX file to $(docv). Use $(b,-) for $(stdout)." in
     Arg.(value & opt More_cli.filepath Fpath.dash & info ["o"] ~doc)
   in
-  bibtex ~outf
+  bibtex ~config ~outf
 
 let html =
   let doc = "Static HTML export" in
@@ -71,15 +72,16 @@ let html =
         external links to it (you will have to configure your webserver \
         to append $(b,.html) to requests)." ]
   in
-  Hyperbib_cli.cmd_with_config "html" ~doc ~man @@
-  let+ dest =
+  Cmd.make (Cmd.info "html" ~doc ~man) @@
+  let+ config = Hyperbib_cli.config
+  and+ dest =
     let doc = "Output directory." and docv = "HTML_DIR" in
     Arg.(required & pos 1 (some More_cli.dirpath) None & info [] ~doc ~docv)
   and+ file_browsable =
     let doc = "Ensure the HTML can be browsed via the $(b,file://) protocol." in
     Arg.(value & flag & info ["file-browsable"] ~doc)
   in
-  html ~dest ~file_browsable
+  html ~config ~dest ~file_browsable
 
 let cmd =
   let doc = "Export data from the database" in
@@ -87,4 +89,5 @@ let cmd =
     `S Manpage.s_description;
     `P "The $(cmd) command exports data in the database."  ]
   in
-  Hyperbib_cli.cmd_group "export" ~doc ~man [bibtex; html]
+  Cmd.group (Cmd.info "export" ~doc ~man) @@
+  [bibtex; html]

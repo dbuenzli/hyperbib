@@ -3,22 +3,8 @@
    SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
-
 open Hyperbib_std
 open Result.Syntax
-
-let setup_http_client () =
-  (* We should eventually switch to libcurl *)
-  let trace pid cmd =
-    Log.debug (fun m -> m "%a" Webs_spawn_client.pp_trace (pid, cmd))
-  in
-  let c = Webs_spawn_client.make ~trace () in
-  begin match c with
-  | Ok _ -> () | Error e ->
-      Log.warn @@ fun m ->
-      m "@[<v>The app may not work properly, no HTTP client found:@,%s@]" e
-  end;
-  c
 
 type t =
   { http_client : (Http_client.t, string) result;
@@ -68,8 +54,21 @@ let find_app_dir = function
        as@ an application directory.@]"
       Fmt.(st [`Fg `Yellow]) "Hint" Fmt.code "-a" Fmt.code "-a ."
 
-let with_cli ~app_dir =
-  (* I hate these three lines can't we do something better ? *)
+
+let setup_http_client () =
+  (* We should eventually switch to libcurl *)
+  let trace pid cmd =
+    Log.debug (fun m -> m "%a" Webs_spawn_client.pp_trace (pid, cmd))
+  in
+  let c = Webs_spawn_client.make ~trace () in
+  begin match c with
+  | Ok _ -> () | Error e ->
+      Log.warn @@ fun m ->
+      m "@[<v>The app may not work properly, no HTTP client found:@,%s@]" e
+  end;
+  c
+
+let discover ~app_dir =
   let http_client = setup_http_client () in
   let* app_dir = find_app_dir app_dir in
   let* app_dir = Os.Path.realpath app_dir in

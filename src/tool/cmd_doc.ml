@@ -74,7 +74,7 @@ let add_reference_doc
       Log.stdout (fun m -> m "%a: added doc from %s" Doi.pp doi origin);
       Ok ()
 
-let fill ~doi_resolvers ~media_type ~url_only ~public config =
+let fill ~config ~doi_resolvers ~media_type ~url_only ~public =
   Log.if_error ~use:Hyperbib_cli.Exit.some_error @@
   let* httpc = Hyperbib_config.http_client config in
   let* blobstore = Hyperbib_config.blobstore config in
@@ -106,7 +106,7 @@ let fill ~doi_resolvers ~media_type ~url_only ~public config =
   in
   Ok Hyperbib_cli.Exit.ok
 
-let fetch ~doi_resolvers ~media_type ~doi ~url_only ~outf config =
+let fetch ~config ~doi_resolvers ~media_type ~doi ~url_only ~outf =
   Log.if_error ~use:Hyperbib_cli.Exit.some_error @@
   let* httpc = Hyperbib_config.http_client config in
   (* XXX we should extract and use a resolver from doi if there is one *)
@@ -157,15 +157,15 @@ let fill_cmd =
       `P "The $(cmd) tries to fill-in the document store for those \
           references that do not have an associated document"; ]
   in
-  Hyperbib_cli.cmd_with_config "fill" ~doc ~man @@
-  let+ doi_resolvers and+ media_type and+ url_only
+  Cmd.make (Cmd.info "fill" ~doc ~man) @@
+  let+ config = Hyperbib_cli.config and+ doi_resolvers and+ media_type
+  and+ url_only
   and+ public =
     let doc = "Publication status of added documents" and docv = "BOOL" in
     let absent = "Only https://doi.org resolutions are public" in
     Arg.(value & opt (some bool) None & info ["public"] ~doc ~docv ~absent)
   in
-  fill ~doi_resolvers ~media_type ~url_only ~public
-
+  fill ~config ~doi_resolvers ~media_type ~url_only ~public
 
 let fetch_cmd =
   let doc = "fetch documents" in
@@ -178,8 +178,9 @@ let fetch_cmd =
           this may result in a 403 forbidden error. Sometimes trying \
           to use the resolver with a browser and trying again works."];
   in
-  Hyperbib_cli.cmd_with_config "fetch" ~doc ~man @@
-  let+ doi_resolvers and+ media_type and+ url_only
+  Cmd.make (Cmd.info "fetch" ~doc ~man) @@
+  let+ config = Hyperbib_cli.config
+  and+ doi_resolvers and+ media_type and+ url_only
   and+ doi =
     let doc =
       "The identifier to fetch. For now only DOIs are supported or the \
@@ -190,9 +191,9 @@ let fetch_cmd =
     let doc = "Write document to $(docv). Use $(b,-) for standard output" in
     Arg.(value & opt More_cli.filepath Fpath.dash & info ["o"] ~doc)
   in
-  fetch ~doi_resolvers ~media_type ~doi ~url_only ~outf
+  fetch ~config ~doi_resolvers ~media_type ~doi ~url_only ~outf
 
 let cmd =
   let doc = "Operations on reference documents" in
-  Hyperbib_cli.cmd_group "doc" ~doc @@
+  Cmd.group (Cmd.info "doc" ~doc) @@
   [fetch_cmd; fill_cmd]

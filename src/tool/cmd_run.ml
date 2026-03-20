@@ -124,7 +124,7 @@ let check_reference_dois db ~repair =
    in
    Db.fold db cites_stmt check 0 |> Db.string_error
 
-let check_dois ~repair config =
+let check_dois ~config ~repair =
   let log_result ~repair n =
     if repair then () else
     Log.stdout (fun m -> m "%a@." (if n > 0 then pp_fail else pp_pass) ())
@@ -202,7 +202,7 @@ let check_person_orcids db ~repair =
   in
   Db.fold db person_orcid_stmt check 0 |> Db.string_error
 
-let check_orcids ~repair config =
+let check_orcids ~config ~repair =
   let log_result ~repair n =
     if repair then () else
     Log.stdout (fun m -> m "%a@." (if n > 0 then pp_fail else pp_pass) ())
@@ -217,15 +217,14 @@ let check_orcids ~repair config =
   then Ok Hyperbib_cli.Exit.ok
   else Ok Hyperbib_cli.Exit.some_error
 
-let test () config =
+let test ~config =
   Log.if_error ~use:Hyperbib_cli.Exit.some_error @@
   Result.join @@ Hyperbib_config.with_db config @@ fun db ->
   let open Rel_query.Syntax in
   Db.string_error @@
   let match' =
     Db.show_sql @@
-    Person.match_stmt ~last:"Coulter" ~first:"Liese"
-      ~orcid:None
+    Person.match_stmt ~last:"Coulter" ~first:"Liese" ~orcid:None
   in
   let open Result.Syntax in
   let* persons = Db.list db match' in
@@ -238,16 +237,19 @@ let test () config =
 open Cmdliner
 open Cmdliner.Term.Syntax
 
+let repair =
+  let doc = "Repair warnings and errors that can be." in
+  Arg.(value & flag & info ["repair"] ~doc)
+
 let check_dois_cmd =
   let doc = "Check DOIs" in
   let man =
     [ `S Manpage.s_description;
       `P "The $(cmd) command is used for checking DOIs in the database."; ]
   in
-  Hyperbib_cli.cmd_with_config "check-dois" ~doc ~man @@
-  let doc = "Repair warnings and errors that can be." in
-  let+ repair = Arg.(value & flag & info ["repair"] ~doc) in
-  check_dois ~repair
+  Cmd.make (Cmd.info "check-dois" ~doc ~man) @@
+  let+ config = Hyperbib_cli.config and+ repair in
+  check_dois ~config ~repair
 
 let check_orcids_cmd =
   let doc = "Check DOIs" in
@@ -255,10 +257,9 @@ let check_orcids_cmd =
     [ `S Manpage.s_description;
       `P "The $(cmd) command is used for checking ORCIDs in the database."; ]
   in
-  Hyperbib_cli.cmd_with_config "check-orcids" ~doc ~man @@
-  let doc = "Repair warnings and errors that can be." in
-  let+ repair = Arg.(value & flag & info ["repair"] ~doc) in
-  check_orcids ~repair
+  Cmd.make (Cmd.info "check-orcids" ~doc ~man) @@
+  let+ config = Hyperbib_cli.config and+ repair in
+  check_orcids ~config ~repair
 
 let test_cmd =
   let doc = "Test" in
@@ -266,11 +267,11 @@ let test_cmd =
     [ `S Manpage.s_description;
       `P "The $(cmd) is used for testing purposes."; ]
   in
-  Hyperbib_cli.cmd_with_config "test" ~doc ~man @@
-  let+ () = Term.const () in
-  test ()
+  Cmd.make (Cmd.info "test" ~doc ~man) @@
+  let+ config = Hyperbib_cli.config in
+  test ~config
 
 let cmd =
   let doc = "Run maintenance tasks" in
-  Hyperbib_cli.cmd_group "run" ~doc @@
+  Cmd.group (Cmd.info "run" ~doc) @@
   [test_cmd; check_dois_cmd; check_orcids_cmd]

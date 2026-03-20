@@ -15,34 +15,16 @@ module Exit : sig
   val user_exists : Os.Exit.t
   (** [user_exists] indicates a user already exists. *)
 
-  val conf_error : Os.Exit.t
-  (** [conf_error] indicates a configuration error. *)
-
   val some_error : Os.Exit.t
   (** [some_error] indicates an indiscriminate error reported on stderr. *)
 
-  (** Cmdliner documentation. *)
   module Info : sig
-    val base_cmd : Cmdliner.Cmd.Exit.info list
+    val user_cmd : Cmdliner.Cmd.Exit.info list
   end
 end
 
-(** {1:config Cli configuration} *)
+(** {1:cli Cli fragments} *)
 
 val config : Hyperbib_config.t Term.t
-(** [config] is a cmdliner term for configuration.
-
-    Term evaluation sets up logging level and by side effect
-    and looks up the HTTP client. *)
-
-val cmd_with_config :
-  ?doc:string -> ?man:Manpage.block list -> ?exits:Cmd.Exit.info list ->
-  string -> (Hyperbib_config.t -> 'a) Term.t -> 'a Cmd.t
-
-val cmd :
-  ?doc:string -> ?man:Manpage.block list -> ?exits:Cmd.Exit.info list ->
-  string -> 'a Term.t -> 'a Cmd.t
-
-val cmd_group :
-  ?doc:string -> ?man:Manpage.block list -> ?exits:Cmd.Exit.info list ->
-  ?default:'a Cmdliner.Term.t -> string -> 'a Cmd.t list -> 'a Cmdliner.Cmd.t
+(** [config] is a cmdliner term for configuration. Term evaluation sets up
+    logging level and coloring by side effect and looks up the HTTP client. *)
