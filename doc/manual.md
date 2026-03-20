@@ -11,20 +11,36 @@ In order to install and run Hyperbib you need:
 
 * `curl`
 * `pdftotext` (`apt install poppler-utils`)
-* OCaml >= 4.12.0 
+* OCaml >= 5.4.0
 * Sqlite3 >= v3.26.2
 * A bunch of OCaml libraries.
+
+## Playing with the web application on `localhost`
+
+By default you can run `hyperbib` and it will write the data to
+appropriate XDG directories, see `hyperbib config` to see which paths
+it accesses.  If you want the data to be written in the current
+working directory do a `mkdir hyperbib`, this directory will be used
+for writing the data.
+
+```
+hyperbib serve --editable=unsafe
+hyperbib serve --editable=unsafe --insecure-cookie # For safari
+```
+
+There are also a few command that can be used as is, see 
+`hyperbib --help` for more information.
 
 ## Using the web application with a webserver 
 
 ### Systemd 
 
 Choose a service path prefix `$HYPERBIB_SERVICE_PATH` on your website on 
-which you  want to publish your website and find a suitable value for
-these variables:
+which you want to publish your website and find a suitable value for
+these variables which we are used in the subsequent instructions.
 
 ```
-export HYPERBIB_APP_DIR=/var/www/hyperbib
+export HYPERBIB_DATA_DIR=/var/lib/hyperbib
 export HYPERBIB_CACHE_DIR=/var/cache/
 export HYPERBIB_LISTEN=localhost:8000
 export HYPERBIB_SERVICE_PATH=/mybibliography/ 
@@ -43,14 +59,14 @@ Description=Hyperbib
 [Service]
 Type=simple
 Restart=on-failure
-RestartSec=10s
+RestartSec=5s
 User=$HYPERBIB_USER
 Group=$HYPERBIB_USER
 
 ExecStart=hyperbib serve \
           --listen $HYPERBIB_LISTEN \
           --service-path $HYPERBIB_SERVICE_PATH \
-          --app-dir $HYPERBIB_APP_DIR
+          --data-dir $HYPERBIB_DATA_DIR \
           --cache-dir $HYPERBIB_CACHE_DIR
 
 [Install]
@@ -108,7 +124,7 @@ One use case it enables is to edit the bibliography locally and
 publish it via a simple webserver:
 
 ```
-hyperbib serve -a . --        # Edit your bibliography locally.
+hyperbib serve        # Edit your bibliography locally.
 rm -rf /var/www/mybib     
 hyperbib export html /var/www/mybib 
 ```
@@ -116,23 +132,25 @@ hyperbib export html /var/www/mybib
 ## Backup
 
 By default `hyperbib serve` makes a stable copy of the SQLite data
-base every XXX hours under `app/data/bib.sqlite3.backup` (use
+base every XXX hours in the `bib` subdirectory of the 
+data directory  as `bib.sqlite3.backup` (use
 `--no-backup` to disable this behaviour) alongside the live 
 database. 
 
 If the machine you are running the service on has a file system
-backup, it should be enough to add the `app/data` application
-directory the backup.
+backup, it should be enough to add the `$(hyperbib config
+--show-data-dir)/bib` directory to your backup (this won't save users
+though).
 
 ## Admin tasks
 
 ### Logging out all users 
 
 User sessions are stored on the client and authenticated 
-by the private key `app/auth.private` 
+by the private key `$(hyperbib config --show-data-dir)/auth.private` 
 
 ```
-rm app/auth.private
+rm $(hyperbib config --show-data-dir)/auth.private
 sytemctl restart hyperbib 
 ```
 

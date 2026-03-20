@@ -7,18 +7,18 @@ open Hyperbib_std
 open Result.Syntax
 
 let log_startup c env =
-  let app_dir = Hyperbib_config.app_dir (Service_env.config env) in
+  let data_dir = Hyperbib_config.data_dir (Service_env.config env) in
   let l = Webs_http11_gateway.listener c in
   let service_path = Webs_http11_gateway.service_path c in
   Log.stdout (fun m ->
       m  "@[<v>Hyperbib %s database schema v%d@,\
-               Application directory: %a@,\
+               Data directory: %a@,\
                Listening on http://%a%a@]"
         Stamp.version Schema.version
-        (Fmt.code' Fpath.pp_unquoted) app_dir
+        (Fmt.code' Fpath.pp_unquoted) data_dir
         (Fmt.code' Webs_listener.pp) l
         (Fmt.code' Http.Path.pp) service_path);
-  if (Service_env.editable env = `Unsafe) then
+  if Service_env.editable env = `Unsafe then
     Log.warn (fun m -> m "Anyone can edit the bibliography, no login required.")
 
 let log_shutdown () =

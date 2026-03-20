@@ -13,26 +13,26 @@ type t
 (** The type for configurations. *)
 
 val make :
-  app_dir:Fpath.t -> cache_dir:Fpath.t ->
+  data_dir:Fpath.t -> cache_dir:Fpath.t ->
   http_client:(Http_client.t, string) result -> unit -> t
 (** [make] is a configuration with given atributes. See the acessors
     for semantics. *)
 
 val discover :
-  app_dir:Fpath.t option -> cache_dir:Fpath.t option -> (t, string) result
+  data_dir:Fpath.t option -> cache_dir:Fpath.t option -> (t, string) result
 (** [discover] is a configuration whose unspecified attributes
     are discovered. *)
 
 (** {1:props Properties} *)
 
-val app_dir : t -> Fpath.t
-(** [app_dir c] is the absolute path to the application directory. *)
+val data_dir : t -> Fpath.t
+(** [data_dir c] is the absolute path to the app's data directory. *)
 
 val cache_dir : t -> Fpath.t
-(** [cache_dir c] is the absolute path to the cache directory. *)
+(** [cache_dir c] is the absolute path to the app's cache directory. *)
 
 val users_file : t -> Fpath.t
-(** [users_file c] is the JSON file holding application users. *)
+(** [users_file c] is the JSON file holding app's users. *)
 
 val doi_cache_dir : t -> Fpath.t
 (** [doic_cache_dir c] is the absolute path to the DOI metadata
@@ -49,7 +49,7 @@ val db_backup_file : t -> Fpath.t
     holding application data. *)
 
 val blobstore_dir : t -> Fpath.t
-(** [blobstore_dir c] is the path to the documentation store. *)
+(** [blobstore_dir c] is the absolute path to the documentation store. *)
 
 val blobstore : t -> (Blobstore.t, string) result
 (** [blobstore c] is the blob store of {!blobstore_dir}. *)
@@ -60,8 +60,8 @@ val blobstore : t -> (Blobstore.t, string) result
 *)
 
 val authentication_private_key : t -> Fpath.t
-(** [authentication_private_key c] is the file that stores the private key
-    to authenticate data like session cookies. *)
+(** [authentication_private_key c] is absolute path to the file that stores
+    the private key to authenticate data like session cookies. *)
 
 val http_client : t -> (Http_client.t, string) result
 (** [http_client c] is the HTTP client to use in the app. *)

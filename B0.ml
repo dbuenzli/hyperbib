@@ -35,7 +35,7 @@ let hyperbib_base = B0_ocaml.libname "hyperbib.base"
 
 (* Front end (and copy to app/static) *)
 
-let static_dir = ~/"app/static"
+let static_dir = ~/"hyperbib/static"
 let src_front_dir = ~/"src/front"
 
 let assets_to_static_dir b =
@@ -155,7 +155,7 @@ let hyperbib =
   let srcs = [ `Dir ~/"src/tool" ] in
   let meta =
     B0_meta.empty
-    |> ~~ B0_unit.Action.cwd (`In (`Scope_dir, ~/"app"))
+    |> ~~ B0_unit.Action.cwd `Scope_dir
     |> ~~
       (* TODO b0: this is a hack to avoid the problem that since we require
          [hyperbib_js] dynamically we need to add the unit manually on the
@@ -188,7 +188,7 @@ let pull_data =
   fun env _ ~args ->
   let* rsync = B0_rsync.get () in
   let src = ~/"hyperbib/app/data/bib.sqlite3.backup" in
-  let dst = B0_env.in_scope_dir env ~/"app/data/bib.sqlite3" in
+  let dst = B0_env.in_scope_dir env ~/"hyperbib/bib/bib.sqlite3" in
   B0_rsync.copy rsync ~delete:true ~src_host:deploy_remote src ~dst
 
 let exec_remote cmd = Cmd.(arg "ssh" % "-t" % "philo" % cmd)
