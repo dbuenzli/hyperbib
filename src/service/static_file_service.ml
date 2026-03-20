@@ -7,7 +7,8 @@ open Hyperbib_std
 open Result.Syntax
 
 let v env _sess request =
-  let static_dir = Fpath.to_string (Service_env.static_dir env) in
+  let config = Service_env.config env in
+  let static_dir = Fpath.to_string (Hyperbib_config.static_dir config) in
   let* file = Http.Request.to_absolute_filepath ~file_root:static_dir request in
   let file = Fpath.v file in
   let file =

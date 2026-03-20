@@ -18,7 +18,6 @@ type t =
     max_pending_suggestions : int;
     notification_email : Email.address;
     page_gen : Page.Gen.t;
-    static_dir : Fpath.t;
     suggestion_notification : bool; }
 
 (* Properties *)
@@ -30,7 +29,6 @@ let email_sender e = e.email_sender
 let notification_email e = e.notification_email
 let max_pending_suggestions e = e.max_pending_suggestions
 let page_gen e = e.page_gen
-let static_dir e = e.static_dir
 let suggestion_notification e = e.suggestion_notification
 let url_fmt e = Page.Gen.url_fmt e.page_gen
 
@@ -40,9 +38,8 @@ let make ~config ~caps ~db_pool ~editable ~page_gen () =
   let email_sender = "relay@philoclimate.ch" in
   let notification_email = "bib@philoclimate.ch" in
   let suggestion_notification = true in
-  let static_dir = Hyperbib_config.static_dir config in
   { config; caps; db_pool; editable; email_sender; max_pending_suggestions;
-    notification_email; page_gen; static_dir; suggestion_notification }
+    notification_email; page_gen; suggestion_notification }
 
 let adjust e caps page_gen = { e with caps; page_gen }
 

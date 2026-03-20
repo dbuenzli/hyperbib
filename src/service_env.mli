@@ -49,9 +49,6 @@ val suggestion_notification : t -> bool
 (** [suggestion_notification e] is [true] if new suggestion are notified
     to the {!notification_email}. *)
 
-val static_dir : t -> Fpath.t
-(** [static_dir e] is the directory in which static files can be found. *)
-
 val url_fmt : t -> Kurl.fmt
 (** [url_fmt e] is the URL formatter for [e]. *)
 
