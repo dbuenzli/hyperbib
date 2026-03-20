@@ -25,7 +25,7 @@ open Cmdliner.Term.Syntax
 let common_man = []
 let docs = Manpage.s_common_options
 
-let conf =
+let config =
   Term.term_result' @@
   let+ () = More_cli.set_no_color ()
   and+ () = More_cli.set_log_level ()
@@ -36,15 +36,15 @@ let conf =
     Arg.(value & opt (some ~none:"." More_cli.dirpath) None &
          info ["a"; "app-dir"] ~doc ~docs ~env ~absent)
   in
-  Hyperbib_conf.with_cli ~app_dir
+  Hyperbib_config.with_cli ~app_dir
 
 let cmd ?doc ?(man = []) ?(exits = []) name term =
   let man = [`Blocks man; `Blocks common_man] in
   let exits = List.append exits Exit.Info.base_cmd in
   Cmd.make (Cmd.info name ~exits ?doc ~man) term
 
-let cmd_with_conf ?doc ?man ?exits name term =
-  cmd ?doc ?man ?exits name Term.(term $ conf)
+let cmd_with_config ?doc ?man ?exits name term =
+  cmd ?doc ?man ?exits name Term.(term $ config)
 
 let cmd_group ?doc ?(man = []) ?(exits = []) ?default name cmds =
   let man = [`Blocks man; `Blocks common_man] in

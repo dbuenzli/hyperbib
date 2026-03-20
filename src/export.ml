@@ -141,25 +141,25 @@ module Static_html = struct
     let* () = write_page ~dir g (Help_html.page g) in
     Ok ()
 
-  let write_static_files ~dir conf =
-    let src = Hyperbib_conf.static_dir conf in
+  let write_static_files ~dir config =
+    let src = Hyperbib_config.static_dir config in
     let dotfiles = true and follow_symlinks = true and recurse = true in
     Adhoc.cp_dir_content
       ~dotfiles ~follow_symlinks ~recurse ~of_dir:src ~inside_dir:dir ()
 
-  let write_data ~dir data_conf db g =
+  let write_data ~dir config db g =
     let* () = write_references ~dir db g in
     let* () = write_containers ~dir db g in
     let* () = write_persons ~dir db g in
     let* () = write_subjects ~dir db g in
     let* () = write_years ~dir db g in
     let* () = write_bib_pages ~dir db g in
-    let* () = write_static_files ~dir data_conf in
+    let* () = write_static_files ~dir config in
     Ok ()
 end
 
-let static_html ~inside_dir data_conf db g =
-  Static_html.write_data ~dir:inside_dir data_conf db g
+let static_html ~inside_dir config db g =
+  Static_html.write_data ~dir:inside_dir config db g
 
 module Bibtex = struct
   type type' =
@@ -341,9 +341,9 @@ module Bibtex = struct
     in
     Bibtex.v ~type':(type_to_string type') ~cite_key ~fields ()
 
-  let of_refs ~now bib_conf rrender_data =
-    let t = Bibliography.project_title bib_conf in
-    let href = Bibliography.project_href bib_conf in
+  let of_refs ~now bibinfo rrender_data =
+    let t = Bibliography.project_title bibinfo in
+    let href = Bibliography.project_href bibinfo in
     let preamble = Fmt.str "%% %s\n%% %s" t href in
     let now = Ptime.to_rfc3339 ~space:true ~tz_offset_s:3600 now in
     let bibs = List.map (ref_to_bib rrender_data) rrender_data.Reference.list in

@@ -19,9 +19,9 @@ let make_backup db_file db =
 
 (* Backup *)
 
-let backup conf file =
+let backup config file =
   Log.if_error ~use:Hyperbib_cli.Exit.some_error @@
-  let db_file = Hyperbib_conf.db_file conf in
+  let db_file = Hyperbib_config.db_file config in
   let file = match file with
   | None -> Db.stamped_backup_file db_file | Some file -> file
   in
@@ -44,9 +44,9 @@ let do_changes (col_renames, table_renames) db =
   else
   List.iter_stop_on_error (Db.exec db) stmts |> Db.string_error
 
-let changes conf (col_renames, table_renames as r) format exec no_backup =
+let changes config (col_renames, table_renames as r) format exec no_backup =
   Log.if_error ~use:Hyperbib_cli.Exit.some_error @@
-  let db_file = Hyperbib_conf.db_file conf in
+  let db_file = Hyperbib_config.db_file config in
   Result.join @@ Db.string_error @@ Db.with_open db_file @@ fun db ->
   let* (live, issues) = Db.schema db |> Db.string_error in
   List.iter (fun i -> Log.warn (fun m -> m "%s" i)) issues;
@@ -73,11 +73,11 @@ let changes conf (col_renames, table_renames as r) format exec no_backup =
   in
   Ok Hyperbib_cli.Exit.ok
 
-let restore ~backup ~last conf =
+let restore ~backup ~last config =
   Log.if_error ~use:Hyperbib_cli.Exit.some_error @@
-  let db_file = Hyperbib_conf.db_file conf in
+  let db_file = Hyperbib_config.db_file config in
   let* backup = match backup with
-  | None when last -> Ok (Hyperbib_conf.db_backup_file conf)
+  | None when last -> Ok (Hyperbib_config.db_backup_file config)
   | Some backup -> Ok backup
   | None ->
       Fmt.error
@@ -92,9 +92,9 @@ let restore ~backup ~last conf =
 
 (* Reset *)
 
-let reset conf no_backup (* populate *) =
+let reset config no_backup (* populate *) =
   Log.if_error ~use:Hyperbib_cli.Exit.some_error @@ Result.join @@
-  let db_file = Hyperbib_conf.db_file conf in
+  let db_file = Hyperbib_config.db_file config in
   let* exists = Os.File.exists db_file in
   Db.string_error @@ Db.with_open db_file @@ fun db ->
   let* () = if no_backup || not exists then Ok () else make_backup db_file db in
@@ -114,13 +114,13 @@ let output_schema ~format s = match format with
 | `Ocaml kind ->
     Log.stdout (fun m -> m "@[%a@]" (Rel.Schema.pp_ocaml kind) s)
 
-let schema conf which format =
+let schema config which format =
   Log.if_error ~use:Hyperbib_cli.Exit.some_error @@
   let* () = match which with
   | `App -> output_schema ~format Schema.v; Ok ()
   | `Live ->
       Db.string_error @@ Result.join @@
-      Db.with_open (Hyperbib_conf.db_file conf) @@ fun db ->
+      Db.with_open (Hyperbib_config.db_file config) @@ fun db ->
       let* live, issues = Db.schema db in
       output_schema ~format live;
       List.iter (fun i -> Log.warn (fun m -> m "%a" Fmt.lines i)) issues;
@@ -130,9 +130,9 @@ let schema conf which format =
 
 (* SQL prompt *)
 
-let sql conf args =
+let sql config args =
   Log.if_error ~use:Hyperbib_cli.Exit.some_error @@
-  let db_file = Hyperbib_conf.db_file conf in
+  let db_file = Hyperbib_config.db_file config in
   let args = match List.rev args with
   | [] -> Cmd.path db_file
   | a :: _ when String.length a > 1 && a.[0] = '-' (* is an option *) ->
@@ -162,7 +162,7 @@ let backup_cmd =
     Arg.(value & pos 0 (some More_cli.filepath) None & info [] ~doc)
   in
   Cmd.make (Cmd.info "backup" ~doc ~man) @@
-  Term.(const backup $ Hyperbib_cli.conf $ dst)
+  Term.(const backup $ Hyperbib_cli.config $ dst)
 
 let changes_cmd =
   let doc = "Compare live database and application schema" in
@@ -196,7 +196,7 @@ let changes_cmd =
     Arg.(value & flag & info ["no-backup"] ~doc)
   in
   Cmd.make (Cmd.info "changes" ~doc ~man) @@
-  Term.(const changes $ Hyperbib_cli.conf $ Rel_cli.renames () $ format $
+  Term.(const changes $ Hyperbib_cli.config $ Rel_cli.renames () $ format $
         exec $ no_backup)
 
 let restore_cmd =
@@ -205,7 +205,7 @@ let restore_cmd =
     `S Manpage.s_description;
     `P "$(cmd) restores a backup of the database."; ]
   in
-  Hyperbib_cli.cmd_with_conf "restore" ~doc ~man @@
+  Hyperbib_cli.cmd_with_config "restore" ~doc ~man @@
   let+ backup =
     let doc = "$(docv) is the backup file to restore." in
     let docv = "BACKUP.sqlite3" in
@@ -233,7 +233,7 @@ let reset_cmd =
     Arg.(value & flag & info ["p"; "populate"] ~doc)
   in *)
   Cmd.make (Cmd.info "reset" ~doc ~exits ~man) @@
-  Term.(const reset $ Hyperbib_cli.conf $ no_backup (* $ populate *))
+  Term.(const reset $ Hyperbib_cli.config $ no_backup (* $ populate *))
 
 let schema_cmd =
   let doc = "Output the app or live database schema" in
@@ -252,7 +252,7 @@ let schema_cmd =
     Arg.(required & pos 0 (Arg.enum e) None & info [] ~doc ~docv)
   in
   Cmd.make (Cmd.info "schema" ~doc ~exits ~man) @@
-  Term.(const schema $ Hyperbib_cli.conf $ which $
+  Term.(const schema $ Hyperbib_cli.config $ which $
         Rel_cli.schema_format ~default:`Sqlite3 ())
 
 let sql_cmd =
@@ -269,7 +269,7 @@ let sql_cmd =
     Arg.(value & pos_all string [] & info [] ~doc ~docv)
   in
   Cmd.make (Cmd.info "sql" ~doc ~exits ~man) @@
-  Term.(const sql $ Hyperbib_cli.conf $ args)
+  Term.(const sql $ Hyperbib_cli.config $ args)
 
 let cmd =
   let doc = "Manage the application database" in

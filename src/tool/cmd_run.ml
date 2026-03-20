@@ -124,13 +124,13 @@ let check_reference_dois db ~repair =
    in
    Db.fold db cites_stmt check 0 |> Db.string_error
 
-let check_dois ~repair conf =
+let check_dois ~repair config =
   let log_result ~repair n =
     if repair then () else
     Log.stdout (fun m -> m "%a@." (if n > 0 then pp_fail else pp_pass) ())
   in
   Log.if_error ~use:Hyperbib_cli.Exit.some_error @@
-  Hyperbib_conf.with_db_transaction conf `Deferred @@ fun db ->
+  Hyperbib_config.with_db_transaction config `Deferred @@ fun db ->
   Log.stdout (fun m -> m "%a DOIs in the %a table"
               pp_check () Fmt.code (Table.name Reference.Cites.table));
   let* n0 = check_cites_doi db ~repair in
@@ -202,13 +202,13 @@ let check_person_orcids db ~repair =
   in
   Db.fold db person_orcid_stmt check 0 |> Db.string_error
 
-let check_orcids ~repair conf =
+let check_orcids ~repair config =
   let log_result ~repair n =
     if repair then () else
     Log.stdout (fun m -> m "%a@." (if n > 0 then pp_fail else pp_pass) ())
   in
   Log.if_error ~use:Hyperbib_cli.Exit.some_error @@
-  Hyperbib_conf.with_db_transaction conf `Deferred @@ fun db ->
+  Hyperbib_config.with_db_transaction config `Deferred @@ fun db ->
   Log.stdout (fun m -> m "%a ORCIDs in the %a table"
               pp_check () Fmt.code (Table.name Person.table));
   let* n = check_person_orcids db ~repair in
@@ -217,9 +217,9 @@ let check_orcids ~repair conf =
   then Ok Hyperbib_cli.Exit.ok
   else Ok Hyperbib_cli.Exit.some_error
 
-let test () conf =
+let test () config =
   Log.if_error ~use:Hyperbib_cli.Exit.some_error @@
-  Result.join @@ Hyperbib_conf.with_db conf @@ fun db ->
+  Result.join @@ Hyperbib_config.with_db config @@ fun db ->
   let open Rel_query.Syntax in
   Db.string_error @@
   let match' =
@@ -244,7 +244,7 @@ let check_dois_cmd =
     [ `S Manpage.s_description;
       `P "The $(cmd) command is used for checking DOIs in the database."; ]
   in
-  Hyperbib_cli.cmd_with_conf "check-dois" ~doc ~man @@
+  Hyperbib_cli.cmd_with_config "check-dois" ~doc ~man @@
   let doc = "Repair warnings and errors that can be." in
   let+ repair = Arg.(value & flag & info ["repair"] ~doc) in
   check_dois ~repair
@@ -255,7 +255,7 @@ let check_orcids_cmd =
     [ `S Manpage.s_description;
       `P "The $(cmd) command is used for checking ORCIDs in the database."; ]
   in
-  Hyperbib_cli.cmd_with_conf "check-orcids" ~doc ~man @@
+  Hyperbib_cli.cmd_with_config "check-orcids" ~doc ~man @@
   let doc = "Repair warnings and errors that can be." in
   let+ repair = Arg.(value & flag & info ["repair"] ~doc) in
   check_orcids ~repair
@@ -266,7 +266,7 @@ let test_cmd =
     [ `S Manpage.s_description;
       `P "The $(cmd) is used for testing purposes."; ]
   in
-  Hyperbib_cli.cmd_with_conf "test" ~doc ~man @@
+  Hyperbib_cli.cmd_with_config "test" ~doc ~man @@
   let+ () = Term.const () in
   test ()
 

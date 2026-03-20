@@ -6,17 +6,17 @@
 open Hyperbib_std
 open Rel
 
-type conf = string * string
-let conf =
+type config = string * string
+let config =
   let name = Col.make "name" Type.text fst in
   let value = Col.make "value" Type.text snd in
-  let conf k v = k, v in
+  let config k v = k, v in
   Table.make "conf" @@
-  Row.(unit conf * name * value)
+  Row.(unit config * name * value)
 
 let version = 1
 let tables =
-  Table.[ Def conf;
+  Table.[ Def config;
           Def Container.Label.table;
           Def Container.table;
           Def Label.table;
@@ -32,6 +32,5 @@ let tables =
           Def Subject.See_also.table;
           Def Subject.table;
           Def Suggestion.table; ]
-
 
 let v = Rel.Schema.make ~tables ()

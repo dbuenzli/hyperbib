@@ -6,6 +6,8 @@
 
 {!modules:
 Hyperbib_std.Adhoc
+Hyperbib_config
+Hyperbib_cli
 Adhoc_html
 Adhoc_schema
 Adhoc_service

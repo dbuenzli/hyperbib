@@ -10,7 +10,7 @@ open Result.Syntax
 
 type editable = [ `No | `With_login | `Unsafe ]
 type t =
-  { conf : Hyperbib_conf.t;
+  { config : Hyperbib_config.t;
     caps : User.Caps.t;
     db_pool : Db.pool;
     editable : editable;
@@ -23,7 +23,7 @@ type t =
 
 (* Properties *)
 
-let conf e = e.conf
+let config e = e.config
 let caps e = e.caps
 let editable e = e.editable
 let email_sender e = e.email_sender
@@ -34,14 +34,14 @@ let static_dir e = e.static_dir
 let suggestion_notification e = e.suggestion_notification
 let url_fmt e = Page.Gen.url_fmt e.page_gen
 
-let make ~conf ~caps ~db_pool ~editable ~page_gen () =
+let make ~config ~caps ~db_pool ~editable ~page_gen () =
   (* FIXME store these things in the db or in a json file. *)
   let max_pending_suggestions = 30 in
   let email_sender = "relay@philoclimate.ch" in
   let notification_email = "bib@philoclimate.ch" in
   let suggestion_notification = true in
-  let static_dir = Hyperbib_conf.static_dir conf in
-  { conf; caps; db_pool; editable; email_sender; max_pending_suggestions;
+  let static_dir = Hyperbib_config.static_dir config in
+  { config; caps; db_pool; editable; email_sender; max_pending_suggestions;
     notification_email; page_gen; static_dir; suggestion_notification }
 
 let adjust e caps page_gen = { e with caps; page_gen }

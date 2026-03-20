@@ -6,9 +6,9 @@
 open Hyperbib_std
 open Result.Syntax
 
-let add ~name ~password ~force conf =
+let add ~name ~password ~force config =
   Log.if_error ~use:Hyperbib_cli.Exit.some_error @@
-  let users_file = Hyperbib_conf.users_file conf in
+  let users_file = Hyperbib_config.users_file config in
   let* users = User.load users_file in
   match User.mem ~name users with
   | true when not force ->
@@ -22,16 +22,16 @@ let add ~name ~password ~force conf =
       let* () = User.save users_file users in
       Ok Hyperbib_cli.Exit.ok
 
-let list conf =
+let list config =
   Log.if_error ~use:Hyperbib_cli.Exit.some_error @@
-  let users_file = Hyperbib_conf.users_file conf in
+  let users_file = Hyperbib_config.users_file config in
   let* users = User.load users_file in
   User.fold (fun u () -> Log.stdout (fun m -> m "%s" (User.name u))) users ();
   Ok Hyperbib_cli.Exit.ok
 
-let delete ~name conf =
+let delete ~name config =
   Log.if_error ~use:Hyperbib_cli.Exit.some_error @@
-  let users_file = Hyperbib_conf.users_file conf in
+  let users_file = Hyperbib_config.users_file config in
   let* users = User.load users_file in
   match User.mem ~name users with
   | false ->
@@ -65,7 +65,7 @@ let add_cmd =
     [ `S Manpage.s_description;
       `P "The $(tname) command adds an application user."; ]
   in
-  Hyperbib_cli.cmd_with_conf "add" ~doc ~man @@
+  Hyperbib_cli.cmd_with_config "add" ~doc ~man @@
   let+ name = username and+ password and+ force in
   add ~name ~password ~force
 
@@ -75,7 +75,7 @@ let delete_cmd =
     [ `S Manpage.s_description;
       `P "The $(tname) command deletes an application user."; ]
   in
-  Hyperbib_cli.cmd_with_conf "delete" ~doc ~man @@
+  Hyperbib_cli.cmd_with_config "delete" ~doc ~man @@
   let+ name = username in
   delete ~name
 
@@ -85,7 +85,7 @@ let list_cmd =
     [ `S Manpage.s_description;
       `P "The $(tname) command lists application users."; ]
   in
-  Hyperbib_cli.cmd_with_conf "list" ~doc ~man @@
+  Hyperbib_cli.cmd_with_config "list" ~doc ~man @@
   Term.(const list)
 
 let cmd =

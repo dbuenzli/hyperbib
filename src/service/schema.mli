@@ -7,8 +7,8 @@
 
 open Hyperbib_std
 
-type conf = string * string
-val conf : conf Rel.Table.t
+type config = string * string
+val config : config Rel.Table.t
 
 val version : int
 val v : Rel.Schema.t

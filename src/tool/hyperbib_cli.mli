@@ -4,6 +4,7 @@
   ---------------------------------------------------------------------------*)
 
 open Hyperbib_std
+open Cmdliner
 
 (** Exit codes. *)
 module Exit : sig
@@ -26,19 +27,17 @@ module Exit : sig
   end
 end
 
-open Cmdliner
+(** {1:config Cli configuration} *)
 
-(** {1:conf Cli configuration} *)
-
-val conf : Hyperbib_conf.t Term.t
-(** [conf] is a cmdliner term for configuration.
+val config : Hyperbib_config.t Term.t
+(** [config] is a cmdliner term for configuration.
 
     Term evaluation sets up logging level and by side effect
     and looks up the HTTP client. *)
 
-val cmd_with_conf :
+val cmd_with_config :
   ?doc:string -> ?man:Manpage.block list -> ?exits:Cmd.Exit.info list ->
-  string -> (Hyperbib_conf.t -> 'a) Term.t -> 'a Cmd.t
+  string -> (Hyperbib_config.t -> 'a) Term.t -> 'a Cmd.t
 
 val cmd :
   ?doc:string -> ?man:Manpage.block list -> ?exits:Cmd.Exit.info list ->

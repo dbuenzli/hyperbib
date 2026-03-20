@@ -8,9 +8,9 @@ open Result.Syntax
 
 (* BibTeX export *)
 
-let bibtex ~outf conf =
+let bibtex ~outf config =
   Log.if_error ~use:Hyperbib_cli.Exit.some_error @@
-  Hyperbib_conf.with_db_transaction conf `Deferred @@ fun db ->
+  Hyperbib_config.with_db_transaction config `Deferred @@ fun db ->
   let* b = Bibliography.get () in
   let now = Ptime_clock.now () in
   let only_public = Rel_query.Bool.true' in
@@ -32,12 +32,12 @@ let page_gen ~file_browsable bibliography =
   let testing = false in
   Page.Gen.v ~now bibliography uf ~auth_ui ~user_view ~private_data ~testing
 
-let html ~dest ~file_browsable conf =
+let html ~dest ~file_browsable config =
   Log.if_error ~use:Hyperbib_cli.Exit.some_error @@
-  Hyperbib_conf.with_db_transaction conf `Deferred @@ fun db ->
+  Hyperbib_config.with_db_transaction config `Deferred @@ fun db ->
   let* b = Bibliography.get () in
   let page_gen = page_gen ~file_browsable b in
-  let* () = Export.static_html ~inside_dir:dest conf db page_gen in
+  let* () = Export.static_html ~inside_dir:dest config db page_gen in
   Ok Hyperbib_cli.Exit.ok
 
 (* Command line interface *)
@@ -52,7 +52,7 @@ let bibtex =
     `P "The $(cmd) command exports the public bibliography as a \
         BibTeX file." ]
   in
-  Hyperbib_cli.cmd_with_conf "bibtex" ~doc ~man @@
+  Hyperbib_cli.cmd_with_config "bibtex" ~doc ~man @@
   let+ outf =
     let doc = "Write BibTeX file to $(docv). Use $(b,-) for $(stdout)." in
     Arg.(value & opt More_cli.filepath Fpath.dash & info ["o"] ~doc)
@@ -71,7 +71,7 @@ let html =
         external links to it (you will have to configure your webserver \
         to append $(b,.html) to requests)." ]
   in
-  Hyperbib_cli.cmd_with_conf "html" ~doc ~man @@
+  Hyperbib_cli.cmd_with_config "html" ~doc ~man @@
   let+ dest =
     let doc = "Output directory." and docv = "HTML_DIR" in
     Arg.(required & pos 1 (some More_cli.dirpath) None & info [] ~doc ~docv)

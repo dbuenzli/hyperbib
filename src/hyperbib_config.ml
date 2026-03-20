@@ -75,14 +75,14 @@ let with_cli ~app_dir =
   let* app_dir = Os.Path.realpath app_dir in
   Ok (make ~app_dir ~http_client ())
 
-let with_db conf f =
-  let db_file = db_file conf in
+let with_db config f =
+  let db_file = db_file config in
   let* () = Db.ensure_db_path db_file in
   Result.map_error (fun e -> Fmt.str "%a: %s" Fpath.pp_unquoted db_file e) @@
   Db.with_open_schema Schema.v db_file f
 
-let with_db_transaction conf kind f =
-  let db_file = db_file conf in
+let with_db_transaction config kind f =
+  let db_file = db_file config in
   let* () = Db.ensure_db_path db_file in
   Result.map_error (fun e -> Fmt.str "%a: %s" Fpath.pp_unquoted db_file e) @@
   Result.join @@ Result.join @@ Result.map Db.string_error @@

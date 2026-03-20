@@ -6,7 +6,7 @@
 open Hyperbib_std
 open Result.Syntax
 
-let doi ~reset ~dois ~files ~dry_run conf =
+let doi ~reset ~dois ~files ~dry_run config =
   Log.if_error ~use:Hyperbib_cli.Exit.some_error @@
   let files = match dois, files with [], [] -> [Fpath.dash] | _ -> files in
   let dois_of_file file acc =
@@ -31,13 +31,13 @@ let doi ~reset ~dois ~files ~dry_run conf =
       Fmt.error "Cannot import without clearing the database use %a option"
         Fmt.code "--reset"
   | true ->
-      let db_file = Cli_kit.Conf.db_file conf in
+      let db_file = Cli_kit.Conf.db_file config in
       let file_error e = Fmt.str "%a: %s" Fpath.pp_unquoted db_file e in
       Result.map_error file_error @@ Result.join @@ Db.string_error @@
       Db.with_open ~foreign_keys:false db_file @@ fun db ->
       let* () = Db.clear db |> Db.string_error in
       let* () = Db.ensure_schema Schema.v db in
-      let* () = Import.legacy db conf |> Db.string_error |> Result.join in
+      let* () = Import.legacy db config |> Db.string_error |> Result.join in
       Ok Hyperbib_cli.Exit.ok *)
 
 (* Command line interface *)
@@ -70,7 +70,7 @@ let doi_cmd =
     `P "Note that it won't work well if your text format needs to \
         escape the DOIs, e.g. on BibTeX files." ]
   in
-  Hyperbib_cli.cmd_with_conf "doi" ~doc ~man @@
+  Hyperbib_cli.cmd_with_config "doi" ~doc ~man @@
   let+ reset and+ dry_run
   and+ dois =
     let doc = "Import reference $(docv). Repeatable." in

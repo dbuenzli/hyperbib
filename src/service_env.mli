@@ -17,7 +17,7 @@ type t
     capbilities and database access for services. *)
 
 val make :
-  conf:Hyperbib_conf.t -> caps:User.Caps.t -> db_pool:Db.pool ->
+  config:Hyperbib_config.t -> caps:User.Caps.t -> db_pool:Db.pool ->
   editable:editable -> page_gen:Page.Gen.t -> unit -> t
 (** [make …] is an environment with given properties. See corresponding
     accessors for semantics. *)
@@ -26,8 +26,8 @@ val adjust : t -> User.Caps.t -> Page.Gen.t -> t
 
 (** {1:props Properties} *)
 
-val conf : t -> Hyperbib_conf.t
-(** [conf e] is the hyperbib configuration of [e]. *)
+val config : t -> Hyperbib_config.t
+(** [config e] is the hyperbib configuration of [e]. *)
 
 val caps : t -> User.Caps.t
 (** [caps e] are the capabilities for the session. *)

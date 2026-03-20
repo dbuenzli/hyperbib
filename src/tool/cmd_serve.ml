@@ -7,7 +7,7 @@ open Hyperbib_std
 open Result.Syntax
 
 let log_startup c env =
-  let app_dir = Hyperbib_conf.app_dir (Service_env.conf env) in
+  let app_dir = Hyperbib_config.app_dir (Service_env.config env) in
   let l = Webs_http11_gateway.listener c in
   let service_path = Webs_http11_gateway.service_path c in
   Log.stdout (fun m ->
@@ -28,7 +28,7 @@ let setup_db ~read_only ~db_pool =
   Result.join @@ Db.string_error @@ Rel_pool.with' db_pool @@ fun db ->
   Db.ensure_schema ~read_only Schema.v db
 
-let setup_env ~conf ~db_pool ~editable ~service_path ~testing  =
+let setup_env ~config ~db_pool ~editable ~service_path ~testing  =
   (* XXX still needs streamlining, review when env get mutated. *)
   let* bib = Bibliography.get () in
   (* FIXME we need to get that data from somewhere. *)
@@ -41,19 +41,19 @@ let setup_env ~conf ~db_pool ~editable ~service_path ~testing  =
     Page.Gen.v ~now bib url_fmt ~auth_ui ~user_view ~private_data ~testing
   in
   let caps = User.Caps.none in
-  Ok (Service_env.make ~conf ~caps ~db_pool ~editable ~page_gen ())
+  Ok (Service_env.make ~config ~caps ~db_pool ~editable ~page_gen ())
 
-let setup_service ~conf ~service_path ~secure_cookie ~env =
-  let pk_file = Hyperbib_conf.authentication_private_key conf in
+let setup_service ~config ~service_path ~secure_cookie ~env =
+  let pk_file = Hyperbib_config.authentication_private_key config in
   let* private_key = Service.setup_private_key ~file:pk_file in
   let tree = Service_tree.v and fallback = Static_file_service.v in
   Ok (Service.make ~service_path ~private_key ~secure_cookie tree ~fallback env)
 
-let start_backup_thread ~conf ~db_pool ~backup_every_s =
+let start_backup_thread ~config ~db_pool ~backup_every_s =
   match backup_every_s with
   | None -> ()
   | Some every_s ->
-      let backup = Hyperbib_conf.db_backup_file conf in
+      let backup = Hyperbib_config.db_backup_file config in
       (* FIXME would be nice to stop that in finish *)
       ignore (Db.backup_thread db_pool ~every_s backup)
 
@@ -63,25 +63,25 @@ let finish ~db_pool =
 
 let serve
     listener service_path max_connections backup_every_s editable
-    insecure_cookie testing conf
+    insecure_cookie testing config
   =
   Log.if_error ~use:Hyperbib_cli.Exit.some_error @@
   let service_path = Option.value ~default:[""] service_path in
   let secure_cookie = not insecure_cookie in
   let read_only = editable = `No in
   let pool_size = max_connections + 1 (* backup thread *) in
-  let db_file = Hyperbib_conf.db_file conf in
+  let db_file = Hyperbib_config.db_file config in
   let* () = if not read_only then Db.ensure_db_path db_file else Ok () in
   let db_pool = Db.pool ~read_only db_file ~size:pool_size in
   let* () = setup_db ~read_only ~db_pool in
-  let* env = setup_env ~conf ~db_pool ~editable ~service_path ~testing in
-  let* service = setup_service ~conf ~service_path ~secure_cookie ~env in
+  let* env = setup_env ~config ~db_pool ~editable ~service_path ~testing in
+  let* service = setup_service ~config ~service_path ~secure_cookie ~env in
   let c =
     let log = Http.Connector.Log.default ~trace:true () in
     Webs_http11_gateway.make ~log ~listener ~service_path ~max_connections ()
   in
   log_startup c env;
-  start_backup_thread ~conf ~db_pool ~backup_every_s;
+  start_backup_thread ~config ~db_pool ~backup_every_s;
   let* () = Webs_http11_gateway.serve c service in
   let* () = finish ~db_pool in
   log_shutdown ();
@@ -148,7 +148,7 @@ let cmd =
     `S Manpage.s_description;
     `P "The $(cmd) command serves the web application."; ]
   in
-  Hyperbib_cli.cmd_with_conf "serve" ~doc ~man @@
+  Hyperbib_cli.cmd_with_config "serve" ~doc ~man @@
   Term.(const serve $ Webs_cli.listener () $
         Webs_cli.service_path () $ Webs_cli.max_connections () $
         backup_every_s $ editable $ insecure_cookie $ testing)
