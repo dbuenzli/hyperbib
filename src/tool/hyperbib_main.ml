@@ -7,8 +7,8 @@ open Hyperbib_std
 open Cmdliner
 
 let cmds =
-  [ Cmd_user.cmd; Cmd_db.cmd; Cmd_export.cmd; Cmd_doc.cmd; Cmd_import.cmd;
-    Cmd_serve.cmd; Cmd_run.cmd ]
+  [ Cmd_db.cmd; Cmd_config.cmd; Cmd_doc.cmd; Cmd_export.cmd;
+    Cmd_import.cmd; Cmd_run.cmd; Cmd_serve.cmd; Cmd_user.cmd; ]
 
 let hyperbib =
   let doc = "Annotates bibliographies" in

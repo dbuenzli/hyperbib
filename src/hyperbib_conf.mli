@@ -54,6 +54,10 @@ val http_client : t -> (Http_client.t, string) result
 (** [http_client c] is the HTTP client to use in the app. *)
 
 
+val pp : t Fmt.t
+(** [pp] formats configurations for inspection. *)
+
+
 val with_cli : app_dir:Hyperbib_std.Fpath.t option -> (t, string) result
 
 val with_db : t -> (Db.t -> 'a) -> ('a, string) result

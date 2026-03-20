@@ -27,18 +27,34 @@ type t =
 let make ~app_dir ~http_client () =
   { app_dir; http_client }
 
-let blobstore_path = Fpath.v "data/blobs"
 let db_path = Fpath.v "data/bib.sqlite3"
-let http_client c = c.http_client
+let blobstore_path = Fpath.v "data/blobs"
+
 let app_dir c = c.app_dir
-let users_file c = Fpath.(c.app_dir / "users.json")
 let authentication_private_key c = Fpath.(c.app_dir / "auth.private")
-let static_dir c = Fpath.(c.app_dir / "static")
-let doi_cache_dir c = Fpath.(c.app_dir / "dois")
+let blobstore_dir c = Fpath.(c.app_dir // blobstore_path)
 let db_file c = Fpath.(c.app_dir // db_path)
 let db_backup_file c = Fpath.(db_file c + ".backup")
-let blobstore_dir c = Fpath.(c.app_dir // blobstore_path)
+let doi_cache_dir c = Fpath.(c.app_dir / "dois")
+let http_client c = c.http_client
+let static_dir c = Fpath.(c.app_dir / "static")
+let users_file c = Fpath.(c.app_dir / "users.json")
+
 let blobstore c = Blobstore.of_dir (blobstore_dir c)
+
+let pp =
+  let http_client c = Result.map Http_client.id (http_client c) in
+  Fmt.record
+    [ Fmt.field "app-dir" app_dir Fpath.pp;
+      Fmt.field "authentication-private-key"
+        authentication_private_key Fpath.pp;
+      Fmt.field "blobstore-dir" blobstore_dir Fpath.pp;
+      Fmt.field "db-file" db_file Fpath.pp;
+      Fmt.field "db-backup-file" db_backup_file Fpath.pp;
+      Fmt.field "doi-cache-dir" doi_cache_dir Fpath.pp;
+      Fmt.field "http-client" http_client Fmt.(result ~ok:string ~error:string);
+      Fmt.field "static-dir" static_dir Fpath.pp;
+      Fmt.field "users-file" users_file Fpath.pp ]
 
 let find_app_dir = function
 | Some app_dir -> Ok app_dir
