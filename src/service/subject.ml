@@ -56,6 +56,10 @@ module Subject = struct
     in
     List.fold_left add ([], Id.Map.empty) ss
 
+  let roots ss =
+    let add acc s = if is_root s then Id.Map.add (id s) s acc else acc in
+    List.fold_left add Id.Map.empty ss
+
   (* Table *)
 
   let id' = Col.make "id" Id.type' id

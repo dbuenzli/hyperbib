@@ -75,6 +75,9 @@ val hierarchy : t list -> t list * t list Id.Map.t
     children. Does not check that each element in [ss] has its root
     in [ss]. *)
 
+val roots : t list -> t Id.Map.t
+(** [roots ss] is a map with the roots of [ss]. *)
+
 (** {1:tables Tables} *)
 
 open Rel

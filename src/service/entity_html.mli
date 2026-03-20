@@ -94,12 +94,16 @@ val subject_input :
     subject. *)
 
 val subject_input_finder :
+  ?all_subjects:Subject.t list ->
   Kurl.fmt -> for_list:bool -> input_name:Entity.Url.input_name ->
   exclude:Subject.Id.t option -> El.html
-(** [subject_input_finder] is a text field to search for a subjec to input
+(** [subject_input_finder] is a text field to search for a subject to input
     in an hidden input element named [input_name]. If [for_list] is [true]
     this is for a list of subjects; if [false] it's for selecting a single
-    subject. *)
+    subject. In contrast to other entity input finders we show the whole
+    list of subjects on empty input, that list can be specified in
+    [all_subjects], if the list is empty it is lazily loaded when the input
+    is focused. *)
 
 val subject_input_finder_results :
   Kurl.fmt -> for_list:bool -> input_name:Entity.Url.input_name ->

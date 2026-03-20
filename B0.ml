@@ -73,7 +73,8 @@ let hyperbib_js =
   let doc = "hyperbib front-end" in
   let requires = [brr; note; note_brr; htmlact_page] in
   let wrap proc b = assets_to_static_dir b; front_to_static_dir b; proc b in
-  B0_jsoo.exe "hyperbib.js" ~requires ~wrap ~doc ~srcs
+  let meta = B0_meta.empty |> ~~ B0_jsoo.source_map None in
+  B0_jsoo.exe "hyperbib.js" ~requires ~wrap ~doc ~srcs ~meta
 
 (* Backend *)
 

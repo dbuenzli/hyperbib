@@ -106,10 +106,15 @@ let input_finder_results
   let c = match creatable with None -> El.void | Some c -> c in
   El.ol ~at:[At.v "role" "listbox"] (List.map li es @ [c])
 
-let entity_input_finder ?min_size ?(at = []) uf ~kind req ~value =
+let entity_input_finder ?add_ev ?min_size ?(at = []) uf ~kind req ~value =
   let r = Adhoc_html.htmlact_request uf req in
   let t = Htmlact.target (":up :up ol") in
-  let e = Htmlact.event ~debounce_ms:250 "input" in
+  let e =
+    let debounce_ms = 250 and ev = "input" in
+    match add_ev with
+    | None -> Htmlact.event ~debounce_ms ev
+    | Some e -> e |> Htmlact.add_event ~debounce_ms ev
+  in
   let eff = Htmlact.effect' `Element in
   let pl = kind ^ "\u{207A}" in
   let min_size = String.length pl (* - 1 *) in
@@ -281,18 +286,25 @@ let subject_input_finder_results uf ~for_list ~input_name ~parents ss =
   let tip = Uimsg.add_subject and creatable = None in
   input_finder_results (module Subject) ~creatable ~tip ~render uf ~action ss
 
-let subject_input_finder uf ~for_list ~input_name ~exclude =
+let subject_input_finder
+    ?(all_subjects = []) uf ~for_list ~input_name ~exclude =
   let res =
-    let parents = Subject.Id.Map.empty in
-    subject_input_finder_results uf ~for_list ~input_name ~parents []
+    let parents = Subject.roots all_subjects in
+    subject_input_finder_results uf ~for_list ~input_name ~parents
+      all_subjects
   in
   let input_subject_id = input_entity_id ~input_name None in
   let input =
+    let add_ev =
+      if List.is_empty all_subjects
+      then Some (Htmlact.event ~once:true "focus") (* Load list on focus *)
+      else None
+    in
     let req =
       Subject.Url.v (Input_finder_find (for_list, input_name, exclude, ""))
     in
     let kind = Uimsg.subject and at = [Hclass.subject] in
-    entity_input_finder ~at ~kind uf req ~value:""
+    entity_input_finder ?add_ev ~at ~kind uf req ~value:""
   in
   let finder = El.div ~at:[Hui.Class.finder] [input; res] in
   let at = [Hclass.entity; Hclass.subject] in
