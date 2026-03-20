@@ -25,6 +25,7 @@ these variables:
 
 ```
 export HYPERBIB_APP_DIR=/var/www/hyperbib
+export HYPERBIB_CACHE_DIR=/var/cache/
 export HYPERBIB_LISTEN=localhost:8000
 export HYPERBIB_SERVICE_PATH=/mybibliography/ 
 export HYPERBIB_USER=`whoami`
@@ -50,6 +51,7 @@ ExecStart=hyperbib serve \
           --listen $HYPERBIB_LISTEN \
           --service-path $HYPERBIB_SERVICE_PATH \
           --app-dir $HYPERBIB_APP_DIR
+          --cache-dir $HYPERBIB_CACHE_DIR
 
 [Install]
 WantedBy=multi-user.target

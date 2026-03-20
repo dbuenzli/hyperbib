@@ -13,11 +13,13 @@ type t
 (** The type for configurations. *)
 
 val make :
-  app_dir:Fpath.t -> http_client:(Http_client.t, string) result -> unit -> t
+  app_dir:Fpath.t -> cache_dir:Fpath.t ->
+  http_client:(Http_client.t, string) result -> unit -> t
 (** [make] is a configuration with given atributes. See the acessors
     for semantics. *)
 
-val discover : app_dir:Hyperbib_std.Fpath.t option -> (t, string) result
+val discover :
+  app_dir:Fpath.t option -> cache_dir:Fpath.t option -> (t, string) result
 (** [discover] is a configuration whose unspecified attributes
     are discovered. *)
 
@@ -26,12 +28,15 @@ val discover : app_dir:Hyperbib_std.Fpath.t option -> (t, string) result
 val app_dir : t -> Fpath.t
 (** [app_dir c] is the absolute path to the application directory. *)
 
+val cache_dir : t -> Fpath.t
+(** [cache_dir c] is the absolute path to the cache directory. *)
+
 val users_file : t -> Fpath.t
 (** [users_file c] is the JSON file holding application users. *)
 
 val doi_cache_dir : t -> Fpath.t
 (** [doic_cache_dir c] is the absolute path to the DOI metadata
-    cache directory. *)
+    cache directory (this is in {!cache_dir}) *)
 
 val static_dir : t -> Fpath.t
 (** [static_dir c] is the absolute path to the static assets directory. *)

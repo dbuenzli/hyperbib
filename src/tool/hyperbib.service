@@ -5,10 +5,13 @@ Description=Hyperbib
 Type=simple
 Restart=on-failure
 RestartSec=10s
-User=philo
-Group=philo
+User=hyperbib
+Group=hyperbib
 
-ExecStart=hyperbib serve --listen localhost:8000 --app-dir /var/www/hyperbib
+ExecStart=hyperbib serve \
+          --listen localhost:8000 \
+          --app-dir /var/www/hyperbib \
+          --cache-dir /var/cache/hyperbib
 
 [Install]
 WantedBy=multi-user.target
