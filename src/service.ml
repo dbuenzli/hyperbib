@@ -161,7 +161,7 @@ let make ~service_path ~secret_key ~secure_cookie tree ~fallback env =
     in
     let env, session = adjust_env_and_session env session in
     let session, response =
-      Http.Response.result @@
+      Result.retract @@
       let* () =
         Webs_session.for_error session (Http.Request.clean_path request)
       in
@@ -172,7 +172,7 @@ let make ~service_path ~secret_key ~secure_cookie tree ~fallback env =
       | None -> (sub_with_immutable_session fallback) env session request
     in
     let error = Page.error (Service_env.page_gen env) request in
-    session, Http.Response.map_errors ~only_empty:true error response
+    session, Http.Response.map_errors ~only_on_empty_body:true error response
   in
   let handler = Session.handler ~service_path ~secret_key ~secure_cookie in
   Webs_session.setup Session.state handler serve

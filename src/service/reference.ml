@@ -878,7 +878,7 @@ module Url = struct
       (* XXX something feels wrong with Kurl here separate
          URL req / resp types ? *)
       let query = match d with
-      | "" -> None | d -> Some (Http.Query.empty |> Http.Query.def doi d)
+      | "" -> None | d -> Some (Http.Query.empty |> Http.Query.define doi d)
       in
       Kurl.bare `GET ["part"; "fill-in-form"] ?query
   | New_form { cancel } ->
@@ -904,7 +904,7 @@ module Url = struct
 
   (* Constructors *)
 
-  let res_name r = Res.Named.name_of_string (title r)
+  let res_name r = Webs_url_resource.Named.name_of_string (title r)
   let page r = Kurl.v kind (Page (Some (res_name r), id r))
 
   let doc r doc =

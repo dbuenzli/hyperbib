@@ -132,7 +132,7 @@ module Url = struct
   | Index -> Kurl.Bare.v `GET [""] ~ext:html
   | Page {id; created} ->
       let query = match created with
-      | true -> Http.Query.empty |> Http.Query.def "created" ""
+      | true -> Http.Query.empty |> Http.Query.define "created" ""
       | false -> Http.Query.empty
       in
       Kurl.bare `GET [Id.to_string id] ~query ~ext:html

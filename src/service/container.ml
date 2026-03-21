@@ -152,7 +152,7 @@ module Url = struct
         ~public:false ()
 
   let container_to_query ?(init = Http.Query.empty) c =
-    init |> Http.Query.def titleq (Container.title c)
+    init |> Http.Query.define titleq (Container.title c)
 
   let dec u = match Kurl.Bare.path u with
   | [""] ->
@@ -272,6 +272,6 @@ module Url = struct
 
   (* Constructors *)
 
-  let res_name c = Res.Named.name_of_string (title c)
+  let res_name c = Webs_url_resource.Named.name_of_string (title c)
   let page c = Kurl.v kind (Page (Some (res_name c), id c))
 end

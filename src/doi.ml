@@ -100,9 +100,9 @@ let extract ?start s = find ?start s
 
 let default_resolver = "https://doi.org"
 
-let as_uri d = Fmt.str "doi:%s" (Webs.Url.Percent.encode `Uri d)
+let as_uri d = Fmt.str "doi:%s" (Webs.Url.Percent.encode Uri d)
 let as_url ?(resolver = default_resolver) d =
-  Fmt.str "%s/%s" resolver (Webs.Url.Percent.encode `Uri d)
+  Fmt.str "%s/%s" resolver (Webs.Url.Percent.encode Uri d)
 
 let as_filename doi = String.map (function '/' | '\\' -> '_' | c -> c) doi
 
@@ -138,7 +138,7 @@ let jsont =
 
 let response_success request response = match Http.Response.status response with
 | 200 ->
-    let* body = Http.Body.to_string (Http.Response.body response) in
+    let body = Http.Body.to_string (Http.Response.body response) in
     Ok (Some body)
 | 404 -> Ok None
 | status ->
@@ -153,15 +153,15 @@ let doi_url' ?resolver = function (* This can go once DOI becomes abstract *)
 let resolve_to_url ?resolver http doi =
   let* url = doi_url' ?resolver doi in
   let* request = Http.Request.of_url `GET ~url in
-  let* response = Http_client.request ~follow:false http request in
-  Http.Headers.(find' location) (Http.Response.headers response)
+  let* response = Http.Client.request ~follow:false http request in
+  Http.Headers.(find_or_error location) (Http.Response.headers response)
 
 let resolve_to_content_type ?resolver ~content_type:ctype httpc doi
   =
-  let headers = Http.Headers.(empty |> def accept ctype) in
+  let headers = Http.Headers.(empty |> define accept ctype) in
   let* url = doi_url' ?resolver doi in
   let* request = Http.Request.of_url ~headers `GET ~url in
-  let* response = Http_client.request ~follow:true httpc request in
+  let* response = Http.Client.request ~follow:true httpc request in
   response_success request response
 
 let bibtex = "application/x-bibtex; charset=utf-8"
@@ -196,13 +196,15 @@ let document_content_type_okay ~media_type ctype =
 let download_document_url httpc ~media_type url =
   let accept_types = media_type in
   let headers =
-    Http.Headers.(empty |> def user_agent mozilla |> def accept accept_types)
+    Http.Headers.empty
+    |> Http.Headers.(define user_agent) mozilla
+    |> Http.Headers.(define accept) accept_types
   in
   let* request = Http.Request.of_url ~headers `GET ~url in
-  let* response = Http_client.request httpc ~follow:true request in
-  let url = (* FIXME add something to Http_client *)
+  let* response = Http.Client.request httpc ~follow:true request in
+  let url = (* FIXME add something to Http.Client *)
     let headers = Http.Response.headers response in
-    match Http.Headers.find Http_client.x_follow_location headers with
+    match Http.Headers.find Http.Client.x_follow_location headers with
     | None -> url | Some url -> url
   in
   let status = Http.Response.status response in
@@ -217,14 +219,16 @@ let to_document ?(url_only = false) ?resolver httpc ~media_type doi =
     String.concat ", " [media_type; "text/html;q=0.5"; "text/plain;q=0.4"]
   in
   let headers =
-    Http.Headers.(empty |> def user_agent mozilla |> def accept accept_types)
+    Http.Headers.empty
+    |> Http.Headers.(define user_agent) mozilla
+    |> Http.Headers.(define accept) accept_types
   in
   let url = as_url ?resolver doi in
   let* request = Http.Request.of_url ~headers `GET ~url in
-  let* response = Http_client.request httpc ~follow:true request in
-  let url = (* FIXME add something to Http_client *)
+  let* response = Http.Client.request httpc ~follow:true request in
+  let url = (* FIXME add something to Http.Client *)
     let headers = Http.Response.headers response in
-    match Http.Headers.find Http_client.x_follow_location headers with
+    match Http.Headers.find Http.Client.x_follow_location headers with
     | None -> url | Some url -> url
   in
   let status = Http.Response.status response in
@@ -233,7 +237,7 @@ let to_document ?(url_only = false) ?resolver httpc ~media_type doi =
   let ctype = Media_type.get_type (Http.Body.content_type body) in
   if document_content_type_okay ~media_type ctype
   then Ok (url, if url_only then Http.Body.empty else body) else
-  let* page = Http.Body.to_string body in
+  let page = Http.Body.to_string body in
   let urls = Webs.Url.list_of_text_scrape ~root:url page in
   match find_document_url_candidates ~doi ~media_type urls with
   | [] -> Fmt.error "%s: No document URL found" url

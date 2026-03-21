@@ -102,14 +102,14 @@ module Map : Map.S with type key := t
 (** {1:res Resolution} *)
 
 val resolve_to_url :
-  ?resolver:string -> Webs.Http_client.t -> t ->
+  ?resolver:string -> Webs.Http.Client.t -> t ->
   (Webs.Url.t, string) result
 (** [resolve_to_url r ~resolver doi] resolve [doi] with [resolver]
       to an URL with [resolver] (defaults to {!default_resolver}). *)
 
 val resolve_to_content_type :
   ?resolver:Webs.Url.t -> content_type:string ->
-  Webs.Http_client.t -> t -> (string option, string) result
+  Webs.Http.Client.t -> t -> (string option, string) result
 (** [resolve_to_content_type ~resolver httpc ~content_type doi]
     resolves [doi] to a content_type [content_type] (the value of the
     HTTP [Accept:] header) with [resolver] (defaults to
@@ -128,7 +128,7 @@ val json : string
     DOIs this seems to return the format {!Crossref}. *)
 
 val to_document :
-  ?url_only:bool -> ?resolver:Webs.Url.t -> Webs.Http_client.t ->
+  ?url_only:bool -> ?resolver:Webs.Url.t -> Webs.Http.Client.t ->
   media_type:Webs.Media_type.t -> t->
   (Webs.Url.t * Webs.Http.Body.t, string) result
 (** [to_document] is a best-effort resolver to try find a document of

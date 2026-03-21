@@ -265,7 +265,7 @@ let create app req = (* create and update are very similar factor out a bit. *)
       let id = Suggestion.Id.to_int id in
       String.concat "#" [url; string_of_int id]
   in
-  let headers = Http.Headers.(empty |> def Htmlact.redirect url) in
+  let headers = Http.Headers.(empty |> define Htmlact.redirect url) in
   Ok (Http.Response.empty ~headers Http.Status.ok_200)
 
 let update env req id =
@@ -339,10 +339,13 @@ let doc env request (_, ref_id) docid =
   | Ok (Some file) ->
       let* response = Webs_fs.send_file request (Fpath.to_string file) in
       let forever = "public, max-age=31536000, immutable" in
-      let hs = Http.Headers.(def cache_control) forever Http.Headers.empty in
-      let hs = Http.Headers.(def content_type) media_type hs in
-      let hs = Http.Headers.(def content_disposition) content_disposition hs in
-      Ok (Http.Response.override_headers ~by:hs response)
+      let headers =
+        Http.Headers.empty
+        |> Http.Headers.(define cache_control) forever
+        |> Http.Headers.(define content_type) media_type
+        |> Http.Headers.(define content_disposition) content_disposition
+      in
+      Ok (Http.Response.override_headers ~by:headers response)
 
 let view_fields app req id =
   Service_env.with_db_transaction' `Deferred app @@ fun db ->

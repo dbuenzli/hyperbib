@@ -20,7 +20,7 @@ module Url = struct
     | ["hyperbib.js"] -> Kurl.ok Hyperbib_js
     | _ -> Kurl.no_match
 
-  let query = Http.Query.empty |> Http.Query.def "stamp" Stamp.static_files
+  let query = Http.Query.empty |> Http.Query.define "stamp" Stamp.static_files
   let enc = function
   | Hyperbib_css -> Kurl.Bare.v `GET ["hyperbib.css"] ~query
   | Hyperbib_js -> Kurl.Bare.v `GET ["hyperbib.js"] ~query

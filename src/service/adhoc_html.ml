@@ -82,13 +82,13 @@ let new_entity_button ~href ~label =
 let htmlact_page_location_update ?(init = Http.Headers.empty) uf url ~title () =
   let url = Kurl.Fmt.url uf url in
   let title = Htmlact.encode_location_title title in
-  Http.Headers.(init
-                |> def Htmlact.location_replace url
-                |> def Htmlact.location_title title)
+  init
+  |> Http.Headers.define Htmlact.location_replace url
+  |> Http.Headers.define Htmlact.location_title title
 
 let htmlact_redirect ?(init = Http.Headers.empty) uf url =
   let url = Kurl.Fmt.url uf url in
-  Http.Headers.(empty |> def Htmlact.redirect url)
+  Http.Headers.(empty |> define Htmlact.redirect url)
 
 let url_of_req_referer req = match Kurl.Bare.of_req_referer req with
 | Ok ref -> Ok (Kurl.v Kurl.any ref)
@@ -112,7 +112,7 @@ let doi_link ?(at = []) doi text = match doi with
 let mailto_link ?(at = []) ?(body = "") ?(subject = "") ~email text =
   (* Do that properly at some point https://www.rfc-editor.org/rfc/rfc6068 *)
   let esc s =
-    Webs.Url.Percent.encode `Uri_component @@
+    Webs.Url.Percent.encode Uri_component @@
     String.concat "\r\n" (String.split_on_char '\n' s)
   in
   let subj = if subject = "" then "" else Fmt.str "subject=%s" (esc subject) in

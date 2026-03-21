@@ -169,7 +169,7 @@ let delete env id =
   Service_env.with_db_transaction' `Immediate env @@ fun db ->
   let* c = get_suggestion db id in
   let* () = Db.exec' db (Suggestion.delete id) in
-  let headers = Http.Headers.def Htmlact.reload "true" Http.Headers.empty in
+  let headers = Http.Headers.(empty |> define Htmlact.reload "true") in
   Ok (Page.part_response ~headers (El.splice []))
 
 let fill_in env req =

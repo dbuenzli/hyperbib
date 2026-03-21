@@ -166,7 +166,7 @@ module Url = struct
   let cancel_of_query query = Http.Query.find_first cancel query
   let cancel_to_query goto = match goto with
   | None -> None | Some goto ->
-      Some (Http.Query.empty |> Http.Query.def cancel goto)
+      Some (Http.Query.empty |> Http.Query.define cancel goto)
 
   type label = t
   type named_id = string option * Id.t
@@ -181,7 +181,7 @@ module Url = struct
 
   let id_meth u ms id =
     let* meth = Kurl.allow ms u in
-    let* id = Res.Id.decode id in
+    let* id = Webs_url_resource.Id.decode id in
     let id = (* TODO likely make Res.Id a functor *)
       Id.of_int id |> Result.get_ok'
     in
@@ -225,6 +225,6 @@ module Url = struct
 
   (* Constructors *)
 
-  let res_name l = Res.Named.name_of_string (name l)
+  let res_name l = Webs_url_resource.Named.name_of_string (name l)
   let page l = Kurl.v kind (Page (Some (res_name l), id l))
 end

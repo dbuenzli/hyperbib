@@ -129,7 +129,7 @@ module Url = struct
   let goto_of_query query = Http.Query.find_first goto_key query
   let goto_to_query goto = match goto with
   | None -> None |
-    Some goto -> Some (Http.Query.empty |> Http.Query.def goto_key goto)
+    Some goto -> Some (Http.Query.empty |> Http.Query.define goto_key goto)
 
   type t =
   | Login of { goto : goto }

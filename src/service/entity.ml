@@ -151,7 +151,7 @@ module Url = struct
     match Http.Query.find_first replace_by q with
     | None -> Http.Response.bad_request_400 ()
     | Some r ->
-        let* id = Res.Id.decode r in
+        let* id = Webs_url_resource.Id.decode r in
         Ok (Id.of_int id |> Result.get_ok' (* FIXME *))
 
   let replace_by_of_query'
@@ -159,7 +159,7 @@ module Url = struct
     match Http.Query.find_first replace_by q with
     | None | Some "" -> Ok None
     | Some r ->
-        let* id = Res.Id.decode r in
+        let* id = Webs_url_resource.Id.decode r in
         Ok (Some (Id.of_int id |> Result.get_ok' (* FIXME *)))
 
   type cancel_url = string option
@@ -167,7 +167,7 @@ module Url = struct
   let cancel_url_of_query query = Http.Query.find_first cancel query
   let cancel_url_to_query = function
   | None -> None
-  | Some goto -> Some (Http.Query.empty |> Http.Query.def cancel goto)
+  | Some goto -> Some (Http.Query.empty |> Http.Query.define cancel goto)
 
   let select = "select"
   let select_of_query q =
@@ -175,7 +175,7 @@ module Url = struct
 
   let select_to_query = function
   | "" -> None
-  | sel -> Some (Http.Query.empty |> Http.Query.def select sel)
+  | sel -> Some (Http.Query.empty |> Http.Query.define select sel)
 
   type input_name = string
   let input_name = "input-name"
@@ -195,7 +195,7 @@ module Url = struct
       | Some bool -> Ok bool
 
   let for_list_to_query ?(init = Http.Query.empty) b =
-    init |> Http.Query.def for_list (string_of_bool b)
+    init |> Http.Query.define for_list (string_of_bool b)
 
 
   let exclude_id = "exclude-id"
@@ -215,17 +215,17 @@ module Url = struct
     =
     match exclude with
     | None -> init
-    | Some id -> Http.Query.def exclude_id (Id.to_string id) init
+    | Some id -> init |> Http.Query.define exclude_id (Id.to_string id)
 
 
   let input_name_to_query ?(init = Http.Query.empty) n =
-    init |> Http.Query.def input_name n
+    init |> Http.Query.define input_name n
 
   let meth_id
       (type id) (module Id : Rel_kit.INTABLE_ID with type t = id) u ms id
     =
     let* meth = Kurl.allow ms u in
-    let* id = Res.Id.decode id in
+    let* id = Webs_url_resource.Id.decode id in
     let id = Id.of_int id |> (* TODO *) Result.get_ok' in
     Ok (meth, id)
 

@@ -9,7 +9,7 @@ open Result.Syntax
 type t =
   { data_dir : Fpath.t;
     cache_dir : Fpath.t;
-    http_client : (Http_client.t, string) result; }
+    http_client : (Http.Client.t, string) result; }
 
 let make ~data_dir ~cache_dir ~http_client () =
   { data_dir; cache_dir; http_client }
@@ -34,7 +34,7 @@ let users_file c = Fpath.(c.data_dir / "users.json")
 let blobstore c = Blobstore.of_dir (blobstore_dir c)
 
 let pp =
-  let http_client c = Result.map Http_client.id (http_client c) in
+  let http_client c = Result.map Http.Client.id (http_client c) in
   Fmt.record
     [ Fmt.field "data-dir" data_dir Fpath.pp;
       Fmt.field "cache-dir" cache_dir Fpath.pp;

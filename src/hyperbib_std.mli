@@ -25,9 +25,7 @@ module List = More.List
 module Url = Webs.Url
 module Media_type = Webs.Media_type
 module Http = Webs.Http
-module Http_client = Webs.Http_client
-module Res = Webs_bazaar.Res
-module Kurl = Webs_bazaar.Kurl
+module Kurl = Webs_kurl
 
 module At = Htmlit.At
 module El = Htmlit.El

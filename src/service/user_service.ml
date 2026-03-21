@@ -82,7 +82,7 @@ let logout app sess req ~goto = match Service_env.editable app with
 
 let view app sess req private' =
   (* Update session and ask for a page reload *)
-  let headers = Http.Headers.def Htmlact.reload "true" Http.Headers.empty in
+  let headers = Http.Headers.(empty |> define Htmlact.reload "true") in
   Result.ok @@
   match sess with
   | None ->

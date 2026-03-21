@@ -25,10 +25,10 @@ let v env _sess request =
   | ".css" | ".js" | ".woff2" ->
       (* FIXME versioning scheme, note something was done in Static_file *)
       let forever = "public, max-age=31536000, immutable" in
-      let hs = Http.Headers.(def cache_control) forever Http.Headers.empty in
+      let hs = Http.Headers.(empty |> define cache_control forever) in
       Ok (Http.Response.override_headers ~by:hs response)
   | ".html" ->
       let ctrl = "max-age=0" in
-      let hs = Http.Headers.(def cache_control) ctrl Http.Headers.empty in
+      let hs = Http.Headers.(empty |> define cache_control ctrl) in
       Ok (Http.Response.override_headers ~by:hs response)
   | _ -> Ok response

@@ -35,7 +35,9 @@ module Url = struct
     match Kurl.Bare.path u with
     | [""] -> Kurl.ok Index
     | ["no-date"] -> Kurl.ok (Page None)
-    | [y] -> Result.map (fun y -> Some (Page (Some y))) (Res.Id.decode y)
+    | [y] ->
+        Result.map (fun y -> Some (Page (Some y)))
+          (Webs_url_resource.Id.decode y)
     | _ -> Kurl.no_match
 
   let html = ".html"

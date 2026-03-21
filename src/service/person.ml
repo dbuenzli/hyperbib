@@ -178,7 +178,7 @@ module Url = struct
 
   let role_to_query ?(init = Http.Query.empty) = function
   | None -> init
-  | Some r -> init |> Http.Query.def role (Role.to_string r)
+  | Some r -> init |> Http.Query.define role (Role.to_string r)
 
   let first = "first"
   let last = "last"
@@ -203,9 +203,9 @@ module Url = struct
 
   let person_to_query ?(init = Http.Query.empty) p =
     init
-    |> Http.Query.def last (Person.last_name p)
-    |> Http.Query.def first (Person.first_names p)
-    |> Http.Query.def orcid
+    |> Http.Query.define last (Person.last_name p)
+    |> Http.Query.define first (Person.first_names p)
+    |> Http.Query.define orcid
       (match Person.orcid p with None -> "" | Some o -> Orcid.to_string o)
 
   type named_id = string option * Id.t
@@ -370,6 +370,6 @@ module Url = struct
 
   (* Constructors *)
 
-  let res_name p = Res.Named.name_of_string (names_fl p)
+  let res_name p = Webs_url_resource.Named.name_of_string (names_fl p)
   let page p = Kurl.v kind (Page (Some (res_name p), id p))
 end

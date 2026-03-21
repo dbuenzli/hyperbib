@@ -58,7 +58,6 @@ let delete
   let deleted = deleted_html (Service_env.page_gen env) c in
   Ok (Page.part_response deleted)
 
-
 (* Page references *)
 
 type ('name, 'id) page_ref = 'name option * 'id
@@ -81,4 +80,5 @@ let entity_for_page_ref
   in
   let res_name = entity_res_name in
   let res_url n id = Kurl.Fmt.url (Page.Gen.url_fmt g) (page_url (Some n) id) in
-  Res.Named.resolve ~get_res ~res_name ~res_url ~req_name ~req_id ()
+  Webs_url_resource.Named.resolve
+    ~get_res ~res_name ~res_url ~req_name ~req_id ()

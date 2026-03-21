@@ -87,14 +87,15 @@ let fill ~config ~doi_resolvers ~media_type ~url_only ~public =
           if url_only
           then Log.stdout (fun m -> m "%a %s" (Fmt.code' Doi.pp) doi url) else
           (* XXX Webs: the Body error handling story is missing. *)
-          let doc = Http.Body.to_bytes_reader doc |> Result.get_ok' in
+          let r = Http.Body.to_bytes_reader doc in
           let public = match public with
           | None -> String.equal resolver Doi.default_resolver
           | Some public -> public
           in
           add_reference_doc
-            ~doi ~doc ~media_type ~origin:resolver ~public ~reference:rid
+            ~doi ~doc:r ~media_type ~origin:resolver ~public ~reference:rid
             db blobstore;
+          Http.Body.finally doc ();
           Unix.sleepf 0.5; (* Throttle. *)
       | Error e -> Log.err (fun m -> m "%s" e)
   in
@@ -116,7 +117,7 @@ let fetch ~config ~doi_resolvers ~media_type ~doi ~url_only ~outf =
   in
   let* () =
     if url_only then (Log.stdout (fun m -> m "%s" url); Ok ()) else
-    let* doc = Http.Body.to_string doc in
+    let doc = Http.Body.to_string doc in
     let* () = Os.File.write outf ~force:true ~make_path:true doc in
     Log.info (fun m -> m "Wrote file %a" (Fmt.code' Fpath.pp) outf);
     Ok ()

@@ -14,7 +14,7 @@ type t
 
 val make :
   data_dir:Fpath.t -> cache_dir:Fpath.t ->
-  http_client:(Http_client.t, string) result -> unit -> t
+  http_client:(Http.Client.t, string) result -> unit -> t
 (** [make] is a configuration with given atributes. See the acessors
     for semantics. *)
 
@@ -63,7 +63,7 @@ val authentication_secret_key_file : t -> Fpath.t
 (** [authentication_secret_key_file c] is absolute path to the file that stores
     the secret key to authenticate session cookies. *)
 
-val http_client : t -> (Http_client.t, string) result
+val http_client : t -> (Http.Client.t, string) result
 (** [http_client c] is the HTTP client to use in the app. *)
 
 (** {1:fmt Formatting} *)

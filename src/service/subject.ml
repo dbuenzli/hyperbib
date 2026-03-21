@@ -215,7 +215,7 @@ module Url = struct
         ~description:"" ~private_note:"" ~public:false ()
 
   let subject_to_query ?(init = Http.Query.empty) s =
-    init |> Http.Query.def nameq (Subject.name s)
+    init |> Http.Query.define nameq (Subject.name s)
 
   let dec u = match Kurl.Bare.path u with
   | [""] ->
@@ -346,6 +346,6 @@ module Url = struct
 
   (* Constructors *)
 
-  let res_name s = Res.Named.name_of_string (name s)
+  let res_name s = Webs_url_resource.Named.name_of_string (name s)
   let page s = Kurl.v kind (Page (Some (res_name s), id s))
 end

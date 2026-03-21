@@ -27,7 +27,7 @@ module Url = struct
 
   let make_query q = match q with
   | None | Some "" -> Http.Query.empty
-  | Some q -> Http.Query.add_value query_key q Http.Query.empty
+  | Some q -> Http.Query.append_value query_key q Http.Query.empty
 
   let enc = function
   | Index q -> Kurl.Bare.v `GET [""] ~query:(make_query q)
