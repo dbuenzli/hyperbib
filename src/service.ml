@@ -45,37 +45,37 @@ module Session = struct
   let state = Webs_session.State.make ~encode ~decode ~equal:( = ) ()
 
   type handler = (t, Webs_session.client_stored_error) Webs_session.Handler.t
-  let handler ~service_path ~private_key ~secure_cookie:secure =
+  let handler ~service_path ~secret_key ~secure_cookie:secure =
     let name = "hyperbib" in
     let attributes = Http.Cookie.attributes ~secure ~path:service_path () in
-    Webs_session.client_stored ~attributes ~private_key ~name ()
+    Webs_session.client_stored ~attributes ~secret_key ~name ()
 end
 
-(* Service private key setup. This could be in a webs bazaar. *)
+(* Service secret key setup. This could be in a webs bazaar. *)
 
-let setup_private_key ~file =
-  let err_load_private_key file e =
-    Fmt.str "@[<v>Service private key error: %s@,\
+let setup_secret_key ~file =
+  let err_load_secret_key file e =
+    Fmt.str "@[<v>Service secret key error: %s@,\
              To create a new one (logs out all users) delete file:@,%a@]"
       e Fmt.(code' Fpath.pp_unquoted) file
   in
-  let err_save_private_key file e =
+  let err_save_secret_key file e =
     Fmt.str
-      "[<v>Cannot save service private key:@,%a: %s@]" Fpath.pp_unquoted file e
+      "@[<v>Cannot save service secret key:@,%a: %s@]" Fpath.pp_unquoted file e
   in
   let* exists = Os.File.exists file in
-  match exists with
-  | true ->
-      Result.map_error (err_load_private_key file) @@
-      let* key = Os.File.read file in
-      Webs_authenticatable.Private_key.of_ascii_string key
-  | false ->
-      Result.map_error (err_save_private_key file) @@
-      let key = Webs_authenticatable.Private_key.random_hs256 () in
-      let save = Webs_authenticatable.Private_key.to_ascii_string key in
-      let force = true and make_path = false in
-      let* () = Os.File.write ~force ~make_path ~mode:0o600 file save in
-      Ok key
+  if exists then begin
+    Result.map_error (err_load_secret_key file) @@
+    let* key = Os.File.read file in
+    Webs_authenticatable.Secret_key.of_ascii_string key
+  end else begin
+    Result.map_error (err_save_secret_key file) @@
+    let key = Webs_authenticatable.Secret_key.random_hs256 () in
+    let save = Webs_authenticatable.Secret_key.to_ascii_string key in
+    let force = true and make_path = true in
+    let* () = Os.File.write ~force ~make_path ~mode:0o600 file save in
+    Ok key
+  end
 
 (* Sub services *)
 
@@ -150,7 +150,7 @@ let adjust_env_and_session env sess =
           let env = env' caps ~auth_ui ~user_view in
           env, sess
 
-let make ~service_path ~private_key ~secure_cookie tree ~fallback env =
+let make ~service_path ~secret_key ~secure_cookie tree ~fallback env =
   let serve session request =
     let session = match session with
     | Ok v -> v
@@ -174,5 +174,5 @@ let make ~service_path ~private_key ~secure_cookie tree ~fallback env =
     let error = Page.error (Service_env.page_gen env) request in
     session, Http.Response.map_errors ~only_empty:true error response
   in
-  let handler = Session.handler ~service_path ~private_key ~secure_cookie in
+  let handler = Session.handler ~service_path ~secret_key ~secure_cookie in
   Webs_session.setup Session.state handler serve

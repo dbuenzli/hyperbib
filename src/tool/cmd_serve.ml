@@ -44,10 +44,10 @@ let setup_env ~config ~db_pool ~editable ~service_path ~testing  =
   Ok (Service_env.make ~config ~caps ~db_pool ~editable ~page_gen ())
 
 let setup_service ~config ~service_path ~secure_cookie ~env =
-  let pk_file = Hyperbib_config.authentication_private_key config in
-  let* private_key = Service.setup_private_key ~file:pk_file in
+  let file = Hyperbib_config.authentication_secret_key_file config in
+  let* secret_key = Service.setup_secret_key ~file in
   let tree = Service_tree.v and fallback = Static_file_service.v in
-  Ok (Service.make ~service_path ~private_key ~secure_cookie tree ~fallback env)
+  Ok (Service.make ~service_path ~secret_key ~secure_cookie tree ~fallback env)
 
 let start_backup_thread ~config ~db_pool ~backup_every_s =
   match backup_every_s with

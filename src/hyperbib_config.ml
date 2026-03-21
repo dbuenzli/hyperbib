@@ -14,14 +14,17 @@ type t =
 let make ~data_dir ~cache_dir ~http_client () =
   { data_dir; cache_dir; http_client }
 
-let db_path = Fpath.v "bib/bib.sqlite3"
+let db_file_path = Fpath.v "bib/bib.sqlite3"
 let blobstore_path = Fpath.v "bib/blobs"
+let secrets_path = Fpath.v "secrets"
 
 let data_dir c = c.data_dir
-let authentication_private_key c = Fpath.(c.data_dir / "auth.private")
+let authentication_secret_key_file c =
+  Fpath.(c.data_dir // secrets_path /  "authentication.key")
+
 let cache_dir c = c.cache_dir
 let blobstore_dir c = Fpath.(c.data_dir // blobstore_path)
-let db_file c = Fpath.(c.data_dir // db_path)
+let db_file c = Fpath.(c.data_dir // db_file_path)
 let db_backup_file c = Fpath.(db_file c + ".backup")
 let doi_cache_dir c = Fpath.(c.cache_dir / "dois")
 let http_client c = c.http_client
@@ -35,8 +38,8 @@ let pp =
   Fmt.record
     [ Fmt.field "data-dir" data_dir Fpath.pp;
       Fmt.field "cache-dir" cache_dir Fpath.pp;
-      Fmt.field "authentication-private-key"
-        authentication_private_key Fpath.pp;
+      Fmt.field "authentication-secret-key-file"
+        authentication_secret_key_file Fpath.pp;
       Fmt.field "blobstore-dir" blobstore_dir Fpath.pp;
       Fmt.field "db-file" db_file Fpath.pp;
       Fmt.field "db-backup-file" db_backup_file Fpath.pp;

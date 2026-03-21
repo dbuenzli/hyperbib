@@ -27,15 +27,15 @@ module Session : sig
 
   val handler :
     service_path:Http.Path.t ->
-    private_key:Webs_authenticatable.Private_key.t -> secure_cookie:bool ->
+    secret_key:Webs_authenticatable.Secret_key.t -> secure_cookie:bool ->
     handler
   (** [handler] is a session handler for authenticated users. *)
 end
 
-(** {1:private_key Service private key setup} *)
+(** {1:secret_key Service secret key setup} *)
 
-val setup_private_key : file:Hyperbib_std.Fpath.t ->
-  (Webs_authenticatable.Private_key.t, string) result
+val setup_secret_key : file:Hyperbib_std.Fpath.t ->
+  (Webs_authenticatable.Secret_key.t, string) result
 
 (** {1:sub Sub services} *)
 
@@ -59,10 +59,10 @@ type t = Service_env.t -> Http.Request.t -> Http.Response.t
 (** The type for the web service. *)
 
 val make :
-  service_path:Http.Path.t -> private_key:Webs_authenticatable.Private_key.t ->
+  service_path:Http.Path.t -> secret_key:Webs_authenticatable.Secret_key.t ->
   secure_cookie:bool -> sub Kurl.tree ->
   fallback:sub_with_immutable_session -> t
-(** [make ~service_path ~private_key ~secure_cookie tree ~fallback] serves
+(** [make ~service_path ~secret_key ~secure_cookie tree ~fallback] serves
     [tree] with a fallback to [fallback] if nothing matches. The root
     of the service is on [service_path], [private_key] is for session
     authentication and [secure_cookie] indicates whether secure cookies

@@ -59,9 +59,9 @@ val blobstore : t -> (Blobstore.t, string) result
   (** [bib_conf_file c] is the file holding the bibliography configuration. *)
 *)
 
-val authentication_private_key : t -> Fpath.t
-(** [authentication_private_key c] is absolute path to the file that stores
-    the private key to authenticate data like session cookies. *)
+val authentication_secret_key_file : t -> Fpath.t
+(** [authentication_secret_key_file c] is absolute path to the file that stores
+    the secret key to authenticate session cookies. *)
 
 val http_client : t -> (Http_client.t, string) result
 (** [http_client c] is the HTTP client to use in the app. *)
