@@ -13,7 +13,6 @@ module Char = More.Char
 module String = More.String
 module Bytes = Bytesrw.Bytes
 module List = More.List
-module Result = More.Result
 
 module Bag = Rel_query.Bag
 
