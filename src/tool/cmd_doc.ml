@@ -119,7 +119,7 @@ let fetch ~config ~doi_resolvers ~media_type ~doi ~url_only ~outf =
     if url_only then (Log.stdout (fun m -> m "%s" url); Ok ()) else
     let doc = Http.Body.to_string doc in
     let* () = Os.File.write outf ~force:true ~make_path:true doc in
-    Log.info (fun m -> m "Wrote file %a" (Fmt.code' Fpath.pp) outf);
+    Log.info (fun m -> m "Wrote file %a" (Fmt.code' Filepath.pp) outf);
     Ok ()
   in
   Ok Hyperbib_cli.Exit.ok
@@ -190,7 +190,7 @@ let fetch_cmd =
     Arg.(required & pos 0 (some string) None & info [] ~doc ~docv:"ID")
   and+ outf =
     let doc = "Write document to $(docv). Use $(b,-) for standard output" in
-    Arg.(value & opt More_cli.filepath Fpath.dash & info ["o"] ~doc)
+    Arg.(value & opt More_cli.file Filepath.dash & info ["o"] ~doc)
   in
   fetch ~config ~doi_resolvers ~media_type ~doi ~url_only ~outf
 

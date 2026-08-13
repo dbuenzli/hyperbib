@@ -7,11 +7,11 @@ open Hyperbib_std
 open Result.Syntax
 
 let log_making_backup file =
-  Log.stdout (fun m -> m "Making backup to %a" (Fmt.code' Fpath.pp) file)
+  Log.stdout (fun m -> m "Making backup to %a" (Fmt.code' Filepath.pp) file)
 
 let log_restore_backup backup db =
   Log.stdout (fun m -> m "@[<v>Restoring backup %a@,into %a@]"
-              (Fmt.code' Fpath.pp) backup (Fmt.code' Fpath.pp) db)
+              (Fmt.code' Filepath.pp) backup (Fmt.code' Filepath.pp) db)
 
 let make_backup db_file db =
   let backup = Db.stamped_backup_file db_file in
@@ -163,7 +163,7 @@ let backup_cmd =
       "The backup file. If unspecified a new timestamped file is written \
        in data directory of the application directory."
     in
-    Arg.(value & pos 0 (some More_cli.filepath) None & info [] ~doc)
+    Arg.(value & pos 0 (some More_cli.file) None & info [] ~doc)
   in
   backup ~config ~file
 
@@ -213,7 +213,7 @@ let restore_cmd =
   and+ backup =
     let doc = "$(docv) is the backup file to restore." in
     let docv = "BACKUP.sqlite3" in
-    Arg.(value & pos 0 (some More_cli.filepath) None & info [] ~doc ~docv)
+    Arg.(value & pos 0 (some More_cli.file) None & info [] ~doc ~docv)
   and+ last =
     let doc = "Use the last automated backup." in
     Arg.(value & flag & info ["l"; "last"] ~doc)

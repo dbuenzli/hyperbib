@@ -337,7 +337,7 @@ let doc env request (_, ref_id) docid =
   | Error e -> Http.Response.server_error_500 ~log:e ()
   | Ok None -> Http.Response.not_found_404 ()
   | Ok (Some file) ->
-      let* response = Webs_fs.send_file request (Fpath.to_string file) in
+      let* response = Webs_fs.send_file request (Filepath.to_string file) in
       let forever = "public, max-age=31536000, immutable" in
       let headers =
         Http.Headers.empty

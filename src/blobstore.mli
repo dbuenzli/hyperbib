@@ -42,11 +42,11 @@ end
 type t
 (** The type for blob stores. *)
 
-val of_dir : Fpath.t -> (t, string) result
+val of_dir : Filepath.t -> (t, string) result
 (** [of_dir dir] is a blob store reading and writing in [dir].
     If [dir] does not exist it is created when needed. *)
 
-val dir : t -> Fpath.t
+val dir : t -> Filepath.t
 (** [dir store] is the directory of the blob store (which may not exist
     yet). *)
 
@@ -69,7 +69,7 @@ val delete : Key.t -> t -> (bool, string) result
 (** [delete key store] deletes the blob keyed by [key] in [store] and
     reports if the blob existed or not. *)
 
-val find : Key.t -> t -> (Fpath.t option, string) result
+val find : Key.t -> t -> (Filepath.t option, string) result
 (** [find key store] is the path in [store] to the blob keyed by [key]
     (if any). *)
 
@@ -79,7 +79,7 @@ val with_blob : Key.t -> t ->
     available in [f] (if any). The reader is only valid during [f]. *)
 
 val fold :
-  (Key.t option -> Fpath.t -> 'a -> 'a) -> t -> 'a -> ('a, string) result
+  (Key.t option -> Filepath.t -> 'a -> 'a) -> t -> 'a -> ('a, string) result
 (** [fold f store acc] folds [f] over the blobs found in [store]
     starting with [acc]. If [f] is called with [None] as the first
     argument then the path is in the directory [dir store] but

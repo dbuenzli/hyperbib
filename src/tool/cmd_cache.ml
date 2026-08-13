@@ -17,7 +17,7 @@ let clear ~config ~only_dois =
   Ok Hyperbib_cli.Exit.ok
 
 let path ~config =
-  Fmt.pr "@[%a@]@." Fpath.pp (Hyperbib_config.cache_dir config);
+  Fmt.pr "@[%a@]@." Filepath.pp (Hyperbib_config.cache_dir config);
   Hyperbib_cli.Exit.ok
 
 (* Command line interface *)

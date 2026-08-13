@@ -8,7 +8,7 @@
 (** {1:std Standard libray needs} *)
 
 module Fmt = More.Fmt
-module Fpath = More.Fpath
+module Filepath = More.Filepath
 module Log = More.Log
 module Cmd = More.Cmd
 module Os = More.Os
@@ -41,7 +41,7 @@ module Adhoc : sig
 
   val cp_dir_content :
     dotfiles:bool -> follow_symlinks:bool -> recurse:bool ->
-    of_dir:Fpath.t -> inside_dir:Fpath.t -> unit -> (unit, string) result
+    of_dir:Filepath.t -> inside_dir:Filepath.t -> unit -> (unit, string) result
   (** FIXME it these kinds of things should likely be added to
       B0_std FIXME don't we have that now ? *)
 

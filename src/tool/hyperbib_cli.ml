@@ -34,13 +34,13 @@ let config =
     let doc_envs =
       [Cmd.Env.info "HYPERBIB_DATA_DIR"; Cmd.Env.info "XDG_DATA_HOME"]
     in
-    Arg.(value & opt (some More_cli.dirpath) None &
+    Arg.(value & opt (some More_cli.dir) None &
          info ["data-dir"] ~doc ~docs ~absent ~doc_envs)
   and+ cache_dir =
     let doc = "$(docv) is the cache directory" in
     let absent = "$(b,XDG_CACHE_HOME)/$(tool)" in
     let doc_envs = [Cmd.Env.info "XDG_CACHE_HOME"] in
-    Arg.(value & opt (some More_cli.dirpath) None &
+    Arg.(value & opt (some More_cli.dir) None &
          info ["cache-dir"] ~absent ~doc ~docs ~doc_envs)
   in
   Hyperbib_config.discover ~data_dir ~cache_dir

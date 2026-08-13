@@ -4,7 +4,7 @@
   ---------------------------------------------------------------------------*)
 
 module Fmt = More.Fmt
-module Fpath = More.Fpath
+module Filepath = More.Filepath
 module Log = More.Log
 module Cmd = More.Cmd
 module Os = More.Os
@@ -29,7 +29,7 @@ module Adhoc = struct
     =
     let cp _ _ rel () =
       Log.if_error ~use:() @@
-      let src = Fpath.(src // rel) and dst = Fpath.(dst // rel) in
+      let src = Filepath.(src // rel) and dst = Filepath.(dst // rel) in
       Os.File.copy ~force:true ~make_path:true src ~dst
     in
     Os.Dir.fold_files ~dotfiles ~follow_symlinks ~rel:true ~recurse cp src ()

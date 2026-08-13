@@ -57,14 +57,14 @@ let front_to_static_dir b =
   let dst = B0_build.in_scope_dir b static_dir in
   let exe = B0_unit.find_meta_or_error B0_unit.exe_file (B0_build.current b) in
   let* exe = B0_memo.fail_if_error m exe in
-  B0_memo.copy m exe ~dst:Fpath.(dst / basename exe);
+  B0_memo.copy m exe ~dst:Filepath.(dst / basename exe);
   let has_map = B0_unit.find_meta B0_jsoo.source_map (B0_build.current b) in
   let has_map = match Option.join has_map with
   | Some `File -> true | Some `Inline | None -> false
   in
   if has_map then begin
-    let map = Fpath.(exe -+ ".map") in
-    B0_memo.copy m map ~dst:Fpath.(dst / basename map);
+    let map = Filepath.(exe -+ ".map") in
+    B0_memo.copy m map ~dst:Filepath.(dst / basename map);
   end;
   Fut.return ()
 
@@ -94,7 +94,7 @@ let vcs_describe b =
 let write_static_file_stamp b =
   let m = B0_build.memo b in
   let r = B0_memo.reviver m in
-  let asset_file file = B0_build.in_scope_dir b Fpath.(static_dir / file) in
+  let asset_file file = B0_build.in_scope_dir b Filepath.(static_dir / file) in
   let files = List.map asset_file static_files in
   let stamp_ml = stamp_ml b in
   let version = vcs_describe b |> B0_memo.fail_if_error m in
@@ -130,7 +130,7 @@ let hyperbib_base_lib =
       (* TODO b0: slightly messy we need to copy it over because of
          https://github.com/ocaml/ocaml/issues/9717
          Maybe we should rather always copy srcs to build_dir *)
-      Fut.return (Fpath.Set.(singleton (stamp_ml b) |> add (stamp_mli b)))
+      Fut.return (Filepath.Set.(singleton (stamp_ml b) |> add (stamp_mli b)))
     in
     [ `Dir ~/"src";
       `Dir ~/"src/service";

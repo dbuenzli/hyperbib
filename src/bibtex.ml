@@ -204,9 +204,9 @@ let decode_entries d =
   in
   loop d []
 
-let of_string ?(file = Fpath.dash) s =
+let of_string ?(file = Filepath.dash) s =
   try
-    let file = Fpath.to_string file in
+    let file = Filepath.to_string file in
     let d = Textdec.make ~file s in
     Ok (nextc d; decode_entries d)
   with Error (loc, msg) -> Result.Error (msg, loc)

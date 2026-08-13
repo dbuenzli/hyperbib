@@ -13,53 +13,54 @@ type t
 (** The type for configurations. *)
 
 val make :
-  data_dir:Fpath.t -> cache_dir:Fpath.t ->
+  data_dir:Filepath.t -> cache_dir:Filepath.t ->
   http_client:(Http.Client.t, string) result -> unit -> t
 (** [make] is a configuration with given atributes. See the acessors
     for semantics. *)
 
 val discover :
-  data_dir:Fpath.t option -> cache_dir:Fpath.t option -> (t, string) result
+  data_dir:Filepath.t option -> cache_dir:Filepath.t option ->
+  (t, string) result
 (** [discover] is a configuration whose unspecified attributes
     are discovered. *)
 
 (** {1:props Properties} *)
 
-val data_dir : t -> Fpath.t
+val data_dir : t -> Filepath.t
 (** [data_dir c] is the absolute path to the app's data directory. *)
 
-val cache_dir : t -> Fpath.t
+val cache_dir : t -> Filepath.t
 (** [cache_dir c] is the absolute path to the app's cache directory. *)
 
-val users_file : t -> Fpath.t
+val users_file : t -> Filepath.t
 (** [users_file c] is the JSON file holding app's users. *)
 
-val doi_cache_dir : t -> Fpath.t
+val doi_cache_dir : t -> Filepath.t
 (** [doic_cache_dir c] is the absolute path to the DOI metadata
     cache directory (this is in {!cache_dir}) *)
 
-val static_dir : t -> Fpath.t
+val static_dir : t -> Filepath.t
 (** [static_dir c] is the absolute path to the static assets directory. *)
 
-val db_file : t -> Fpath.t
+val db_file : t -> Filepath.t
 (** [db_file c] is the sqlite3 database file holding application data. *)
 
-val db_backup_file : t -> Fpath.t
+val db_backup_file : t -> Filepath.t
 (** [db_backup_file c] is the stable backup of the sqlite3 database file
     holding application data. *)
 
-val blobstore_dir : t -> Fpath.t
+val blobstore_dir : t -> Filepath.t
 (** [blobstore_dir c] is the absolute path to the documentation store. *)
 
 val blobstore : t -> (Blobstore.t, string) result
 (** [blobstore c] is the blob store of {!blobstore_dir}. *)
 
   (*
-  val bib_conf_file : t -> Fpath.t
+  val bib_conf_file : t -> Filepath.t
   (** [bib_conf_file c] is the file holding the bibliography configuration. *)
 *)
 
-val authentication_secret_key_file : t -> Fpath.t
+val authentication_secret_key_file : t -> Filepath.t
 (** [authentication_secret_key_file c] is absolute path to the file that stores
     the secret key to authenticate session cookies. *)
 

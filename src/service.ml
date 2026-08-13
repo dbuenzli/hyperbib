@@ -57,11 +57,12 @@ let setup_secret_key ~file =
   let err_load_secret_key file e =
     Fmt.str "@[<v>Service secret key error: %s@,\
              To create a new one (logs out all users) delete file:@,%a@]"
-      e Fmt.(code' Fpath.pp_unquoted) file
+      e Fmt.(code' Filepath.pp_unquoted) file
   in
   let err_save_secret_key file e =
     Fmt.str
-      "@[<v>Cannot save service secret key:@,%a: %s@]" Fpath.pp_unquoted file e
+      "@[<v>Cannot save service secret key:@,%a: %s@]"
+      Filepath.pp_unquoted file e
   in
   let* exists = Os.File.exists file in
   if exists then begin

@@ -8,9 +8,9 @@ open Result.Syntax
 
 let doi ~config ~reset ~dois ~files ~dry_run =
   Log.if_error ~use:Hyperbib_cli.Exit.some_error @@
-  let files = match dois, files with [], [] -> [Fpath.dash] | _ -> files in
+  let files = match dois, files with [], [] -> [Filepath.dash] | _ -> files in
   let dois_of_file file acc =
-    Log.info (fun m -> m "Extracting DOIs from %a" Fpath.pp file);
+    Log.info (fun m -> m "Extracting DOIs from %a" Filepath.pp file);
     let* contents = Os.File.read file in
     Ok (Doi.fold_text_scrape Doi.Set.add contents acc)
   in
@@ -32,7 +32,7 @@ let doi ~config ~reset ~dois ~files ~dry_run =
         Fmt.code "--reset"
   | true ->
       let db_file = Cli_kit.Conf.db_file config in
-      let file_error e = Fmt.str "%a: %s" Fpath.pp_unquoted db_file e in
+      let file_error e = Fmt.str "%a: %s" Filepath.pp_unquoted db_file e in
       Result.map_error file_error @@ Result.join @@ Db.string_error @@
       Db.with_open ~foreign_keys:false db_file @@ fun db ->
       let* () = Db.clear db |> Db.string_error in
@@ -81,7 +81,7 @@ let doi_cmd =
     let doc = "Extract DOIs from (UTF-8 or ASCII compatible) text $(docv)."in
     let docv = "FILE" in
     let absent = "$(b,stdin) if no DOI is specified" in
-    let path_conv = Arg.conv' Fpath.(of_string, pp) in
+    let path_conv = Arg.conv' Filepath.(of_string, pp) in
     Arg.(value & pos_all path_conv [] & info [] ~doc ~docv ~absent)
   in
   doi ~config ~reset ~dois ~files ~dry_run

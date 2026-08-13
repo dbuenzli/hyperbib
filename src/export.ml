@@ -24,13 +24,13 @@ module Static_html = struct
     let* path = Http.Path.to_absolute_filepath (Kurl.Bare.path req) in
     let file = String.subrange ~first:1 (* drop / *) path ^ Kurl.Bare.ext req in
     Result.map_error (fun e -> Fmt.str "URL %s to file path: %s" path e) @@
-    Fpath.of_string file
+    Filepath.of_string file
 
   let write_page ~dir g p =
     let url = Page.url p in
     let html = El.to_string ~doctype:true (Page.html p) in
     let* file = filepath_of_url (Page.Gen.url_fmt g) url in
-    let file = Fpath.(dir // file) in
+    let file = Filepath.(dir // file) in
     Os.File.write ~force:true ~make_path:true file html
 
   let write_reference ~dir db g r =

@@ -34,7 +34,7 @@ end
 
 (** {1:secret_key Service secret key setup} *)
 
-val setup_secret_key : file:Hyperbib_std.Fpath.t ->
+val setup_secret_key : file:Hyperbib_std.Filepath.t ->
   (Webs_authenticatable.Secret_key.t, string) result
 
 (** {1:sub Sub services} *)

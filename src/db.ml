@@ -21,7 +21,7 @@ let open' ?foreign_keys ?(read_only = false) file =
   let set_wal_mode db = Rel_sqlite3.exec_sql db "PRAGMA journal_mode=WAL;" in
   let mode = Rel_sqlite3.(if read_only then Read else Read_write_create) in
   let stmt_cache_size = 40 in
-  let mutex = Rel_sqlite3.No and f = Fpath.to_string file in
+  let mutex = Rel_sqlite3.No and f = Filepath.to_string file in
   let* db = Rel_sqlite3.open' ?foreign_keys ~stmt_cache_size ~mutex ~mode f in
   let* () = Rel_sqlite3.busy_timeout_ms db 5000 in
   let* () = if read_only then Ok () else set_wal_mode db in
@@ -35,11 +35,11 @@ let with_open ?foreign_keys ?read_only db_file f =
   Fun.protect ~finally @@ fun () -> Ok (f db)
 
 let with_open' ?foreign_keys ?read_only db_file f =
-  Result.map_error (Fmt.str "%a: %s" Fpath.pp db_file) @@ string_error @@
+  Result.map_error (Fmt.str "%a: %s" Filepath.pp db_file) @@ string_error @@
   with_open ?foreign_keys ?read_only db_file f
 
 let ensure_db_path db_path =
-  Result.map ignore (Os.Dir.create ~make_path:true (Fpath.parent db_path))
+  Result.map ignore (Os.Dir.create ~make_path:true (Filepath.parent db_path))
 
 (* Pool *)
 
@@ -58,18 +58,18 @@ let stamped_backup_file file =
     Fmt.str "-%04d-%02d-%02d-%02d%02d%02d"
       (t.tm_year + 1900) (t.tm_mon + 1) t.tm_mday t.tm_hour t.tm_min t.tm_sec
   in
-  let p, ext = Fpath.cut_ext ~multi:true file in
-  Fpath.append_ext p (stamp ^ ext)
+  let p, ext = Filepath.cut_ext ~multi:true file in
+  Filepath.append_ext p (stamp ^ ext)
 
 let vaccum_into file db =
-  let err e = Fmt.str "Vacuum into %a: %s" Fpath.pp_unquoted file e in
+  let err e = Fmt.str "Vacuum into %a: %s" Filepath.pp_unquoted file e in
   Result.map_error err @@ Rel_sqlite3.string_error @@
   let vacuum = Rel_sql.Stmt.(func "VACUUM INTO ?1;" (text @-> unit)) in
-  let vacuum = vacuum (Fpath.to_string file) in
+  let vacuum = vacuum (Filepath.to_string file) in
   Rel_sqlite3.exec db vacuum
 
 let backup file db =
-  let* tmp = Os.Path.tmp ~dir:(Fpath.parent file) () in
+  let* tmp = Os.Path.tmp ~dir:(Filepath.parent file) () in
   let* () = vaccum_into tmp db in
   Os.Path.rename ~force:true ~make_path:false tmp ~dst:file
 

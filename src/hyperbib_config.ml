@@ -7,46 +7,46 @@ open Hyperbib_std
 open Result.Syntax
 
 type t =
-  { data_dir : Fpath.t;
-    cache_dir : Fpath.t;
+  { data_dir : Filepath.t;
+    cache_dir : Filepath.t;
     http_client : (Http.Client.t, string) result; }
 
 let make ~data_dir ~cache_dir ~http_client () =
   { data_dir; cache_dir; http_client }
 
-let db_file_path = Fpath.v "bib/bib.sqlite3"
-let blobstore_path = Fpath.v "bib/blobs"
-let secrets_path = Fpath.v "secrets"
+let db_file_path = Filepath.v "bib/bib.sqlite3"
+let blobstore_path = Filepath.v "bib/blobs"
+let secrets_path = Filepath.v "secrets"
 
 let data_dir c = c.data_dir
 let authentication_secret_key_file c =
-  Fpath.(c.data_dir // secrets_path /  "authentication.key")
+  Filepath.(c.data_dir // secrets_path /  "authentication.key")
 
 let cache_dir c = c.cache_dir
-let blobstore_dir c = Fpath.(c.data_dir // blobstore_path)
-let db_file c = Fpath.(c.data_dir // db_file_path)
-let db_backup_file c = Fpath.(db_file c + ".backup")
-let doi_cache_dir c = Fpath.(c.cache_dir / "dois")
+let blobstore_dir c = Filepath.(c.data_dir // blobstore_path)
+let db_file c = Filepath.(c.data_dir // db_file_path)
+let db_backup_file c = Filepath.(db_file c + ".backup")
+let doi_cache_dir c = Filepath.(c.cache_dir / "dois")
 let http_client c = c.http_client
-let static_dir c = Fpath.(c.data_dir / "static")
-let users_file c = Fpath.(c.data_dir / "users.json")
+let static_dir c = Filepath.(c.data_dir / "static")
+let users_file c = Filepath.(c.data_dir / "users.json")
 
 let blobstore c = Blobstore.of_dir (blobstore_dir c)
 
 let pp =
   let http_client c = Result.map Http.Client.id (http_client c) in
   Fmt.record
-    [ Fmt.field "data-dir" data_dir Fpath.pp;
-      Fmt.field "cache-dir" cache_dir Fpath.pp;
+    [ Fmt.field "data-dir" data_dir Filepath.pp;
+      Fmt.field "cache-dir" cache_dir Filepath.pp;
       Fmt.field "authentication-secret-key-file"
-        authentication_secret_key_file Fpath.pp;
-      Fmt.field "blobstore-dir" blobstore_dir Fpath.pp;
-      Fmt.field "db-file" db_file Fpath.pp;
-      Fmt.field "db-backup-file" db_backup_file Fpath.pp;
-      Fmt.field "doi-cache-dir" doi_cache_dir Fpath.pp;
+        authentication_secret_key_file Filepath.pp;
+      Fmt.field "blobstore-dir" blobstore_dir Filepath.pp;
+      Fmt.field "db-file" db_file Filepath.pp;
+      Fmt.field "db-backup-file" db_backup_file Filepath.pp;
+      Fmt.field "doi-cache-dir" doi_cache_dir Filepath.pp;
       Fmt.field "http-client" http_client Fmt.(result ~ok:string ~error:string);
-      Fmt.field "static-dir" static_dir Fpath.pp;
-      Fmt.field "users-file" users_file Fpath.pp ]
+      Fmt.field "static-dir" static_dir Filepath.pp;
+      Fmt.field "users-file" users_file Filepath.pp ]
 
 (* Discovery logic *)
 
@@ -67,7 +67,7 @@ let tooldir = "hyperbib"
 
 let in_tooldir lookup_dir () =
   let* dir = lookup_dir () in
-  Ok Fpath.(dir / tooldir)
+  Ok Filepath.(dir / tooldir)
 
 let get_dir dir ~or_lookup:lookup_dir =
   let* dir = match dir with
@@ -79,11 +79,11 @@ let get_dir dir ~or_lookup:lookup_dir =
 
 let get_data_dir () =
   let* dir = Os.Dir.cwd () in
-  let cwd_hyperbib = Fpath.(dir / tooldir) in
+  let cwd_hyperbib = Filepath.(dir / tooldir) in
   let* exists = Os.Path.exists cwd_hyperbib in
   if exists then Ok cwd_hyperbib else
   let empty_is_none = true in
-  let* dir = Os.Env.var' ~empty_is_none Fpath.of_string "HYPERBIB_DATA_DIR" in
+  let* dir = Os.Env.var' ~empty_is_none Filepath.of_string "HYPERBIB_DATA_DIR" in
   match dir with
   | Some dir -> Ok dir
   | None -> in_tooldir Os.Dir.data ()
@@ -99,13 +99,13 @@ let discover ~data_dir ~cache_dir =
 let with_db config f =
   let db_file = db_file config in
   let* () = Db.ensure_db_path db_file in
-  Result.map_error (fun e -> Fmt.str "%a: %s" Fpath.pp_unquoted db_file e) @@
+  Result.map_error (fun e -> Fmt.str "%a: %s" Filepath.pp_unquoted db_file e) @@
   Db.with_open_schema Schema.v db_file f
 
 let with_db_transaction config kind f =
   let db_file = db_file config in
   let* () = Db.ensure_db_path db_file in
-  Result.map_error (fun e -> Fmt.str "%a: %s" Fpath.pp_unquoted db_file e) @@
+  Result.map_error (fun e -> Fmt.str "%a: %s" Filepath.pp_unquoted db_file e) @@
   Result.join @@ Result.join @@ Result.map Db.string_error @@
   Db.with_open_schema Schema.v db_file @@ fun db ->
   Db.with_transaction kind db f

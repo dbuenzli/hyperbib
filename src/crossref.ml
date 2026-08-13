@@ -157,12 +157,12 @@ module Work = struct
 end
 
 let rec for_doi httpc ~cache doi =
-  let doi_file = Fpath.(cache / Doi.as_filename doi + ".json") in
+  let doi_file = Filepath.(cache / Doi.as_filename doi + ".json") in
   let* exists = Os.File.exists doi_file in
   match exists with
   | true ->
       let* contents = Os.File.read doi_file in
-      let file = Fpath.to_string doi_file in
+      let file = Filepath.to_string doi_file in
       Result.map Option.some @@
       Jsont_bytesrw.decode_string ~locs:true ~file Work.jsont contents
   | false ->

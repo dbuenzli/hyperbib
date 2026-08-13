@@ -66,7 +66,7 @@ let test_mechanics =
   (* Fold over the store keys. *)
   let add key path acc = match key with
   | Some key -> Test.eq (module Blobstore.Key) key data0_key
-  | None -> Test.fail "%a: File should not exist" Fpath.pp path
+  | None -> Test.fail "%a: File should not exist" Filepath.pp path
   in
   let* () = Blobstore.fold add store () in
   Ok ()

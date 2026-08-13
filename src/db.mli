@@ -28,7 +28,7 @@ type t
 (** The type for database connections. *)
 
 val with_open :
-  ?foreign_keys:bool -> ?read_only:bool -> Fpath.t -> (t -> 'a) ->
+  ?foreign_keys:bool -> ?read_only:bool -> Filepath.t -> (t -> 'a) ->
   ('a, error) result
 (** [with_open file f] calls [f] with a database open on [file].  If
     [read_only] is [true] (defaults to [false]), no writes are
@@ -36,12 +36,12 @@ val with_open :
     {!with_open_schema}. *)
 
 val with_open' :
-  ?foreign_keys:bool -> ?read_only:bool -> Fpath.t -> (t -> 'a) ->
+  ?foreign_keys:bool -> ?read_only:bool -> Filepath.t -> (t -> 'a) ->
   ('a, string) result
 (** [with_open'] is like {!with_open} but with an error string
     prefixed by the file. *)
 
-val ensure_db_path : Fpath.t -> (unit, string) result
+val ensure_db_path : Filepath.t -> (unit, string) result
 (** [ensures_db_path db_file] the parent of [db_file] exists. It's a
     bit annoying to not have that as a [make_path] flag in
     [with_open], but we are not in the right error monad. *)
@@ -51,27 +51,27 @@ val ensure_db_path : Fpath.t -> (unit, string) result
 type pool = (t, error) Rel_pool.t
 (** The type for database connection pools. *)
 
-val pool : ?read_only:bool -> Fpath.t -> size:int -> pool
+val pool : ?read_only:bool -> Filepath.t -> size:int -> pool
 (** [pool file ~size] pools [size] connections on the database [file].
     If [read_only] is [true] (defaults to [false]), no writes are
     allowed. *)
 
 (** {1:backups Backups} *)
 
-val stamped_backup_file : Fpath.t -> Fpath.t
+val stamped_backup_file : Filepath.t -> Filepath.t
 (** [stamped_backup_file file] appends a second precision local time stamp
     to the basename of [file]. This respects the (multi)extension. *)
 
-val backup : Fpath.t -> t -> (unit, string) result
+val backup : Filepath.t -> t -> (unit, string) result
 (** [backup file db] backups [db] to [file]. [file] is replaced
     atomically. This means that with the original db file, we need as
     much a three times the space of the db. *)
 
-val backup_thread : pool -> every_s:int -> Fpath.t -> Thread.t
+val backup_thread : pool -> every_s:int -> Filepath.t -> Thread.t
 (** [backup_thread p every_s file] makes every [every_s] seconds a
     stable copy to [file] of the database drawn from [p]. *)
 
-val restore : backup:Fpath.t -> t -> (unit, string) result
+val restore : backup:Filepath.t -> t -> (unit, string) result
 (** [restore backup db] restore [backup] into [db]. *)
 
 (** {1:transactions Transaction} *)
@@ -100,7 +100,7 @@ val schema :
 
 val with_open_schema :
   ?foreign_keys:bool -> ?read_only:bool -> Rel.Schema.t ->
-  Fpath.t -> (t -> 'a) -> ('a, string) result
+  Filepath.t -> (t -> 'a) -> ('a, string) result
 (** [with_open_schema] is {!with_open} followed by {!ensure_schema}. *)
 
 (** {1:queries Queries} *)

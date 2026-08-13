@@ -88,7 +88,7 @@ end
 
 val for_doi :
   Webs.Http.Client.t option ->
-  cache:Fpath.t -> Doi.t -> (Work.t option, string) result
+  cache:Filepath.t -> Doi.t -> (Work.t option, string) result
 (** [for_doi httpc cache doi] looks up crossref metadata for DOI
     [doi].  Looks up in the local [cache] first. If [httpc] is [None]
     looked up in the cache only. [None] is returned if the DOI cannot

@@ -23,13 +23,13 @@ module Key = struct
   let pp ppf k = Fmt.string ppf (to_text k)
 end
 
-type t = { dir : Fpath.t }
+type t = { dir : Filepath.t }
 
 let of_dir dir = Ok { dir }
 let dir { dir } = dir
 
 let key_of_filename fname = Result.to_option (Key.of_text fname)
-let blobpath key store = Fpath.(store.dir / Key.to_text key)
+let blobpath key store = Filepath.(store.dir / Key.to_text key)
 
 let equal_files f0 f1 =
   Result.join @@
@@ -60,8 +60,10 @@ let add blob store =
         let* () = Os.Path.rename ~force ~make_path file ~dst:blobpath in
         Ok (key, Created)
   with
-  | Unix.Unix_error (e, _, _) -> Fpath.error file "%s" (Unix.error_message e)
-  | Bytes.Stream.Error e -> Fpath.error file "%s" (Bytes.Stream.error_message e)
+  | Unix.Unix_error (e, _, _) ->
+      Filepath.error file "%s" (Unix.error_message e)
+  | Bytes.Stream.Error e ->
+      Filepath.error file "%s" (Bytes.Stream.error_message e)
 
 let mem key store = Os.File.exists (blobpath key store)
 let delete key store = Os.File.delete (blobpath key store)

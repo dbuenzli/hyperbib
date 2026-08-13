@@ -61,11 +61,11 @@ type error_kind
 type error = error_kind * B0_text.Textloc.t
 (** The type for errors. The error and its location. *)
 
-val of_string : ?file:Fpath.t -> string -> (t list, error) result
+val of_string : ?file:Filepath.t -> string -> (t list, error) result
 (** [of_string ~file s] parses entries from [s] assuming it
-    was read from [file] (defaults to {!B0_std.Fpath.dash}). *)
+    was read from [file] (defaults to {!B0_std.Filepath.dash}). *)
 
-val of_string' : ?file:Fpath.t -> string -> (t list, string) result
+val of_string' : ?file:Filepath.t -> string -> (t list, string) result
 (** [of_string'] is like {!of_string} but converts the error to an
     error message. *)
 

@@ -8,7 +8,7 @@
 open Hyperbib_std
 
 val static_html :
-  inside_dir:Fpath.t -> Hyperbib_config.t -> Db.t -> Page.Gen.t ->
+  inside_dir:Filepath.t -> Hyperbib_config.t -> Db.t -> Page.Gen.t ->
   (unit, string) result
 
 val bibtex_of_refs :

@@ -71,11 +71,11 @@ v} *)
 
 (** {1:persist Persisting} *)
 
-val load : Fpath.t -> (s, string) result
+val load : Filepath.t -> (s, string) result
 (** [load file] are users from the JSON file [file]. This is {!empty} if
     the file does not exist. *)
 
-val save : Fpath.t -> s -> (unit, string) result
+val save : Filepath.t -> s -> (unit, string) result
 (** [save file us] saves users us to the JSON file [file]. *)
 
 (** {1:caps Capabilities} *)

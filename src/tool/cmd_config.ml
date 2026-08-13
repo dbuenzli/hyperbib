@@ -8,7 +8,7 @@ open Result.Syntax
 
 let output_config ~config ~data_dir =
   if data_dir
-  then Fmt.pr "@[%a@]@." Fpath.pp (Hyperbib_config.data_dir config)
+  then Fmt.pr "@[%a@]@." Filepath.pp (Hyperbib_config.data_dir config)
   else Fmt.pr "@[%a@]@." Hyperbib_config.pp config;
   Hyperbib_cli.Exit.ok
 
